@@ -3,16 +3,25 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b",
+  "type": "module",
   "scripts": {
     "dev:op": "pnpm --filter @apps/op dev",
     "dev:api": "pnpm --filter @apps/api dev",
     "dev:app": "pnpm --filter @apps/app dev",
     "dev": "NODE_EXTRA_CA_CERTS=\"$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt\" concurrently -n op,api,app -c blue,green,magenta \"pnpm dev:op\" \"pnpm dev:api\" \"pnpm dev:app\"",
     "build": "pnpm -r --filter \"@apps/*\" run build",
-    "caddy": "sudo caddy run --config ./caddyfile"
+    "caddy": "sudo caddy run --config ./caddyfile",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@stylistic/eslint-plugin": "^5.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
     "concurrently": "^9.2.1",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
     "typescript": "^5.9.2"
   }
 }
