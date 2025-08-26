@@ -24,3 +24,6 @@ certs/*
 
 # logs
 *.log
+
+# claude
+.claude/
