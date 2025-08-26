@@ -1,10 +1,10 @@
-# OIDC + Fastify Monorepo
+# OIDC + Express Monorepo
 
-Pure Node.js OIDC stack using **Fastify**, **oidc-provider**, **openid-client**, and **jose**. Local HTTPS is provided by **Caddy** using its **internal CA**.
+Pure Node.js OIDC stack using **Express**, **oidc-provider**, **openid-client**, and **jose**. Local HTTPS is provided by **Caddy** using its **internal CA**.
 
 ## Services
 
-- **OP** (`apps/op`) – Authorization Server + minimal login/consent (interactions) using `oidc-provider` within Fastify.
+- **OP** (`apps/op`) – Authorization Server + minimal login/consent (interactions) using `oidc-provider` within Express.
 - **API** (`apps/api`) – Protected resource server validating JWTs with `jose` against the OP's JWKS.
 - **APP** (`apps/app`) – Relying Party (client) using `openid-client` (Authorization Code + PKCE).
 

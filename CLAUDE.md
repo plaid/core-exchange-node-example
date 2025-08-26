@@ -33,6 +33,7 @@ pnpm build
 ### Caddy Configuration
 
 If you prefer not to use sudo, you can modify the `caddyfile` to use high ports:
+
 ```
 :8443 {
   tls internal
@@ -44,18 +45,19 @@ Then update the `.env` file to reflect the new URL pattern (e.g., `https://local
 
 ## Architecture Overview
 
-This is an OpenID Connect (OIDC) implementation using Fastify for all services in a pnpm monorepo. The system consists of three main services:
+This is an OpenID Connect (OIDC) implementation using Express for all services in a pnpm monorepo. The system consists of three main services:
 
 ### 1. Authorization Server (OP - OpenID Provider)
 
 - Located in `apps/op`
-- Built with `oidc-provider` embedded in Fastify
+- Built with `oidc-provider` embedded in Express
 - Handles authentication, authorization, and token issuance
 - Includes built-in interaction flows (login/consent) for simplicity
 - Currently uses in-memory storage (Postgres adapter planned)
 - Default test user: `user@example.test` / `passw0rd!`
 
 Key components:
+
 - OIDC configuration (clients, claims, scopes)
 - Basic interaction handlers (login and consent flows)
 - In-memory user store (temporary)
@@ -68,6 +70,7 @@ Key components:
 - Enforces scope-based authorization (e.g., `accounts:read`)
 
 Key components:
+
 - JWT verification middleware
 - Protected resources requiring specific scopes
 - Public health endpoint
@@ -81,6 +84,7 @@ Key components:
 - Makes authenticated calls to the API
 
 Key components:
+
 - OIDC client setup and discovery
 - Login/callback handling with PKCE
 - Token storage in secure cookies
