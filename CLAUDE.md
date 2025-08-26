@@ -13,12 +13,15 @@ pnpm install
 # Setup HTTPS with Caddy
 sudo caddy trust         # Install Caddy's internal CA root to macOS trust store
 sudo caddy run --config ./caddyfile  # Run Caddy in another terminal window
+# OR use the pnpm script:
+pnpm caddy
 ```
 
 ### Development
 
 ```bash
 # Run all services in development mode with hot reload
+# Note: This command includes NODE_EXTRA_CA_CERTS for Caddy's internal CA
 pnpm dev
 
 # Run individual services
@@ -28,6 +31,11 @@ pnpm dev:app   # Client App (Relying Party)
 
 # Build all applications
 pnpm build
+
+# Production commands (after build)
+pnpm --filter @apps/op start    # Start OP in production
+pnpm --filter @apps/api start   # Start API in production  
+pnpm --filter @apps/app start   # Start APP in production
 ```
 
 ### Caddy Configuration
