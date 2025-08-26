@@ -1,0 +1,17 @@
+# OP (issuer)
+id.localtest.me {
+  reverse_proxy localhost:3001
+  tls internal
+}
+
+# Client app (RP)
+app.localtest.me {
+  reverse_proxy localhost:3004
+  tls internal
+}
+
+# Resource API
+api.localtest.me {
+  reverse_proxy localhost:3003
+  tls internal
+}

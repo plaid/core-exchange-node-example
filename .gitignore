@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+coverage/
+
+# env
+.env
+apps/**/.env
+packages/**/.env
+
+# editor
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# certs
+certs/*
+!certs/.gitkeep
+
+# logs
+*.log
