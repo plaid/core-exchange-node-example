@@ -28,8 +28,9 @@ Caddy will generate and use its **internal CA**. It can also install that root C
 
 ```bash
 # From repo root
-sudo caddy trust         # installs Caddy's internal CA root into the macOS trust store
 sudo caddy run --config ./caddyfile
+# Run in a separate terminal
+sudo caddy trust         # installs Caddy's internal CA root into the macOS trust store
 ```
 
 - Sites: `https://id.localtest.me`, `https://app.localtest.me`, `https://api.localtest.me` (all proxied to localhost ports).
@@ -49,14 +50,21 @@ Then use `https://localhost:8443` (and update `.env` issuer/redirects accordingl
 
 ### Run the Node apps (in another terminal)
 
+Node does not use the macOS system trust store for TLS. We point Node to Caddy's internal CA so HTTPS calls to `*.localtest.me` validate correctly.
+
 ```bash
+# Root dev command automatically sets NODE_EXTRA_CA_CERTS for macOS
 pnpm dev
+
+# If you run apps individually, set this once per terminal session:
+export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
 ```
 
 Notes:
 
-- The client app now retries OIDC issuer discovery on startup. You can start the Node apps before Caddy/OP; the app will log retries until `https://id.localtest.me` is reachable.
+- The client app retries OIDC issuer discovery on startup. You can start the Node apps before Caddy/OP; the app will log retries until `https://id.localtest.me` is reachable.
 - Still recommended: start Caddy first for faster startup and fewer retries.
+- If you renamed the project folder or switched terminals, ensure `NODE_EXTRA_CA_CERTS` is set in your current shell or use the root `pnpm dev` which sets it automatically.
 
 ## Test the flow
 
@@ -67,7 +75,12 @@ Notes:
 
 ## Troubleshooting
 
-- 502 Bad Gateway during discovery (from the app): Ensure Caddy is running and trusted, and verify the OP is up by visiting `https://id.localtest.me/.well-known/openid-configuration`.
+- 502 Bad Gateway or TLS errors (e.g. `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) during discovery: Ensure Caddy is running and trusted, verify the OP via `https://id.localtest.me/.well-known/openid-configuration`, and confirm `NODE_EXTRA_CA_CERTS` points to Caddy's CA:
+
+  ```bash
+  export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
+  ```
+
 - If you changed ports/hosts, make sure `OP_ISSUER`, `APP_BASE_URL`, `API_BASE_URL`, and `REDIRECT_URI` match the Caddy routes you are serving.
 
 ## Configuration
