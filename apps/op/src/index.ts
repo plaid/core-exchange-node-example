@@ -1,11 +1,32 @@
+import "dotenv/config";
 import express, { Request, Response } from "express";
 import { Provider, errors } from "oidc-provider";
 
-const ISSUER = process.env.OP_ISSUER || "https://id.localtest.me";
-const CLIENT_ID = process.env.CLIENT_ID || "dev-rp";
-const CLIENT_SECRET = process.env.CLIENT_SECRET || "dev-secret";
-const REDIRECT_URI =
-  process.env.REDIRECT_URI || "https://app.localtest.me/callback";
+// Environment configuration validation
+function getRequiredEnv( name: string, fallback?: string ): string {
+	const value = process.env[name] || fallback;
+	if ( !value ) {
+		console.error( `Missing required environment variable: ${ name }` );
+		process.exit( 1 );
+	}
+	return value;
+}
+
+function getRequiredEnvNumber( name: string, fallback?: number ): number {
+	const value = process.env[name];
+	const num = value ? Number( value ) : fallback;
+	if ( num === undefined || isNaN( num ) ) {
+		console.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
+		process.exit( 1 );
+	}
+	return num;
+}
+
+const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
+const CLIENT_ID = getRequiredEnv( "CLIENT_ID", "dev-rp" );
+const CLIENT_SECRET = getRequiredEnv( "CLIENT_SECRET", "dev-secret" );
+const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI", "https://app.localtest.me/callback" );
+const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 
 const app = express();
 app.disable( "x-powered-by" );
@@ -212,9 +233,8 @@ async function main() {
 		callback( req, res );
 	} );
 
-	const port = Number( process.env.OP_PORT || 3001 );
-	app.listen( port, "0.0.0.0", () => {
-		console.log( `OP listening at ${ ISSUER } (local port ${ port })` );
+	app.listen( PORT, "0.0.0.0", () => {
+		console.log( `OP listening at ${ ISSUER } (local port: ${ PORT })` );
 	} );
 }
 

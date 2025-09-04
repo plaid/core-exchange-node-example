@@ -1,18 +1,62 @@
+import "dotenv/config";
 import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import { Issuer, generators, Client } from "openid-client";
 
-const ISSUER_URL = process.env.OP_ISSUER || "https://id.localtest.me";
-const CLIENT_ID = process.env.CLIENT_ID || "dev-rp";
-const CLIENT_SECRET = process.env.CLIENT_SECRET || "dev-secret";
-const REDIRECT_URI =
-  process.env.REDIRECT_URI || "https://app.localtest.me/callback";
-const API_BASE_URL = process.env.API_BASE_URL || "https://api.localtest.me";
-const PORT = Number( process.env.APP_PORT || 3004 );
+// Type definitions
+interface OidcState {
+	state: string;
+	code_verifier: string;
+}
+
+interface TokenSet {
+	access_token: string;
+	id_token?: string;
+	refresh_token?: string;
+}
+
+interface CookieRequest extends Request {
+	cookies: {
+		[key: string]: string;
+	};
+}
+
+// Environment configuration validation
+function getRequiredEnv( name: string ): string {
+	const value = process.env[name];
+	if ( !value ) {
+		console.error( `Missing required environment variable: ${ name }` );
+		process.exit( 1 );
+	}
+	return value;
+}
+
+function getRequiredEnvNumber( name: string ): number {
+	const value = process.env[name];
+	if ( !value ) {
+		console.error( `Missing required environment variable: ${ name }` );
+		process.exit( 1 );
+	}
+	const num = Number( value );
+	if ( isNaN( num ) ) {
+		console.error( `Environment variable ${ name } must be a valid number, got: ${ value }` );
+		process.exit( 1 );
+	}
+	return num;
+}
+
+const HOST = getRequiredEnv( "APP_HOST" );
+const PORT = getRequiredEnvNumber( "APP_PORT" );
+const ISSUER_URL = getRequiredEnv( "OP_ISSUER" );
+const CLIENT_ID = getRequiredEnv( "CLIENT_ID" );
+const CLIENT_SECRET = getRequiredEnv( "CLIENT_SECRET" );
+const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI" );
+const API_BASE_URL = getRequiredEnv( "API_BASE_URL" );
+const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET" );
 
 const app = express();
 app.disable( "x-powered-by" );
-app.use( cookieParser( "dev-secret" ) );
+app.use( cookieParser( COOKIE_SECRET ) );
 
 let client: Client | undefined;
 let clientInitPromise: Promise<Client> | null = null;
@@ -65,7 +109,7 @@ async function ensureClient(): Promise<Client> {
 // Discovery is performed lazily on demand by routes via ensureClient()
 
 app.get( "/", async ( req: Request, res: Response ) => {
-	const tokens = ( req.cookies as any )?.tokens;
+	const tokens = ( req as CookieRequest ).cookies?.tokens;
 	const body = `
     <html><body style="font-family: system-ui; max-width: 680px; margin: 48px auto;">
       <h2>Dev Client</h2>
@@ -104,10 +148,11 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 
 app.get( "/callback", async ( req: Request, res: Response ) => {
 	const oidcClient = await ensureClient();
-	const params = oidcClient.callbackParams( req as any );
-	const cookieVal = ( req.cookies as any )["oidc"]
-		? JSON.parse( String( ( req.cookies as any )["oidc"] ) )
-		: {};
+	const params = oidcClient.callbackParams( req );
+	const oidcCookie = ( req as CookieRequest ).cookies["oidc"];
+	const cookieVal: OidcState = oidcCookie
+		? JSON.parse( oidcCookie )
+		: {} as OidcState;
 	const tokenSet = await oidcClient.callback(
 		REDIRECT_URI,
 		params,
@@ -132,8 +177,9 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 
 app.get( "/me", async ( req: Request, res: Response ) => {
 	const oidcClient = await ensureClient();
-	const tokens = ( req.cookies as any )["tokens"]
-		? JSON.parse( String( ( req.cookies as any )["tokens"] ) )
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
 		: null;
 	if ( !tokens?.access_token ) return res.redirect( "/login" );
 	try {
@@ -153,8 +199,9 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/accounts", async ( req: Request, res: Response ) => {
-	const tokens = ( req.cookies as any )["tokens"]
-		? JSON.parse( String( ( req.cookies as any )["tokens"] ) )
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
 		: null;
 	if ( !tokens?.access_token ) return res.redirect( "/login" );
 	await ensureClient();
@@ -174,5 +221,5 @@ app.get( "/logout", async ( _req: Request, res: Response ) => {
 } );
 
 app.listen( PORT, "0.0.0.0", () => {
-	console.log( `APP listening at https://app.localtest.me (local port ${ PORT })` );
+	console.log( `APP listening at ${ HOST } (local port: ${ PORT })` );
 } );

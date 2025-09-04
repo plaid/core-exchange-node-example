@@ -1,14 +1,39 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
 
 import customersRouter from "./routes/customers.js";
 import accountsRouter from "./routes/accounts.js";
 
-const ISSUER = process.env.OP_ISSUER || "https://id.localtest.me";
-const AUDIENCE = process.env.API_AUDIENCE || "api://my-api";
-const PORT = Number( process.env.API_PORT || 3003 );
-const HOST = process.env.API_HOST || "http://localhost";
+// Extend Request interface to include user payload
+interface AuthenticatedRequest extends Request {
+	user?: JWTPayload;
+}
+
+// Environment configuration validation
+function getRequiredEnv( name: string, fallback?: string ): string {
+	const value = process.env[name] || fallback;
+	if ( !value ) {
+		console.error( `Missing required environment variable: ${ name }` );
+		process.exit( 1 );
+	}
+	return value;
+}
+
+function getRequiredEnvNumber( name: string, fallback?: number ): number {
+	const value = process.env[name];
+	const num = value ? Number( value ) : fallback;
+	if ( num === undefined || isNaN( num ) ) {
+		console.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
+		process.exit( 1 );
+	}
+	return num;
+}
+
+const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
+const AUDIENCE = getRequiredEnv( "API_AUDIENCE", "api://my-api" );
+const PORT = getRequiredEnvNumber( "API_PORT", 3003 );
+const HOST = getRequiredEnv( "API_HOST", "http://localhost" );
 
 const JWKS = createRemoteJWKSet( new URL( `${ ISSUER }/jwks` ) );
 
@@ -37,7 +62,7 @@ app.use( async ( req: Request, res: Response, next: NextFunction ) => {
 			issuer: ISSUER,
 			audience: AUDIENCE
 		} );
-		( req as any ).user = payload;
+		( req as AuthenticatedRequest ).user = payload;
 		next();
 	} catch ( e ) {
 		console.warn( "JWT verification failed", {
@@ -72,5 +97,5 @@ app.use( ( req, res ) => {
 } );
 
 app.listen( PORT, "0.0.0.0", () => {
-	console.log( `API listening at ${ HOST }${ PORT !== 80 && PORT !== 443 ? `:${ PORT }` : "" }` );
+	console.log( `API listening at ${ HOST } (local port: ${ PORT })` );
 } );
