@@ -1,14 +1,18 @@
+import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const ISSUER = process.env.OP_ISSUER || "https://id.localtest.me";
 const AUDIENCE = process.env.API_AUDIENCE || "api://my-api";
 const PORT = Number( process.env.API_PORT || 3003 );
+const HOST = process.env.API_HOST || "http://localhost";
 
 const JWKS = createRemoteJWKSet( new URL( `${ ISSUER }/jwks` ) );
 
 const app = express();
 app.disable( "x-powered-by" );
+
+app.use( express.json() );
 
 // Auth middleware
 app.use( async ( req: Request, res: Response, next: NextFunction ) => {
@@ -52,6 +56,14 @@ app.get( "/accounts", ( req: Request, res: Response ) => {
 	return res.json( [ { id: "acc_123", name: "Primary Checking" } ] );
 } );
 
+// 404 route handler for undefined routes
+app.use( ( req, res ) => {
+	res.status( 404 ).json( {
+		error: "Not Found",
+		message: `Requested resource ${ req.originalUrl } not found`
+	} );
+} );
+
 app.listen( PORT, "0.0.0.0", () => {
-	console.log( `API listening at https://api.localtest.me (local port ${ PORT })` );
+	console.log( `API listening at ${ HOST }${ PORT !== 80 && PORT !== 443 ? `:${ PORT }` : "" }` );
 } );
