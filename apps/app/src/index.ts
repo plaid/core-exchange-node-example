@@ -139,7 +139,7 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 	try {
 		const userinfo = await oidcClient.userinfo( tokens.access_token );
 		return res.send( { userinfo } );
-	} catch ( e ) {
+	} catch {
 		// If access_token was issued for API resource it may not be valid at userinfo
 		// Try refresh to obtain a token suitable for userinfo (no resource)
 		if ( tokens.refresh_token ) {

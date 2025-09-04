@@ -48,8 +48,7 @@ const configuration: any = {
 			// When a resource is requested, return Resource Server config
 			async getResourceServerInfo(
 				_ctx: any,
-				resourceIndicator: string,
-				_client: any
+				resourceIndicator: string
 			) {
 				if ( resourceIndicator === "api://my-api" ) {
 					return {
@@ -126,7 +125,7 @@ async function main() {
 		"/interaction/:uid/login",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			const { uid } = req.params as any;
+			// const { uid } = req.params as any; // uid not used in this handler
 			const email = ( req.body as any )?.email || "";
 			const password = ( req.body as any )?.password || "";
 
@@ -150,7 +149,7 @@ async function main() {
 		"/interaction/:uid/confirm",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			const { uid } = req.params as any;
+			// const { uid } = req.params as any; // uid not used in this handler
 			const details = await provider.interactionDetails( req, res );
 			const { grantId, prompt } = details;
 
