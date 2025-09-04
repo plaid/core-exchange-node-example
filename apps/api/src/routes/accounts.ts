@@ -57,7 +57,7 @@ router.get( "/accounts", async ( req: Request<{}, {}, {}, AccountsQueryParams>, 
 
 		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
-		const page = hasMore ? { nextOffset: offset + limit } : {};
+		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
 		// Construct response
 		const response = {
@@ -134,7 +134,7 @@ router.get( "/accounts/:accountId/statements", async ( req: Request<{ accountId:
 
 		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
-		const page = hasMore ? { nextOffset: offset + limit } : {};
+		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
 		// Construct response
 		const response = {
@@ -198,7 +198,7 @@ router.get( "/accounts/:accountId/transactions", async ( req: Request<{ accountI
 	try {
 		const result = await getAccountTransactions( accountId, offset, limit, startTime, endTime );
 		const hasMore = offset + limit < result.total;
-		const page = hasMore ? { nextOffset: offset + limit } : {};
+		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 		return res.json( {
 			page,
 			transactions: result.transactions
@@ -224,7 +224,7 @@ router.get( "/accounts/:accountId/payment-networks", async ( req: Request<{ acco
 
 		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
-		const page = hasMore ? { nextOffset: offset + limit } : {};
+		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
 		// Construct response
 		const response = {
@@ -251,7 +251,7 @@ router.get( "/accounts/:accountId/asset-transfer-networks", async ( req: Request
 	try {
 		const result = await getAssetTransferNetworks( accountId, offset, limit );
 		const hasMore = offset + limit < result.total;
-		const page = hasMore ? { nextOffset: offset + limit } : {};
+		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 		return res.json( {
 			page,
 			assetTransferNetworks: result.assetTransferNetworks

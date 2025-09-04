@@ -53,8 +53,8 @@ app.get( "/public/health", ( _req: Request, res: Response ) =>
 );
 
 // Routes
-app.use( "/api/fdx", customersRouter );
-app.use( "/api/fdx", accountsRouter );
+app.use( "/api/cx", customersRouter );
+app.use( "/api/cx", accountsRouter );
 
 // app.get( "/accounts", ( req: Request, res: Response ) => {
 // 	const scope = String( ( req as any ).user?.scope || "" ).split( " " );

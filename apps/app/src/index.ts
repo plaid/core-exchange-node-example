@@ -160,7 +160,7 @@ app.get( "/accounts", async ( req: Request, res: Response ) => {
 	await ensureClient();
 	// Expect API-scoped JWT access token from authorization flow
 	const accessToken = tokens.access_token as string;
-	const resApi = await fetch( `${ API_BASE_URL }/accounts`, {
+	const resApi = await fetch( `${ API_BASE_URL }/api/cx/accounts?limit=3`, {
 		headers: { Authorization: `Bearer ${ accessToken }` }
 	} );
 	const data = await resApi.json();
