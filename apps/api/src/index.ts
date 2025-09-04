@@ -2,6 +2,9 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
+import customersRouter from "./routes/customers.js";
+import accountsRouter from "./routes/accounts.js";
+
 const ISSUER = process.env.OP_ISSUER || "https://id.localtest.me";
 const AUDIENCE = process.env.API_AUDIENCE || "api://my-api";
 const PORT = Number( process.env.API_PORT || 3003 );
@@ -49,12 +52,16 @@ app.get( "/public/health", ( _req: Request, res: Response ) =>
 	res.json( { ok: true } )
 );
 
-app.get( "/accounts", ( req: Request, res: Response ) => {
-	const scope = String( ( req as any ).user?.scope || "" ).split( " " );
-	if ( !scope.includes( "accounts:read" ) )
-		return res.status( 403 ).json( { error: "insufficient_scope" } );
-	return res.json( [ { id: "acc_123", name: "Primary Checking" } ] );
-} );
+// Routes
+app.use( "/api/fdx", customersRouter );
+app.use( "/api/fdx", accountsRouter );
+
+// app.get( "/accounts", ( req: Request, res: Response ) => {
+// 	const scope = String( ( req as any ).user?.scope || "" ).split( " " );
+// 	if ( !scope.includes( "accounts:read" ) )
+// 		return res.status( 403 ).json( { error: "insufficient_scope" } );
+// 	return res.json( [ { id: "acc_123", name: "Primary Checking" } ] );
+// } );
 
 // 404 route handler for undefined routes
 app.use( ( req, res ) => {
