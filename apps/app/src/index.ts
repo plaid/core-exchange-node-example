@@ -149,7 +149,8 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		state,
 		code_challenge,
 		code_challenge_method: "S256",
-		resource: "api://my-api"
+		resource: "api://my-api",
+		prompt: "login"
 	} );
 	res.redirect( url.href );
 } );
@@ -265,9 +266,35 @@ app.get( "/accounts", async ( req: Request, res: Response ) => {
 	res.send( data );
 } );
 
-app.get( "/logout", async ( _req: Request, res: Response ) => {
+app.get( "/logout", async ( req: Request, res: Response ) => {
+	console.log( "Logout route called" );
+	const config = await ensureConfig();
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
+		: null;
+
+	console.log( "Logout - tokens present:", !!tokens );
+	console.log( "Logout - id_token present:", !!tokens?.id_token );
+
+	const serverMetadata = config.serverMetadata();
+	console.log( "Logout - server metadata:", {
+		issuer: serverMetadata.issuer,
+		end_session_endpoint: serverMetadata.end_session_endpoint,
+		has_end_session: !!serverMetadata.end_session_endpoint
+	} );
+
+	// Clear local cookies first
 	res.clearCookie( "tokens", { path: "/" } );
 	res.clearCookie( "oidc", { path: "/" } );
+
+	// For now, skip OIDC logout and just do local logout
+	// The complex OIDC logout flow is having issues with the authorization server
+	// TODO: Fix OIDC logout flow later
+	console.log( "Logout - performing local logout only" );
+
+	console.log( "Logout - falling back to local redirect" );
+	// Fallback to local redirect if no proper logout endpoint
 	res.redirect( "/" );
 } );
 

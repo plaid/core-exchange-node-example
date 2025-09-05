@@ -53,6 +53,7 @@ const configuration: any = {
 			client_id: CLIENT_ID,
 			client_secret: CLIENT_SECRET,
 			redirect_uris: [ REDIRECT_URI ],
+			post_logout_redirect_uris: [ "https://app.localtest.me" ],
 			grant_types: [ "authorization_code", "refresh_token" ],
 			response_types: [ "code" ],
 			token_endpoint_auth_method: "client_secret_basic"
@@ -64,6 +65,26 @@ const configuration: any = {
 	formats: { AccessToken: "jwt" },
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions
+		rpInitiatedLogout: {
+			enabled: true,
+			logoutSource: async ( ctx: any, form: string ) => {
+				// Auto-submit immediately without showing any page
+				return `<!DOCTYPE html>
+				<html>
+				<head>
+					<title>Logging out...</title>
+					<script>
+						document.addEventListener('DOMContentLoaded', function() {
+							document.forms[0].submit();
+						});
+					</script>
+				</head>
+				<body style="display:none;">
+					${ form }
+				</body>
+				</html>`;
+			}
+		},
 		resourceIndicators: {
 			enabled: true,
 			// When a resource is requested, return Resource Server config
