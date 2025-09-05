@@ -45,6 +45,9 @@ app.disable( "x-powered-by" );
 app.set( "view engine", "ejs" );
 app.set( "views", new URL( "../views", import.meta.url ).pathname );
 
+// Serve static files (CSS, etc.)
+app.use( "/public", express.static( new URL( "../public", import.meta.url ).pathname ) );
+
 // Very minimal in-memory user store
 const USERS = new Map<
 	string,

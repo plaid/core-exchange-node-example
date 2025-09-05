@@ -4,8 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "dev": "concurrently \"npm run css:watch\" \"tsx watch src/index.ts\"",
+    "css:build": "npx @tailwindcss/cli -i ./src/css/input.css -o ./public/styles.css",
+    "css:watch": "npx @tailwindcss/cli -i ./src/css/input.css -o ./public/styles.css --watch",
+    "build": "npm run css:build && tsc -p tsconfig.json",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -19,10 +21,13 @@
     "undici": "^7.15.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.13",
     "@types/cookie-parser": "^1.4.9",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
+    "concurrently": "^9.2.1",
+    "tailwindcss": "^4.1.13",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }

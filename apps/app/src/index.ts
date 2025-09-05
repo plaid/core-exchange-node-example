@@ -80,6 +80,9 @@ app.use( cookieParser( COOKIE_SECRET ) );
 app.set( "view engine", "ejs" );
 app.set( "views", new URL( "../views", import.meta.url ).pathname );
 
+// Serve static files (CSS, etc.)
+app.use( "/public", express.static( new URL( "../public", import.meta.url ).pathname ) );
+
 let config: client.Configuration | undefined;
 let configInitPromise: Promise<client.Configuration> | null = null;
 
