@@ -186,10 +186,22 @@ importers:
 
   apps/shared:
     dependencies:
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
+      helmet:
+        specifier: ^8.1.0
+        version: 8.1.0
       pino:
         specifier: ^9.5.0
         version: 9.9.4
+      pino-pretty:
+        specifier: ^13.1.1
+        version: 13.1.1
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.3
+        version: 5.0.3
       '@types/node':
         specifier: ^24.3.1
         version: 24.3.1

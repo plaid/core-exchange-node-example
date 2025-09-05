@@ -1,38 +1,20 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
-import helmet from "helmet";
 import { Provider, errors } from "oidc-provider";
-import pino from "pino";
-import { logError } from "@apps/shared/security";
+import {
+	logError,
+	getRequiredEnv,
+	getRequiredEnvNumber,
+	createLogger,
+	createWebSecurityHeaders,
+	setupBasicExpress,
+	setupEJSTemplates
+} from "@apps/shared";
 
-const logger = pino( {
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true
-		}
-	}
-} );
+// Create logger for OP service
+const logger = createLogger( "op" );
 
-// Environment configuration validation
-function getRequiredEnv( name: string, fallback?: string ): string {
-	const value = process.env[name] || fallback;
-	if ( !value ) {
-		logger.error( `Missing required environment variable: ${ name }` );
-		process.exit( 1 );
-	}
-	return value;
-}
-
-function getRequiredEnvNumber( name: string, fallback?: number ): number {
-	const value = process.env[name];
-	const num = value ? Number( value ) : fallback;
-	if ( num === undefined || isNaN( num ) ) {
-		logger.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
-		process.exit( 1 );
-	}
-	return num;
-}
+// Environment configuration
 
 const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
 const CLIENT_ID = getRequiredEnv( "CLIENT_ID", "dev-rp" );
@@ -41,31 +23,13 @@ const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI", "https://app.localtest.me/c
 const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 
 const app = express();
-app.disable( "x-powered-by" );
+setupBasicExpress( app );
 
 // Security headers
-app.use( helmet( {
-	// Allow inline scripts and styles for EJS templates in development
-	// In production, consider using nonces or CSP hashes
-	contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
-		directives: {
-			defaultSrc: [ "'self'" ],
-			styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
-			scriptSrc: [ "'self'" ],
-			imgSrc: [ "'self'", "data:", "https:" ],
-			connectSrc: [ "'self'" ],
-			fontSrc: [ "'self'" ],
-			objectSrc: [ "'none'" ],
-			mediaSrc: [ "'self'" ],
-			frameSrc: [ "'none'" ]
-		}
-	} : false, // Disable CSP in development for easier debugging
-	crossOriginEmbedderPolicy: false // Allow iframe usage if needed
-} ) );
+app.use( createWebSecurityHeaders() );
 
-// Configure EJS as template engine
-app.set( "view engine", "ejs" );
-app.set( "views", new URL( "../views", import.meta.url ).pathname );
+// Template engine
+setupEJSTemplates( app, new URL( "../views", import.meta.url ).pathname );
 
 // Serve static files (CSS, etc.)
 app.use( "/public", express.static( new URL( "../public", import.meta.url ).pathname ) );

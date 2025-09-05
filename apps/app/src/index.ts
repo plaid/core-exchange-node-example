@@ -1,26 +1,27 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
-import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import * as client from "openid-client";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { webcrypto } from "crypto";
-import pino from "pino";
-import { sanitizeError, logError } from "@apps/shared/security";
+import {
+	sanitizeError,
+	logError,
+	getRequiredEnv,
+	getRequiredEnvNumber,
+	createLogger,
+	createWebSecurityHeaders,
+	setupBasicExpress,
+	setupEJSTemplates
+} from "@apps/shared";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
 	globalThis.crypto = webcrypto as any;
 }
 
-const logger = pino( {
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true
-		}
-	}
-} );
+// Create logger for APP service
+const logger = createLogger( "app" );
 
 // Type definitions
 interface OidcState {
@@ -40,29 +41,7 @@ interface CookieRequest extends Request {
 	};
 }
 
-// Environment configuration validation
-function getRequiredEnv( name: string ): string {
-	const value = process.env[name];
-	if ( !value ) {
-		logger.error( `Missing required environment variable: ${ name }` );
-		process.exit( 1 );
-	}
-	return value;
-}
-
-function getRequiredEnvNumber( name: string ): number {
-	const value = process.env[name];
-	if ( !value ) {
-		logger.error( `Missing required environment variable: ${ name }` );
-		process.exit( 1 );
-	}
-	const num = Number( value );
-	if ( isNaN( num ) ) {
-		logger.error( `Environment variable ${ name } must be a valid number, got: ${ value }` );
-		process.exit( 1 );
-	}
-	return num;
-}
+// Environment configuration
 
 const HOST = getRequiredEnv( "APP_HOST" );
 const PORT = getRequiredEnvNumber( "APP_PORT" );
@@ -74,34 +53,16 @@ const API_BASE_URL = getRequiredEnv( "API_BASE_URL" );
 const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET" );
 
 const app = express();
-app.disable( "x-powered-by" );
+setupBasicExpress( app );
 
 // Security headers
-app.use( helmet( {
-	// Allow inline scripts and styles for EJS templates in development
-	contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
-		directives: {
-			defaultSrc: [ "'self'" ],
-			styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
-			scriptSrc: [ "'self'" ],
-			imgSrc: [ "'self'", "data:", "https:" ],
-			connectSrc: [ "'self'", API_BASE_URL ], // Allow connections to API
-			fontSrc: [ "'self'" ],
-			objectSrc: [ "'none'" ],
-			mediaSrc: [ "'self'" ],
-			frameSrc: [ "'none'" ]
-		}
-	} : false, // Disable CSP in development for easier debugging
-	crossOriginEmbedderPolicy: false
-} ) );
+app.use( createWebSecurityHeaders( API_BASE_URL ) );
 
-// Trust proxy headers (for HTTPS detection behind Caddy)
-app.set( "trust proxy", true );
+// Middleware
 app.use( cookieParser( COOKIE_SECRET ) );
 
-// Configure EJS as template engine
-app.set( "view engine", "ejs" );
-app.set( "views", new URL( "../views", import.meta.url ).pathname );
+// Template engine
+setupEJSTemplates( app, new URL( "../views", import.meta.url ).pathname );
 
 // Serve static files (CSS, etc.)
 app.use( "/public", express.static( new URL( "../public", import.meta.url ).pathname ) );

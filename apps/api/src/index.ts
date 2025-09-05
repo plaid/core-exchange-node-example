@@ -1,52 +1,33 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
-import helmet from "helmet";
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
 import { webcrypto } from "crypto";
-import pino from "pino";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
 	globalThis.crypto = webcrypto;
 }
 
-const logger = pino( {
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true
-		}
-	}
-} );
-
 import customersRouter from "./routes/customers.js";
 import accountsRouter from "./routes/accounts.js";
-import { sanitizeError, logError, AuthenticationError } from "@apps/shared/security";
+import {
+	sanitizeError,
+	logError,
+	AuthenticationError,
+	getRequiredEnv,
+	getRequiredEnvNumber,
+	createLogger,
+	createApiSecurityHeaders,
+	setupBasicExpress
+} from "@apps/shared";
 
 // Extend Request interface to include user payload
 interface AuthenticatedRequest extends Request {
 	user?: JWTPayload;
 }
 
-// Environment configuration validation
-function getRequiredEnv( name: string, fallback?: string ): string {
-	const value = process.env[name] || fallback;
-	if ( !value ) {
-		logger.error( `Missing required environment variable: ${ name }` );
-		process.exit( 1 );
-	}
-	return value;
-}
-
-function getRequiredEnvNumber( name: string, fallback?: number ): number {
-	const value = process.env[name];
-	const num = value ? Number( value ) : fallback;
-	if ( num === undefined || isNaN( num ) ) {
-		logger.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
-		process.exit( 1 );
-	}
-	return num;
-}
+// Create logger for API service
+const logger = createLogger( "api" );
 
 const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
 const AUDIENCE = getRequiredEnv( "API_AUDIENCE", "api://my-api" );
@@ -56,18 +37,10 @@ const HOST = getRequiredEnv( "API_HOST", "http://localhost" );
 const JWKS = createRemoteJWKSet( new URL( `${ ISSUER }/jwks` ) );
 
 const app = express();
-app.disable( "x-powered-by" );
+setupBasicExpress( app );
 
 // Security headers
-app.use( helmet( {
-	contentSecurityPolicy: {
-		directives: {
-			defaultSrc: [ "'self'" ],
-			connectSrc: [ "'self'" ]
-		}
-	},
-	crossOriginEmbedderPolicy: false
-} ) );
+app.use( createApiSecurityHeaders() );
 
 app.use( express.json() );
 

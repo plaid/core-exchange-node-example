@@ -14,6 +14,18 @@
     "./security": {
       "import": "./dist/security.js",
       "types": "./dist/security.d.ts"
+    },
+    "./environment": {
+      "import": "./dist/environment.js",
+      "types": "./dist/environment.d.ts"
+    },
+    "./logging": {
+      "import": "./dist/logging.js",
+      "types": "./dist/logging.d.ts"
+    },
+    "./middleware": {
+      "import": "./dist/middleware.js",
+      "types": "./dist/middleware.d.ts"
     }
   },
   "scripts": {
@@ -24,11 +36,17 @@
   "keywords": ["oauth", "security", "utilities", "educational"],
   "author": "OAuth Educational Project",
   "license": "MIT",
+  "dependencies": {
+    "helmet": "^8.1.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.1.1"
+  },
   "devDependencies": {
+    "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
-    "pino": "^9.5.0"
+    "express": "^5.1.0"
   }
 }
