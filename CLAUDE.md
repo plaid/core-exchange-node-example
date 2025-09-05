@@ -4,6 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Commands
 
+**IMPORTANT: This project requires Node.js >=22.0.0. Always use Node 22 for all commands:**
+
+```bash
+# Use Node 22 (required for this project)
+unset npm_config_prefix && source ~/.nvm/nvm.sh && nvm use 22
+```
+
 ### Setup
 
 ```bash
@@ -18,6 +25,8 @@ pnpm caddy
 ```
 
 ### Development
+
+**Note: All development commands require Node 22. Run `unset npm_config_prefix && source ~/.nvm/nvm.sh && nvm use 22` first.**
 
 ```bash
 # Run all services in development mode with hot reload
