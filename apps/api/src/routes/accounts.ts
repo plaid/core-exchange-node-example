@@ -1,6 +1,16 @@
 import express, { Request, Response } from "express";
 import { getAccounts, getAccountById, getAccountContactById, getAccountStatements, getAccountStatementById, getAccountTransactions, getPaymentNetworks, getAssetTransferNetworks } from "../data/accountsRepository.js";
 import { isValidDate } from "../utils/validation.js";
+import pino from "pino";
+
+const logger = pino( {
+	transport: {
+		target: "pino-pretty",
+		options: {
+			colorize: true
+		}
+	}
+} );
 
 const router = express.Router();
 
@@ -39,7 +49,7 @@ async function verifyAccount( accountId: string, res: Response, notFoundCode = 7
 		}
 		return account;
 	} catch ( error ) {
-		console.error( "Error validating account:", error );
+		logger.error( error, "Error validating account" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 		return null;
 	}
@@ -67,7 +77,7 @@ router.get( "/accounts", async ( req: Request<{}, {}, {}, AccountsQueryParams>, 
 
 		res.json( response );
 	} catch ( error ) {
-		console.error( "Error retrieving accounts:", error );
+		logger.error( error, "Error retrieving accounts" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -84,7 +94,7 @@ router.get( "/accounts/:accountId", async ( req: Request<{ accountId: string }>,
 
 		res.json( account );
 	} catch ( error ) {
-		console.error( "Error retrieving account:", error );
+		logger.error( error, "Error retrieving account" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -104,7 +114,7 @@ router.get( "/accounts/:accountId/contact", async ( req: Request<{ accountId: st
 
 		res.json( contact );
 	} catch ( error ) {
-		console.error( "Error retrieving account contact:", error );
+		logger.error( error, "Error retrieving account contact" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -144,7 +154,7 @@ router.get( "/accounts/:accountId/statements", async ( req: Request<{ accountId:
 
 		res.json( response );
 	} catch ( error ) {
-		console.error( "Error retrieving accounts:", error );
+		logger.error( error, "Error retrieving accounts" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -171,7 +181,7 @@ router.get( "/accounts/:accountId/statements/:statementId", async ( req: Request
 		res.setHeader( "Content-Length", buffer.length.toString() );
 		return res.status( 200 ).send( buffer );
 	} catch ( error ) {
-		console.error( "Error retrieving statement PDF:", error );
+		logger.error( error, "Error retrieving statement PDF" );
 		return res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -204,7 +214,7 @@ router.get( "/accounts/:accountId/transactions", async ( req: Request<{ accountI
 			transactions: result.transactions
 		} );
 	} catch ( error ) {
-		console.error( "Error retrieving transactions:", error );
+		logger.error( error, "Error retrieving transactions" );
 		return res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -234,7 +244,7 @@ router.get( "/accounts/:accountId/payment-networks", async ( req: Request<{ acco
 
 		res.json( response );
 	} catch ( error ) {
-		console.error( "Error retrieving accounts:", error );
+		logger.error( error, "Error retrieving accounts" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );
@@ -257,7 +267,7 @@ router.get( "/accounts/:accountId/asset-transfer-networks", async ( req: Request
 			assetTransferNetworks: result.assetTransferNetworks
 		} );
 	} catch ( error ) {
-		console.error( "Error retrieving asset transfer networks:", error );
+		logger.error( error, "Error retrieving asset transfer networks" );
 		return res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );

@@ -1,5 +1,15 @@
 import express, { Request, Response } from "express";
 import { getCurrentCustomer } from "../data/customersRepository.js";
+import pino from "pino";
+
+const logger = pino( {
+	transport: {
+		target: "pino-pretty",
+		options: {
+			colorize: true
+		}
+	}
+} );
 
 const router = express.Router();
 
@@ -19,7 +29,7 @@ router.get( "/customers/current", async ( req: Request, res: Response ) => {
 
 		res.json( customer );
 	} catch ( error ) {
-		console.error( "Error retrieving current customer:", error );
+		logger.error( error, "Error retrieving current customer" );
 		res.status( 500 ).json( { error: "Internal server error" } );
 	}
 } );

@@ -3,11 +3,21 @@ import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import * as client from "openid-client";
 import { webcrypto } from "crypto";
+import pino from "pino";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
 	globalThis.crypto = webcrypto as any;
 }
+
+const logger = pino( {
+	transport: {
+		target: "pino-pretty",
+		options: {
+			colorize: true
+		}
+	}
+} );
 
 // Type definitions
 interface OidcState {
@@ -31,7 +41,7 @@ interface CookieRequest extends Request {
 function getRequiredEnv( name: string ): string {
 	const value = process.env[name];
 	if ( !value ) {
-		console.error( `Missing required environment variable: ${ name }` );
+		logger.error( `Missing required environment variable: ${ name }` );
 		process.exit( 1 );
 	}
 	return value;
@@ -40,12 +50,12 @@ function getRequiredEnv( name: string ): string {
 function getRequiredEnvNumber( name: string ): number {
 	const value = process.env[name];
 	if ( !value ) {
-		console.error( `Missing required environment variable: ${ name }` );
+		logger.error( `Missing required environment variable: ${ name }` );
 		process.exit( 1 );
 	}
 	const num = Number( value );
 	if ( isNaN( num ) ) {
-		console.error( `Environment variable ${ name } must be a valid number, got: ${ value }` );
+		logger.error( `Environment variable ${ name } must be a valid number, got: ${ value }` );
 		process.exit( 1 );
 	}
 	return num;
@@ -83,21 +93,21 @@ async function ensureConfig(): Promise<client.Configuration> {
 		let lastError: unknown = null;
 		for ( let attempt = 1; attempt <= maxAttempts; attempt++ ) {
 			try {
-				console.info( "Discovering OIDC issuer", {
+				logger.debug( {
 					attempt,
 					issuer: ISSUER_URL
-				} );
-				console.info( "Starting OIDC discovery..." );
+				}, "Discovering OIDC issuer" );
+				logger.info( "Starting OIDC discovery..." );
 				const issuerUrl = new URL( ISSUER_URL );
 				const configuration = await client.discovery( issuerUrl, CLIENT_ID, CLIENT_SECRET );
 				config = configuration;
-				console.info( "OIDC discovery completed" );
-				console.info( "Configuration type:", typeof configuration );
-				console.info( "Configuration:", configuration );
+				logger.info( "OIDC discovery completed" );
+				logger.debug( { type: typeof configuration }, "Configuration type" );
+				logger.debug( { configuration }, "Configuration" );
 				return configuration;
 			} catch ( err ) {
 				lastError = err;
-				console.warn( "Issuer discovery failed, will retry", { err, attempt } );
+				logger.warn( { err, attempt }, "Issuer discovery failed, will retry" );
 				await delay( backoffMs );
 			}
 		}
@@ -129,9 +139,9 @@ app.get( "/", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/login", async ( _req: Request, res: Response ) => {
-	console.log( "Login route called" );
+	logger.info( "Login route called" );
 	const config = await ensureConfig();
-	console.log( "Config obtained in login route:", typeof config );
+	logger.debug( { type: typeof config }, "Config obtained in login route" );
 	const state = client.randomState();
 	const code_verifier = client.randomPKCECodeVerifier();
 	const code_challenge = await client.calculatePKCECodeChallenge( code_verifier );
@@ -166,11 +176,11 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 			? JSON.parse( oidcCookie )
 			: {} as OidcState;
 
-		console.log( "Callback - Current URL:", currentUrl.href );
-		console.log( "Callback - Expected Redirect URI:", REDIRECT_URI );
-		console.log( "Callback - Code verifier:", cookieVal.code_verifier ? "present" : "missing" );
-		console.log( "Callback - State:", cookieVal.state ? "present" : "missing" );
-		console.log( "Callback - Query params:", Object.fromEntries( currentUrl.searchParams.entries() ) );
+		logger.debug( { currentUrl: currentUrl.href }, "Callback - Current URL" );
+		logger.debug( { redirectUri: REDIRECT_URI }, "Callback - Expected Redirect URI" );
+		logger.debug( { codeVerifier: cookieVal.code_verifier ? "present" : "missing" }, "Callback - Code verifier" );
+		logger.debug( { state: cookieVal.state ? "present" : "missing" }, "Callback - State" );
+		logger.debug( { queryParams: Object.fromEntries( currentUrl.searchParams.entries() ) }, "Callback - Query params" );
 
 		// Check that we have the required parameters
 		if ( !cookieVal.code_verifier ) {
@@ -183,9 +193,9 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		const authCode = currentUrl.searchParams.get( "code" );
 		const receivedState = currentUrl.searchParams.get( "state" );
 
-		console.log( "Callback - Auth code:", authCode ? "present" : "missing" );
-		console.log( "Callback - Received state:", receivedState );
-		console.log( "Callback - Expected state:", cookieVal.state );
+		logger.debug( { authCode: authCode ? "present" : "missing" }, "Callback - Auth code" );
+		logger.debug( { receivedState }, "Callback - Received state" );
+		logger.debug( { expectedState: cookieVal.state }, "Callback - Expected state" );
 
 		if ( !authCode ) {
 			throw new Error( "Missing authorization code in callback" );
@@ -195,19 +205,19 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		}
 
 		// Debug the configuration
-		console.log( "Config type:", typeof config );
-		console.log( "Config constructor:", config.constructor.name );
-		console.log( "Config properties:", Object.getOwnPropertyNames( config ) );
-		console.log( "Config prototype:", Object.getOwnPropertyNames( Object.getPrototypeOf( config ) ) );
-		console.log( "Current URL for token exchange:", currentUrl.href );
+		logger.debug( { type: typeof config }, "Config type" );
+		logger.debug( { constructor: config.constructor.name }, "Config constructor" );
+		logger.debug( { properties: Object.getOwnPropertyNames( config ) }, "Config properties" );
+		logger.debug( { prototype: Object.getOwnPropertyNames( Object.getPrototypeOf( config ) ) }, "Config prototype" );
+		logger.debug( { url: currentUrl.href }, "Current URL for token exchange" );
 
 		// In openid-client v6, the authorizationCodeGrant handles state validation internally
 		// We need to pass the parameters in the expected format
-		console.log( "About to call authorizationCodeGrant with:" );
-		console.log( "- Auth code:", authCode );
-		console.log( "- State:", receivedState );
-		console.log( "- Expected state:", cookieVal.state );
-		console.log( "- Code verifier present:", !!cookieVal.code_verifier );
+		logger.debug( "About to call authorizationCodeGrant with:" );
+		logger.debug( { authCode }, "- Auth code" );
+		logger.debug( { state: receivedState }, "- State" );
+		logger.debug( { expectedState: cookieVal.state }, "- Expected state" );
+		logger.debug( { codeVerifierPresent: !!cookieVal.code_verifier }, "- Code verifier present" );
 
 		const tokenSet = await client.authorizationCodeGrant(
 			config,
@@ -230,7 +240,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		);
 		res.redirect( "/" );
 	} catch ( error ) {
-		console.error( "OAuth callback error:", error );
+		logger.error( error, "OAuth callback error" );
 		res.status( 400 ).send( `OAuth callback failed: ${ ( error as Error ).message }` );
 	}
 } );
@@ -267,22 +277,22 @@ app.get( "/accounts", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/logout", async ( req: Request, res: Response ) => {
-	console.log( "Logout route called" );
+	logger.info( "Logout route called" );
 	const config = await ensureConfig();
 	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
 	const tokens: TokenSet | null = tokensCookie
 		? JSON.parse( tokensCookie )
 		: null;
 
-	console.log( "Logout - tokens present:", !!tokens );
-	console.log( "Logout - id_token present:", !!tokens?.id_token );
+	logger.debug( { tokensPresent: !!tokens }, "Logout - tokens present" );
+	logger.debug( { idTokenPresent: !!tokens?.id_token }, "Logout - id_token present" );
 
 	const serverMetadata = config.serverMetadata();
-	console.log( "Logout - server metadata:", {
+	logger.debug( {
 		issuer: serverMetadata.issuer,
 		end_session_endpoint: serverMetadata.end_session_endpoint,
 		has_end_session: !!serverMetadata.end_session_endpoint
-	} );
+	}, "Logout - server metadata" );
 
 	// Clear local cookies first
 	res.clearCookie( "tokens", { path: "/" } );
@@ -291,13 +301,13 @@ app.get( "/logout", async ( req: Request, res: Response ) => {
 	// For now, skip OIDC logout and just do local logout
 	// The complex OIDC logout flow is having issues with the authorization server
 	// TODO: Fix OIDC logout flow later
-	console.log( "Logout - performing local logout only" );
+	logger.info( "Logout - performing local logout only" );
 
-	console.log( "Logout - falling back to local redirect" );
+	logger.info( "Logout - falling back to local redirect" );
 	// Fallback to local redirect if no proper logout endpoint
 	res.redirect( "/" );
 } );
 
 app.listen( PORT, "0.0.0.0", () => {
-	console.log( `APP listening at ${ HOST } (local port: ${ PORT })` );
+	logger.info( `APP listening at ${ HOST } (local port: ${ PORT })` );
 } );

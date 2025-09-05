@@ -1,12 +1,22 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import { Provider, errors } from "oidc-provider";
+import pino from "pino";
+
+const logger = pino( {
+	transport: {
+		target: "pino-pretty",
+		options: {
+			colorize: true
+		}
+	}
+} );
 
 // Environment configuration validation
 function getRequiredEnv( name: string, fallback?: string ): string {
 	const value = process.env[name] || fallback;
 	if ( !value ) {
-		console.error( `Missing required environment variable: ${ name }` );
+		logger.error( `Missing required environment variable: ${ name }` );
 		process.exit( 1 );
 	}
 	return value;
@@ -16,7 +26,7 @@ function getRequiredEnvNumber( name: string, fallback?: number ): number {
 	const value = process.env[name];
 	const num = value ? Number( value ) : fallback;
 	if ( num === undefined || isNaN( num ) ) {
-		console.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
+		logger.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
 		process.exit( 1 );
 	}
 	return num;
@@ -253,12 +263,12 @@ async function main() {
 	} );
 
 	app.listen( PORT, "0.0.0.0", () => {
-		console.log( `OP listening at ${ ISSUER } (local port: ${ PORT })` );
+		logger.info( `OP listening at ${ ISSUER } (local port: ${ PORT })` );
 	} );
 }
 
 main().catch( ( e ) => {
-	if ( e instanceof errors.OIDCProviderError ) console.error( e );
-	else console.error( e );
+	if ( e instanceof errors.OIDCProviderError ) logger.error( e );
+	else logger.error( e );
 	process.exit( 1 );
 } );

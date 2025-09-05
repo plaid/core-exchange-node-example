@@ -2,11 +2,21 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
 import { webcrypto } from "crypto";
+import pino from "pino";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
 	globalThis.crypto = webcrypto;
 }
+
+const logger = pino( {
+	transport: {
+		target: "pino-pretty",
+		options: {
+			colorize: true
+		}
+	}
+} );
 
 import customersRouter from "./routes/customers.js";
 import accountsRouter from "./routes/accounts.js";
@@ -20,7 +30,7 @@ interface AuthenticatedRequest extends Request {
 function getRequiredEnv( name: string, fallback?: string ): string {
 	const value = process.env[name] || fallback;
 	if ( !value ) {
-		console.error( `Missing required environment variable: ${ name }` );
+		logger.error( `Missing required environment variable: ${ name }` );
 		process.exit( 1 );
 	}
 	return value;
@@ -30,7 +40,7 @@ function getRequiredEnvNumber( name: string, fallback?: number ): number {
 	const value = process.env[name];
 	const num = value ? Number( value ) : fallback;
 	if ( num === undefined || isNaN( num ) ) {
-		console.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
+		logger.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
 		process.exit( 1 );
 	}
 	return num;
@@ -58,11 +68,11 @@ app.use( async ( req: Request, res: Response, next: NextFunction ) => {
 	try {
 		const parts = token.split( "." );
 		if ( parts.length !== 3 ) {
-			console.warn( "Access token not a compact JWS", {
+			logger.warn( {
 				parts: parts.length,
 				length: token.length,
 				prefix: token.slice( 0, 20 )
-			} );
+			}, "Access token not a compact JWS" );
 		}
 		const { payload } = await jwtVerify( token, JWKS, {
 			issuer: ISSUER,
@@ -71,10 +81,10 @@ app.use( async ( req: Request, res: Response, next: NextFunction ) => {
 		( req as AuthenticatedRequest ).user = payload;
 		next();
 	} catch ( e ) {
-		console.warn( "JWT verification failed", {
+		logger.warn( {
 			message: ( e as Error )?.message,
 			name: ( e as Error )?.name
-		} );
+		}, "JWT verification failed" );
 		return res.status( 401 ).json( { error: "invalid_token" } );
 	}
 } );
@@ -103,5 +113,5 @@ app.use( ( req, res ) => {
 } );
 
 app.listen( PORT, "0.0.0.0", () => {
-	console.log( `API listening at ${ HOST } (local port: ${ PORT })` );
+	logger.info( `API listening at ${ HOST } (local port: ${ PORT })` );
 } );
