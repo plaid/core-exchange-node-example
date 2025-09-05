@@ -9,6 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@apps/shared": "workspace:*",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jose": "^6.1.0",

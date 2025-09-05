@@ -11,10 +11,12 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@apps/shared": "workspace:*",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "jose": "^6.1.0",
     "openid-client": "^6.7.1",
     "pino": "^9.5.0",
     "pino-pretty": "^13.1.1",

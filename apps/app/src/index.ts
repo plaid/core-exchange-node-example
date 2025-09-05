@@ -1,9 +1,12 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import * as client from "openid-client";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { webcrypto } from "crypto";
 import pino from "pino";
+import { sanitizeError, logError } from "@apps/shared/security";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
@@ -72,6 +75,26 @@ const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET" );
 
 const app = express();
 app.disable( "x-powered-by" );
+
+// Security headers
+app.use( helmet( {
+	// Allow inline scripts and styles for EJS templates in development
+	contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
+		directives: {
+			defaultSrc: [ "'self'" ],
+			styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
+			scriptSrc: [ "'self'" ],
+			imgSrc: [ "'self'", "data:", "https:" ],
+			connectSrc: [ "'self'", API_BASE_URL ], // Allow connections to API
+			fontSrc: [ "'self'" ],
+			objectSrc: [ "'none'" ],
+			mediaSrc: [ "'self'" ],
+			frameSrc: [ "'none'" ]
+		}
+	} : false, // Disable CSP in development for easier debugging
+	crossOriginEmbedderPolicy: false
+} ) );
+
 // Trust proxy headers (for HTTPS detection behind Caddy)
 app.set( "trust proxy", true );
 app.use( cookieParser( COOKIE_SECRET ) );
@@ -85,6 +108,7 @@ app.use( "/public", express.static( new URL( "../public", import.meta.url ).path
 
 let config: client.Configuration | undefined;
 let configInitPromise: Promise<client.Configuration> | null = null;
+let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
 
 async function delay( ms: number ) {
 	await new Promise( ( resolve ) => setTimeout( resolve, ms ) );
@@ -108,6 +132,8 @@ async function ensureConfig(): Promise<client.Configuration> {
 				const issuerUrl = new URL( ISSUER_URL );
 				const configuration = await client.discovery( issuerUrl, CLIENT_ID, CLIENT_SECRET );
 				config = configuration;
+				// Initialize JWKS for ID token verification
+				jwks = createRemoteJWKSet( new URL( `${ ISSUER_URL }/jwks` ) );
 				logger.info( "OIDC discovery completed" );
 				logger.debug( { type: typeof configuration }, "Configuration type" );
 				logger.debug( { configuration }, "Configuration" );
@@ -238,8 +264,9 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		);
 		res.redirect( "/" );
 	} catch ( error ) {
-		logger.error( error, "OAuth callback error" );
-		res.status( 400 ).send( `OAuth callback failed: ${ ( error as Error ).message }` );
+		logError( logger, error, { context: "OAuth callback" } );
+		const sanitized = sanitizeError( error, "OAuth callback failed" );
+		res.status( 400 ).json( sanitized );
 	}
 } );
 
@@ -251,16 +278,19 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 	if ( !tokens?.access_token || !tokens?.id_token ) return res.redirect( "/login" );
 
 	try {
-		// Decode the ID token JWT payload (without verification for demo purposes)
-		// In production, you should verify the signature
-		const parts = tokens.id_token.split( "." );
-		if ( parts.length !== 3 ) {
-			throw new Error( "Invalid ID token format" );
+		await ensureConfig();
+
+		if ( !jwks ) {
+			throw new Error( "JWKS not initialized" );
 		}
 
-		const payload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString( "utf8" ) );
+		// Verify the ID token signature and validate claims
+		const { payload } = await jwtVerify( tokens.id_token, jwks, {
+			issuer: ISSUER_URL,
+			audience: CLIENT_ID
+		} );
 
-		// Return the user info from the ID token claims
+		// Return the verified user info from the ID token claims
 		return res.json( {
 			sub: payload.sub,
 			email: payload.email,
@@ -271,8 +301,11 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 			aud: payload.aud
 		} );
 	} catch ( error ) {
-		logger.error( error, "Failed to decode ID token" );
-		return res.status( 401 ).send( { error: "invalid_token" } );
+		logError( logger, error, { context: "ID token verification" } );
+		// Clear invalid tokens and redirect to login
+		res.clearCookie( "tokens", { path: "/" } );
+		const sanitized = sanitizeError( error, "ID token verification failed" );
+		return res.status( 401 ).json( sanitized );
 	}
 } );
 

@@ -1,0 +1,34 @@
+{
+  "name": "@apps/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Shared security utilities for OAuth educational project",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./security": {
+      "import": "./dist/security.js",
+      "types": "./dist/security.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["oauth", "security", "utilities", "educational"],
+  "author": "OAuth Educational Project",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "pino": "^9.5.0"
+  }
+}

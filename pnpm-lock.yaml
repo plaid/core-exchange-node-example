@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@types/helmet':
+        specifier: ^4.0.0
+        version: 4.0.0
+      helmet:
+        specifier: ^8.1.0
+        version: 8.1.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.35.0
@@ -35,6 +42,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@apps/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
@@ -66,6 +76,9 @@ importers:
 
   apps/app:
     dependencies:
+      '@apps/shared':
+        specifier: workspace:*
+        version: link:../shared
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -78,6 +91,9 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.1.0
+      jose:
+        specifier: ^6.1.0
+        version: 6.1.0
       openid-client:
         specifier: ^6.7.1
         version: 6.7.1
@@ -121,6 +137,9 @@ importers:
 
   apps/op:
     dependencies:
+      '@apps/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
@@ -161,6 +180,19 @@ importers:
       tsx:
         specifier: ^4.20.5
         version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+
+  apps/shared:
+    dependencies:
+      pino:
+        specifier: ^9.5.0
+        version: 9.9.4
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.1
+        version: 24.3.1
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -515,6 +547,10 @@ packages:
 
   '@types/express@5.0.3':
     resolution: {integrity: sha512-wGA0NX93b19/dZC1J18tKWVIYWyyF2ZjT9vin/NRu0qzzvfVzWjs04iq2rQ3H65vCTQYlRqs3YHfY7zjdV+9Kw==}
+
+  '@types/helmet@4.0.0':
+    resolution: {integrity: sha512-ONIn/nSNQA57yRge3oaMQESef/6QhoeX7llWeDli0UZIfz8TQMkfNPTXA8VnnyeA1WUjG2pGqdjEIueYonMdfQ==}
+    deprecated: This is a stub types definition. helmet provides its own type definitions, so you do not need this installed.
 
   '@types/http-errors@2.0.5':
     resolution: {integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==}
@@ -1013,6 +1049,10 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  helmet@8.1.0:
+    resolution: {integrity: sha512-jOiHyAZsmnr8LqoPGmCjYAaiuWwjAPLgY8ZX2XrmHawt99/u1y6RgrZMTeoPfpUbV96HOalYgz1qzkRbw54Pmg==}
+    engines: {node: '>=18.0.0'}
 
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
@@ -1998,6 +2038,10 @@ snapshots:
       '@types/express-serve-static-core': 5.0.7
       '@types/serve-static': 1.15.8
 
+  '@types/helmet@4.0.0':
+    dependencies:
+      helmet: 8.1.0
+
   '@types/http-errors@2.0.5': {}
 
   '@types/json-schema@7.0.15': {}
@@ -2574,6 +2618,8 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  helmet@8.1.0: {}
 
   help-me@5.0.0: {}
 

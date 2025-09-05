@@ -1,7 +1,9 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
+import helmet from "helmet";
 import { Provider, errors } from "oidc-provider";
 import pino from "pino";
+import { logError } from "@apps/shared/security";
 
 const logger = pino( {
 	transport: {
@@ -40,6 +42,26 @@ const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 
 const app = express();
 app.disable( "x-powered-by" );
+
+// Security headers
+app.use( helmet( {
+	// Allow inline scripts and styles for EJS templates in development
+	// In production, consider using nonces or CSP hashes
+	contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
+		directives: {
+			defaultSrc: [ "'self'" ],
+			styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
+			scriptSrc: [ "'self'" ],
+			imgSrc: [ "'self'", "data:", "https:" ],
+			connectSrc: [ "'self'" ],
+			fontSrc: [ "'self'" ],
+			objectSrc: [ "'none'" ],
+			mediaSrc: [ "'self'" ],
+			frameSrc: [ "'none'" ]
+		}
+	} : false, // Disable CSP in development for easier debugging
+	crossOriginEmbedderPolicy: false // Allow iframe usage if needed
+} ) );
 
 // Configure EJS as template engine
 app.set( "view engine", "ejs" );
@@ -255,7 +277,10 @@ async function main() {
 }
 
 main().catch( ( e ) => {
-	if ( e instanceof errors.OIDCProviderError ) logger.error( e );
-	else logger.error( e );
+	if ( e instanceof errors.OIDCProviderError ) {
+		logError( logger, e, { context: "OIDC Provider startup" } );
+	} else {
+		logError( logger, e, { context: "Application startup" } );
+	}
 	process.exit( 1 );
 } );

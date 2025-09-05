@@ -27,7 +27,7 @@
               name="email" 
               id="email"
               type="email" 
-              value="user@example.test" 
+              placeholder="user@example.test"
               required 
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
@@ -41,7 +41,7 @@
               name="password" 
               id="password"
               type="password" 
-              value="passw0rd!" 
+              placeholder="Enter password"
               required 
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
@@ -54,6 +54,12 @@
             Sign In
           </button>
         </form>
+        
+        <div class="mt-4 text-xs text-gray-500 text-center">
+          <p><strong>Development credentials:</strong></p>
+          <p>Email: user@example.test</p>
+          <p>Password: passw0rd!</p>
+        </div>
       <% } else { %>
         <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
           <div class="flex">
