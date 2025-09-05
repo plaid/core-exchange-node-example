@@ -41,6 +41,10 @@ const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 const app = express();
 app.disable( "x-powered-by" );
 
+// Configure EJS as template engine
+app.set( "view engine", "ejs" );
+app.set( "views", new URL( "../views", import.meta.url ).pathname );
+
 // Very minimal in-memory user store
 const USERS = new Map<
 	string,
@@ -148,27 +152,7 @@ async function main() {
 		const details = await provider.interactionDetails( req, res );
 		const prompt = details.prompt.name; // "login" or "consent"
 
-		const html = `
-      <html>
-        <body style="font-family: system-ui; max-width: 420px; margin: 48px auto;">
-          <h2>OIDC Dev Login</h2>
-          <p>Interaction: ${ uid } (${ prompt })</p>
-          ${
-				prompt === "login"
-					? `<form method="post" action="/interaction/${ uid }/login">
-                  <label>Email <input name="email" type="email" value="user@example.test" /></label><br/>
-                  <label>Password <input name="password" type="password" value="passw0rd!" /></label><br/>
-                  <button type="submit">Login</button>
-                 </form>`
-					: `<form method="post" action="/interaction/${ uid }/confirm">
-                  <p>Approve scopes: openid profile email accounts:read</p>
-                  <button type="submit">Approve</button>
-                 </form>`
-			}
-        </body>
-      </html>
-    `;
-		res.type( "text/html" ).send( html );
+		res.render( "interaction", { uid, prompt } );
 	} );
 
 	app.post(

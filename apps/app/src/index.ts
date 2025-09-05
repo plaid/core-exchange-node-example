@@ -76,6 +76,10 @@ app.disable( "x-powered-by" );
 app.set( "trust proxy", true );
 app.use( cookieParser( COOKIE_SECRET ) );
 
+// Configure EJS as template engine
+app.set( "view engine", "ejs" );
+app.set( "views", new URL( "../views", import.meta.url ).pathname );
+
 let config: client.Configuration | undefined;
 let configInitPromise: Promise<client.Configuration> | null = null;
 
@@ -126,16 +130,7 @@ async function ensureConfig(): Promise<client.Configuration> {
 
 app.get( "/", async ( req: Request, res: Response ) => {
 	const tokens = ( req as CookieRequest ).cookies?.tokens;
-	const body = `
-    <html><body style="font-family: system-ui; max-width: 680px; margin: 48px auto;">
-      <h2>Dev Client</h2>
-      <p>${ tokens ? "Signed in" : "Signed out" }</p>
-      <p>
-        <a href="/login">Login</a> | <a href="/me">Me</a> | <a href="/accounts">Call API</a> | <a href="/logout">Logout</a>
-      </p>
-    </body></html>
-  `;
-	res.type( "text/html" ).send( body );
+	res.render( "index", { tokens } );
 } );
 
 app.get( "/login", async ( _req: Request, res: Response ) => {

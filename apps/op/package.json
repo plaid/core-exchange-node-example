@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "dotenv": "^17.2.2",
+    "ejs": "^3.1.10",
     "express": "^5.1.0",
     "oidc-provider": "^8.8.1",
     "pino": "^9.5.0",
     "pino-pretty": "^13.1.1"
   },
   "devDependencies": {
+    "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "tsx": "^4.20.5",
