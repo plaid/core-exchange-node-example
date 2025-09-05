@@ -246,16 +246,34 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/me", async ( req: Request, res: Response ) => {
-	await ensureConfig();
 	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
 	const tokens: TokenSet | null = tokensCookie
 		? JSON.parse( tokensCookie )
 		: null;
-	if ( !tokens?.access_token ) return res.redirect( "/login" );
+	if ( !tokens?.access_token || !tokens?.id_token ) return res.redirect( "/login" );
+
 	try {
-		// For now, return basic token info since userInfo API is complex in v6
-		return res.send( { userinfo: { sub: "user", access_token: tokens.access_token } } );
-	} catch {
+		// Decode the ID token JWT payload (without verification for demo purposes)
+		// In production, you should verify the signature
+		const parts = tokens.id_token.split( "." );
+		if ( parts.length !== 3 ) {
+			throw new Error( "Invalid ID token format" );
+		}
+
+		const payload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString( "utf8" ) );
+
+		// Return the user info from the ID token claims
+		return res.json( {
+			sub: payload.sub,
+			email: payload.email,
+			name: payload.name,
+			iat: payload.iat,
+			exp: payload.exp,
+			iss: payload.iss,
+			aud: payload.aud
+		} );
+	} catch ( error ) {
+		logger.error( error, "Failed to decode ID token" );
 		return res.status( 401 ).send( { error: "invalid_token" } );
 	}
 } );
