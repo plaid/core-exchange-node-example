@@ -1,6 +1,12 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
+import { webcrypto } from "crypto";
+
+// Polyfill for crypto global in Node.js
+if ( !globalThis.crypto ) {
+	globalThis.crypto = webcrypto;
+}
 
 import customersRouter from "./routes/customers.js";
 import accountsRouter from "./routes/accounts.js";
@@ -47,7 +53,7 @@ app.use( async ( req: Request, res: Response, next: NextFunction ) => {
 	if ( req.path.startsWith( "/public" ) ) return next();
 	const auth = req.headers["authorization"] || "";
 	const token =
-    typeof auth === "string" && auth.startsWith( "Bearer " ) ? auth.slice( 7 ) : "";
+		typeof auth === "string" && auth.startsWith( "Bearer " ) ? auth.slice( 7 ) : "";
 	if ( !token ) return res.status( 401 ).json( { error: "missing_token" } );
 	try {
 		const parts = token.split( "." );

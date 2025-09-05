@@ -77,17 +77,15 @@ const configuration: any = {
 						audience: "api://my-api",
 						accessTokenFormat: "jwt",
 						jwt: {
-							// sign with provider keystore default alg (RS256 unless overridden)
 							sign: { alg: "RS256" }
 						}
 					};
 				}
 				throw new Error( "Unknown resource indicator" );
 			},
-			// Return a UserInfo token when no resource is provided and 'openid' is present
-			// (keeping the default falsy behavior enables UserInfo tokens on omission)
+			// Ensure we use the resource-specific token format
 			useGrantedResource() {
-				return false;
+				return true;
 			}
 		}
 	},
