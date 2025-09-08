@@ -28,7 +28,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@types/helmet": "^4.0.0",
     "helmet": "^8.1.0"
   }
 }
