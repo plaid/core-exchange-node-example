@@ -48,14 +48,11 @@
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+  <%- include('partials/navigation', { tokens, currentPage: 'api-explorer' }) %>
+  
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-gray-900">API Explorer</h1>
-        <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-          ← Back to Home
-        </a>
-      </div>
+      <h1 class="text-3xl font-bold text-gray-900">API Explorer</h1>
       <p class="text-gray-600 mt-2">Systematically test all available API endpoints</p>
     </div>
 
@@ -402,7 +399,7 @@
       accounts.forEach(account => {
         const option = document.createElement('option');
         option.value = account.accountId;
-        option.textContent = `${account.accountId} - ${account.nickname || account.type}`;
+        option.textContent = `${account.accountId} - ${account.productName || account.accountType}`;
         accountSelect.appendChild(option);
       });
     }

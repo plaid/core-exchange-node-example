@@ -119,8 +119,12 @@ async function ensureConfig(): Promise<client.Configuration> {
 // Discovery is performed lazily on demand by routes via ensureConfig()
 
 app.get( "/", async ( req: Request, res: Response ) => {
-	const tokens = ( req as CookieRequest ).cookies?.tokens;
-	res.render( "index", { tokens } );
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
+		: null;
+	if ( !tokens?.access_token ) return res.redirect( "/login" );
+	res.redirect( "/api-explorer" );
 } );
 
 app.get( "/login", async ( _req: Request, res: Response ) => {
@@ -251,8 +255,8 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 			audience: CLIENT_ID
 		} );
 
-		// Return the verified user info from the ID token claims
-		return res.json( {
+		// Render profile view with user info
+		const userInfo = {
 			sub: payload.sub,
 			email: payload.email,
 			name: payload.name,
@@ -260,13 +264,38 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 			exp: payload.exp,
 			iss: payload.iss,
 			aud: payload.aud
-		} );
+		};
+
+		return res.render( "profile", { tokens, userInfo } );
 	} catch ( error ) {
 		logError( logger, error, { context: "ID token verification" } );
 		// Clear invalid tokens and redirect to login
 		res.clearCookie( "tokens", { path: "/" } );
 		const sanitized = sanitizeError( error, "ID token verification failed" );
 		return res.status( 401 ).json( sanitized );
+	}
+} );
+
+app.get( "/accounts", async ( req: Request, res: Response ) => {
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
+		: null;
+	if ( !tokens?.access_token ) return res.redirect( "/login" );
+	await ensureConfig();
+
+	try {
+		// Expect API-scoped JWT access token from authorization flow
+		const accessToken = tokens.access_token as string;
+		const resApi = await fetch( `${ API_BASE_URL }/api/cx/accounts?limit=3`, {
+			headers: { Authorization: `Bearer ${ accessToken }` }
+		} );
+		const data = await resApi.json();
+		res.render( "accounts", { tokens, apiResponse: data } );
+	} catch ( error ) {
+		logError( logger, error, { context: "Quick API test" } );
+		const sanitized = sanitizeError( error, "Failed to call API" );
+		res.render( "accounts", { tokens, apiResponse: null, error: sanitized } );
 	}
 } );
 

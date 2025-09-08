@@ -1,0 +1,107 @@
+<nav class="bg-white border-b border-gray-200 mb-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo/Title -->
+      <div class="flex items-center">
+        <h1 class="text-xl font-bold text-gray-900">Dev Client</h1>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="hidden md:block">
+        <div class="ml-10 flex items-baseline space-x-4">
+          <a href="/api-explorer" 
+             class="<%= currentPage === 'api-explorer' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700' %> px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            API Explorer
+          </a>
+          <a href="/me" 
+             class="<%= currentPage === 'profile' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700' %> px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Profile
+          </a>
+          <a href="/accounts" 
+             class="<%= currentPage === 'accounts' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700' %> px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Quick API Test
+          </a>
+        </div>
+      </div>
+
+      <!-- User Status & Actions -->
+      <div class="flex items-center space-x-4">
+        <!-- Auth Status -->
+        <div class="flex items-center">
+          <div class="flex items-center px-3 py-1 rounded-full text-xs font-medium <%= tokens ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <% if (tokens) { %>
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              <% } else { %>
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+              <% } %>
+            </svg>
+            <%= tokens ? 'Authenticated' : 'Not Authenticated' %>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-2">
+          <% if (!tokens) { %>
+            <a href="/login" 
+               class="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+              Login
+            </a>
+          <% } else { %>
+            <a href="/logout" 
+               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+              Logout
+            </a>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Mobile menu button -->
+      <div class="md:hidden">
+        <button type="button" 
+                class="mobile-menu-button bg-gray-200 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" 
+                aria-controls="mobile-menu" 
+                aria-expanded="false">
+          <span class="sr-only">Open main menu</span>
+          <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="md:hidden mobile-menu" id="mobile-menu" style="display: none;">
+      <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
+        <a href="/api-explorer" 
+           class="<%= currentPage === 'api-explorer' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900' %> block px-3 py-2 rounded-md text-base font-medium transition-colors">
+          API Explorer
+        </a>
+        <a href="/me" 
+           class="<%= currentPage === 'profile' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900' %> block px-3 py-2 rounded-md text-base font-medium transition-colors">
+          Profile
+        </a>
+        <a href="/accounts" 
+           class="<%= currentPage === 'accounts' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900' %> block px-3 py-2 rounded-md text-base font-medium transition-colors">
+          Quick API Test
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Mobile menu toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const button = document.querySelector('.mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+    
+    if (button && menu) {
+      button.addEventListener('click', function() {
+        const isOpen = menu.style.display !== 'none';
+        menu.style.display = isOpen ? 'none' : 'block';
+        button.setAttribute('aria-expanded', (!isOpen).toString());
+      });
+    }
+  });
+</script>

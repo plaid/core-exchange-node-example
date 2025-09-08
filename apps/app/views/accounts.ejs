@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick API Test - Dev Client</title>
+  <link href="/public/styles.css" rel="stylesheet">
+  <style>
+    .json-response {
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+      background: #1f2937;
+      color: #f9fafb;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <%- include('partials/navigation', { tokens, currentPage: 'accounts' }) %>
+  
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Quick API Test</h1>
+      <p class="text-gray-600 mt-2">Simple test of the accounts endpoint</p>
+    </div>
+
+    <!-- API Call Info -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">API Call Details</h2>
+      
+      <div class="bg-gray-50 rounded-md p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+          <span class="text-sm font-mono text-gray-600">/api/cx/accounts?limit=3</span>
+        </div>
+        <div class="text-xs text-gray-500">
+          This endpoint returns the first 3 accounts for the authenticated user
+        </div>
+      </div>
+    </div>
+
+    <!-- Response Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">API Response</h2>
+        <a href="/api-explorer" 
+           class="inline-flex items-center px-3 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+          </svg>
+          Try More Endpoints
+        </a>
+      </div>
+      
+      <% if (typeof error !== 'undefined' && error) { %>
+        <!-- Error State -->
+        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">API Call Failed</h3>
+              <div class="mt-2 text-sm text-red-700">
+                <div class="json-response bg-red-900 text-red-100"><%= JSON.stringify(error, null, 2) %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } else if (apiResponse) { %>
+        <!-- Success State -->
+        <div class="space-y-4">
+          <div class="flex items-center text-sm text-green-600">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            API call completed successfully
+          </div>
+          
+          <!-- Formatted JSON Response -->
+          <div class="json-response"><%= JSON.stringify(apiResponse, null, 2) %></div>
+          
+          <!-- Summary -->
+          <% if (apiResponse.accounts && apiResponse.accounts.length > 0) { %>
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h3 class="text-sm font-medium text-blue-800 mb-2">Response Summary</h3>
+              <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Found <%= apiResponse.accounts.length %> account(s)</li>
+                <% if (apiResponse.page && apiResponse.page.nextOffset) { %>
+                  <li>• More accounts available (next offset: <%= apiResponse.page.nextOffset %>)</li>
+                <% } else { %>
+                  <li>• No more accounts available</li>
+                <% } %>
+                <li>• Account types: <%= apiResponse.accounts.map(acc => acc.accountType).join(', ') %></li>
+              </ul>
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <!-- Loading/Default State -->
+        <div class="text-center py-8">
+          <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-gray-500">Loading API response...</p>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-8 flex justify-center space-x-4">
+      <button onclick="window.location.reload()" 
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Refresh
+      </button>
+      
+      <a href="/api-explorer" 
+         class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+        </svg>
+        Explore More APIs
+      </a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Dev Client</title>
+  <link href="/public/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <%- include('partials/navigation', { tokens, currentPage: 'profile' }) %>
+  
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Profile</h1>
+      <p class="text-gray-600 mt-2">Your authenticated user information from the ID token</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">User Information</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Basic Info -->
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Subject (User ID)</label>
+            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded"><%= userInfo.sub %></p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-500">Email</label>
+            <p class="mt-1 text-sm text-gray-900"><%= userInfo.email || 'Not provided' %></p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-500">Name</label>
+            <p class="mt-1 text-sm text-gray-900"><%= userInfo.name || 'Not provided' %></p>
+          </div>
+        </div>
+        
+        <!-- Token Info -->
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Issuer</label>
+            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded break-all"><%= userInfo.iss %></p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-500">Audience</label>
+            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded break-all"><%= userInfo.aud %></p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-500">Issued At</label>
+            <p class="mt-1 text-sm text-gray-900">
+              <%= new Date(userInfo.iat * 1000).toLocaleString() %>
+              <span class="text-gray-500">(<%= userInfo.iat %>)</span>
+            </p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-500">Expires At</label>
+            <p class="mt-1 text-sm text-gray-900">
+              <%= new Date(userInfo.exp * 1000).toLocaleString() %>
+              <span class="text-gray-500">(<%= userInfo.exp %>)</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Token Status -->
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Authentication Status</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium text-green-800">ID Token</h3>
+          <p class="text-xs text-green-600 mt-1">Valid & Verified</p>
+        </div>
+        
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium text-green-800">Access Token</h3>
+          <p class="text-xs text-green-600 mt-1">Available for API calls</p>
+        </div>
+        
+        <div class="text-center p-4 <%= tokens.refresh_token ? 'bg-green-50' : 'bg-gray-50' %> rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 <%= tokens.refresh_token ? 'bg-green-100' : 'bg-gray-100' %> rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 <%= tokens.refresh_token ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium <%= tokens.refresh_token ? 'text-green-800' : 'text-gray-600' %>">Refresh Token</h3>
+          <p class="text-xs <%= tokens.refresh_token ? 'text-green-600' : 'text-gray-500' %> mt-1">
+            <%= tokens.refresh_token ? 'Available' : 'Not Available' %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      
+      <div class="flex flex-wrap gap-4">
+        <a href="/api-explorer" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-white hover:bg-blue-700 transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+          </svg>
+          Test API Endpoints
+        </a>
+        
+        <a href="/accounts" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+          Quick API Test
+        </a>
+        
+        <a href="/logout" 
+           class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          Sign Out
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
