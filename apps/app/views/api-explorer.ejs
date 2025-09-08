@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Explorer - Dev Client</title>
+  <link href="/public/styles.css" rel="stylesheet">
+  <style>
+    .endpoint-item {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .endpoint-item:hover {
+      background-color: #f3f4f6;
+    }
+    .endpoint-item.selected {
+      background-color: #dbeafe;
+      border-color: #3b82f6;
+    }
+    .json-response {
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+      background: #1f2937;
+      color: #f9fafb;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .parameter-input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+    .parameter-label {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: #374151;
+      margin-bottom: 0.25rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-900">API Explorer</h1>
+        <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          ← Back to Home
+        </a>
+      </div>
+      <p class="text-gray-600 mt-2">Systematically test all available API endpoints</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Left Panel: Endpoint Selection -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Available Endpoints</h2>
+        
+        <div class="space-y-6">
+          <!-- Customer Endpoints -->
+          <div>
+            <h3 class="text-md font-medium text-gray-700 mb-3">Customer</h3>
+            <div class="space-y-2">
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/customers/current" data-method="GET">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Current Customer</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/customers/current</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Endpoints -->
+          <div>
+            <h3 class="text-md font-medium text-gray-700 mb-3">Accounts</h3>
+            <div class="space-y-2">
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts" data-method="GET" data-params='{"offset": "0", "limit": "10"}'>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">List Accounts</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts</div>
+                <div class="text-xs text-blue-600 mt-1">Params: offset, limit</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}" data-method="GET" data-requires-account="true">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Account Details</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}</div>
+                <div class="text-xs text-orange-600 mt-1">Requires accountId from List Accounts</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/contact" data-method="GET" data-requires-account="true">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Account Contact</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/contact</div>
+                <div class="text-xs text-orange-600 mt-1">Requires accountId</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/statements" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10", "startTime": "", "endTime": ""}'>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Account Statements</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/statements</div>
+                <div class="text-xs text-blue-600 mt-1">Params: offset, limit, startTime, endTime</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/statements/{statementId}" data-method="GET" data-requires-account="true" data-requires-statement="true">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Statement PDF</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/statements/{statementId}</div>
+                <div class="text-xs text-orange-600 mt-1">Requires accountId and statementId</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/transactions" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10", "startTime": "", "endTime": ""}'>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Account Transactions</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/transactions</div>
+                <div class="text-xs text-blue-600 mt-1">Params: offset, limit, startTime, endTime</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/payment-networks" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10"}'>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Payment Networks</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/payment-networks</div>
+                <div class="text-xs text-blue-600 mt-1">Params: offset, limit</div>
+              </div>
+              
+              <div class="endpoint-item border border-gray-200 rounded-md p-3" data-endpoint="/api/cx/accounts/{accountId}/asset-transfer-networks" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10"}'>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900">Get Asset Transfer Networks</span>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">/api/cx/accounts/{accountId}/asset-transfer-networks</div>
+                <div class="text-xs text-blue-600 mt-1">Params: offset, limit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Request/Response -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Request & Response</h2>
+        
+        <!-- Request Section -->
+        <div id="request-section" class="mb-6" style="display: none;">
+          <h3 class="text-md font-medium text-gray-700 mb-3">Request</h3>
+          <div class="bg-gray-50 rounded-md p-3 mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span id="selected-method" class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">GET</span>
+              <span id="selected-endpoint" class="text-sm font-mono text-gray-600"></span>
+            </div>
+          </div>
+          
+          <!-- Parameters Section -->
+          <div id="parameters-section" style="display: none;">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Parameters</h4>
+            <div id="parameters-container" class="space-y-3 mb-4"></div>
+          </div>
+          
+          <!-- Account/Statement ID Selection -->
+          <div id="id-selection-section" style="display: none;">
+            <div id="account-selection" style="display: none;">
+              <label class="parameter-label">Account ID</label>
+              <select id="account-select" class="parameter-input mb-3">
+                <option value="">First call List Accounts to populate</option>
+              </select>
+            </div>
+            <div id="statement-selection" style="display: none;">
+              <label class="parameter-label">Statement ID</label>
+              <select id="statement-select" class="parameter-input mb-3">
+                <option value="">First get account statements to populate</option>
+              </select>
+            </div>
+          </div>
+          
+          <button id="call-button" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            </svg>
+            Call API
+          </button>
+        </div>
+        
+        <!-- Response Section -->
+        <div id="response-section" style="display: none;">
+          <h3 class="text-md font-medium text-gray-700 mb-3">Response</h3>
+          <div id="response-status" class="mb-3"></div>
+          <div id="response-content" class="json-response"></div>
+        </div>
+        
+        <!-- Instructions -->
+        <div id="instructions" class="text-center py-8">
+          <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-gray-500">Select an endpoint from the left panel to begin testing</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedEndpoint = null;
+    let selectedMethod = 'GET';
+    let endpointParams = {};
+    let accountIds = [];
+    let statementIds = [];
+
+    // DOM elements
+    const endpointItems = document.querySelectorAll('.endpoint-item');
+    const requestSection = document.getElementById('request-section');
+    const responseSection = document.getElementById('response-section');
+    const instructions = document.getElementById('instructions');
+    const selectedMethodEl = document.getElementById('selected-method');
+    const selectedEndpointEl = document.getElementById('selected-endpoint');
+    const parametersSection = document.getElementById('parameters-section');
+    const parametersContainer = document.getElementById('parameters-container');
+    const idSelectionSection = document.getElementById('id-selection-section');
+    const accountSelection = document.getElementById('account-selection');
+    const statementSelection = document.getElementById('statement-selection');
+    const accountSelect = document.getElementById('account-select');
+    const statementSelect = document.getElementById('statement-select');
+    const callButton = document.getElementById('call-button');
+    const responseStatus = document.getElementById('response-status');
+    const responseContent = document.getElementById('response-content');
+
+    // Add click handlers to endpoint items
+    endpointItems.forEach(item => {
+      item.addEventListener('click', () => {
+        selectEndpoint(item);
+      });
+    });
+
+    function selectEndpoint(item) {
+      // Remove previous selection
+      endpointItems.forEach(el => el.classList.remove('selected'));
+      
+      // Select current item
+      item.classList.add('selected');
+      
+      // Get endpoint data
+      selectedEndpoint = item.dataset.endpoint;
+      selectedMethod = item.dataset.method || 'GET';
+      endpointParams = item.dataset.params ? JSON.parse(item.dataset.params) : {};
+      
+      const requiresAccount = item.dataset.requiresAccount === 'true';
+      const requiresStatement = item.dataset.requiresStatement === 'true';
+      
+      // Update UI
+      selectedMethodEl.textContent = selectedMethod;
+      selectedEndpointEl.textContent = selectedEndpoint;
+      
+      // Show request section
+      requestSection.style.display = 'block';
+      instructions.style.display = 'none';
+      
+      // Handle parameters
+      setupParameters();
+      
+      // Handle ID requirements
+      setupIdRequirements(requiresAccount, requiresStatement);
+      
+      // Clear previous response
+      responseSection.style.display = 'none';
+    }
+
+    function setupParameters() {
+      parametersContainer.innerHTML = '';
+      
+      if (Object.keys(endpointParams).length > 0) {
+        parametersSection.style.display = 'block';
+        
+        for (const [key, defaultValue] of Object.entries(endpointParams)) {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label class="parameter-label">${key}</label>
+            <input type="text" class="parameter-input" data-param="${key}" value="${defaultValue}" 
+                   placeholder="${key === 'startTime' || key === 'endTime' ? 'YYYY-MM-DD (optional)' : 'Enter ' + key}">
+          `;
+          parametersContainer.appendChild(div);
+        }
+      } else {
+        parametersSection.style.display = 'none';
+      }
+    }
+
+    function setupIdRequirements(requiresAccount, requiresStatement) {
+      idSelectionSection.style.display = (requiresAccount || requiresStatement) ? 'block' : 'none';
+      accountSelection.style.display = requiresAccount ? 'block' : 'none';
+      statementSelection.style.display = requiresStatement ? 'block' : 'none';
+    }
+
+    // Call button click handler
+    callButton.addEventListener('click', async () => {
+      if (!selectedEndpoint) return;
+      
+      callButton.classList.add('loading');
+      callButton.textContent = 'Calling...';
+      
+      try {
+        let endpoint = selectedEndpoint;
+        
+        // Replace placeholders with actual IDs
+        const accountId = accountSelect.value;
+        const statementId = statementSelect.value;
+        
+        if (endpoint.includes('{accountId}')) {
+          if (!accountId) {
+            alert('Please select an account ID first');
+            return;
+          }
+          endpoint = endpoint.replace('{accountId}', accountId);
+        }
+        
+        if (endpoint.includes('{statementId}')) {
+          if (!statementId) {
+            alert('Please select a statement ID first');
+            return;
+          }
+          endpoint = endpoint.replace('{statementId}', statementId);
+        }
+        
+        // Add query parameters
+        const params = new URLSearchParams();
+        document.querySelectorAll('[data-param]').forEach(input => {
+          const value = input.value.trim();
+          if (value) {
+            params.append(input.dataset.param, value);
+          }
+        });
+        
+        if (params.toString()) {
+          endpoint += '?' + params.toString();
+        }
+        
+        // Make API call
+        const response = await fetch('/api-call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            endpoint: endpoint,
+            method: selectedMethod
+          })
+        });
+        
+        const result = await response.json();
+        displayResponse(result);
+        
+        // If this was a list accounts call, populate account select
+        if (selectedEndpoint === '/api/cx/accounts' && result.data.accounts) {
+          populateAccountSelect(result.data.accounts);
+        }
+        
+        // If this was a statements call, populate statement select
+        if (selectedEndpoint.includes('/statements') && !selectedEndpoint.includes('/statements/') && result.data.statements) {
+          populateStatementSelect(result.data.statements);
+        }
+        
+      } catch (error) {
+        displayResponse({
+          status: 500,
+          statusText: 'Error',
+          data: { error: error.message }
+        });
+      } finally {
+        callButton.classList.remove('loading');
+        callButton.innerHTML = `
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+          Call API
+        `;
+      }
+    });
+
+    function populateAccountSelect(accounts) {
+      accountSelect.innerHTML = '<option value="">Select an account</option>';
+      accounts.forEach(account => {
+        const option = document.createElement('option');
+        option.value = account.accountId;
+        option.textContent = `${account.accountId} - ${account.nickname || account.type}`;
+        accountSelect.appendChild(option);
+      });
+    }
+
+    function populateStatementSelect(statements) {
+      statementSelect.innerHTML = '<option value="">Select a statement</option>';
+      statements.forEach(statement => {
+        const option = document.createElement('option');
+        option.value = statement.statementId;
+        option.textContent = `${statement.statementId} - ${statement.statementDate}`;
+        statementSelect.appendChild(option);
+      });
+    }
+
+    function displayResponse(result) {
+      responseSection.style.display = 'block';
+      
+      // Status
+      const statusClass = result.status >= 200 && result.status < 300 ? 'text-green-600' : 'text-red-600';
+      responseStatus.innerHTML = `
+        <span class="text-sm font-medium ${statusClass}">
+          ${result.status} ${result.statusText}
+        </span>
+      `;
+      
+      // Content
+      responseContent.textContent = JSON.stringify(result.data, null, 2);
+    }
+  </script>
+</body>
+</html>

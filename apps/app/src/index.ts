@@ -270,20 +270,61 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 	}
 } );
 
-app.get( "/accounts", async ( req: Request, res: Response ) => {
+app.get( "/api-explorer", async ( req: Request, res: Response ) => {
 	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
 	const tokens: TokenSet | null = tokensCookie
 		? JSON.parse( tokensCookie )
 		: null;
 	if ( !tokens?.access_token ) return res.redirect( "/login" );
-	await ensureConfig();
-	// Expect API-scoped JWT access token from authorization flow
-	const accessToken = tokens.access_token as string;
-	const resApi = await fetch( `${ API_BASE_URL }/api/cx/accounts?limit=3`, {
-		headers: { Authorization: `Bearer ${ accessToken }` }
-	} );
-	const data = await resApi.json();
-	res.send( data );
+
+	res.render( "api-explorer", { tokens } );
+} );
+
+app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => {
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
+		: null;
+	if ( !tokens?.access_token ) return res.status( 401 ).json( { error: "No access token" } );
+
+	const { endpoint, method = "GET" } = req.body;
+	if ( !endpoint ) {
+		return res.status( 400 ).json( { error: "Endpoint is required" } );
+	}
+
+	try {
+		const accessToken = tokens.access_token as string;
+		const apiResponse = await fetch( `${ API_BASE_URL }${ endpoint }`, {
+			method,
+			headers: {
+				Authorization: `Bearer ${ accessToken }`,
+				"Content-Type": "application/json"
+			}
+		} );
+
+		const contentType = apiResponse.headers.get( "content-type" );
+		let responseData;
+
+		if ( contentType?.includes( "application/pdf" ) ) {
+			responseData = {
+				type: "pdf",
+				size: apiResponse.headers.get( "content-length" ),
+				filename: apiResponse.headers.get( "content-disposition" )?.split( "filename=" )[1]
+			};
+		} else {
+			responseData = await apiResponse.json();
+		}
+
+		res.json( {
+			status: apiResponse.status,
+			statusText: apiResponse.statusText,
+			data: responseData,
+			headers: Object.fromEntries( apiResponse.headers.entries() )
+		} );
+	} catch ( error ) {
+		logError( logger, error, { context: "API call proxy" } );
+		res.status( 500 ).json( { error: "Failed to call API", details: ( error as Error ).message } );
+	}
 } );
 
 app.get( "/logout", async ( req: Request, res: Response ) => {
