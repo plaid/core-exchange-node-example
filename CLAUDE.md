@@ -34,7 +34,7 @@ pnpm caddy
 pnpm dev
 
 # Run individual services
-pnpm dev:op    # Authorization Server (OP)
+pnpm dev:auth  # Authorization Server
 pnpm dev:api   # Resource Server (API)
 pnpm dev:app   # Client App (Relying Party)
 
@@ -46,7 +46,7 @@ pnpm lint
 pnpm lint:fix  # Auto-fix linting issues
 
 # Production commands (after build)
-pnpm --filter @apps/op start    # Start OP in production
+pnpm --filter @apps/auth start  # Start Auth Server in production
 pnpm --filter @apps/api start   # Start API in production  
 pnpm --filter @apps/app start   # Start APP in production
 ```
@@ -73,9 +73,9 @@ Then update the `.env` file to reflect the new URL pattern (e.g., `https://local
 
 This is an OpenID Connect (OIDC) implementation using Express for all services in a pnpm monorepo. The system consists of three main services:
 
-### 1. Authorization Server (OP - OpenID Provider)
+### 1. Authorization Server (Auth - OpenID Provider)
 
-- Located in `apps/op`
+- Located in `apps/auth`
 - Built with `oidc-provider` embedded in Express
 - Handles authentication, authorization, and token issuance
 - Uses EJS templates for interaction views (login/consent)
@@ -95,7 +95,7 @@ Key components:
 
 - Located in `apps/api`
 - Protects resources with JWT validation using `jose`
-- Validates tokens against the OP's JWKS endpoint
+- Validates tokens against the Auth server's JWKS endpoint
 - Enforces scope-based authorization (e.g., `accounts:read`)
 - Includes customer and account data repositories
 - Uses Pino for structured logging
@@ -135,7 +135,7 @@ Key components:
 - All services communicate via HTTPS using Caddy's internal CA
 - Caddy handles routing via `*.localtest.me` subdomains
 - Default endpoints:
-  - OP: `https://id.localtest.me` (port 3001)
+  - Auth: `https://id.localtest.me` (port 3001)
   - API: `https://api.localtest.me` (port 3003)
   - APP: `https://app.localtest.me` (port 3004)
 - Environment variables in `.env` control service configuration
@@ -146,7 +146,7 @@ Key components:
 
 ## Testing the Flow
 
-1. Visit `https://id.localtest.me/.well-known/openid-configuration` to verify the OP is running
+1. Visit `https://id.localtest.me/.well-known/openid-configuration` to verify the Auth server is running
 2. Go to `https://app.localtest.me` and click "Login"
 3. Use demo credentials: `user@example.test` / `passw0rd!`
 4. Approve consent → redirected to the app

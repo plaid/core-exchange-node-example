@@ -11,7 +11,7 @@
   "references": [
     { "path": "./apps/app" },
     { "path": "./apps/api" },
-    { "path": "./apps/op" }
+    { "path": "./apps/auth" }
   ],
   "files": []
 }

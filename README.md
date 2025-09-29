@@ -4,8 +4,8 @@ Pure Node.js OIDC stack using **Express**, **oidc-provider**, **openid-client**,
 
 ## Services
 
-- **OP** (`apps/op`) – Authorization Server + minimal login/consent (interactions) using `oidc-provider` within Express.
-- **API** (`apps/api`) – Protected resource server validating JWTs with `jose` against the OP's JWKS.
+- **Auth** (`apps/auth`) – Authorization Server + minimal login/consent (interactions) using `oidc-provider` within Express.
+- **API** (`apps/api`) – Protected resource server validating JWTs with `jose` against the Auth server's JWKS.
 - **APP** (`apps/app`) – Relying Party (client) using `openid-client` (Authorization Code + PKCE).
 
 ## Prereqs (macOS)
@@ -62,7 +62,7 @@ export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorit
 
 Notes:
 
-- The client app retries OIDC issuer discovery on startup. You can start the Node apps before Caddy/OP; the app will log retries until `https://id.localtest.me` is reachable.
+- The client app retries OIDC issuer discovery on startup. You can start the Node apps before Caddy/Auth; the app will log retries until `https://id.localtest.me` is reachable.
 - Still recommended: start Caddy first for faster startup and fewer retries.
 - If you renamed the project folder or switched terminals, ensure `NODE_EXTRA_CA_CERTS` is set in your current shell or use the root `pnpm dev` which sets it automatically.
 
@@ -70,12 +70,12 @@ Notes:
 
 1. Visit **https://id.localtest.me/.well-known/openid-configuration** – discovery JSON should load.
 2. Go to **https://app.localtest.me** and click **Login**.
-3. Use demo creds on the OP interactions page: `user@example.test` / `passw0rd!`.
+3. Use demo creds on the Auth interactions page: `user@example.test` / `passw0rd!`.
 4. Approve consent → redirected to the app. Click **/accounts** to call the API with the access token.
 
 ## Troubleshooting
 
-- 502 Bad Gateway or TLS errors (e.g. `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) during discovery: Ensure Caddy is running and trusted, verify the OP via `https://id.localtest.me/.well-known/openid-configuration`, and confirm `NODE_EXTRA_CA_CERTS` points to Caddy's CA:
+- 502 Bad Gateway or TLS errors (e.g. `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) during discovery: Ensure Caddy is running and trusted, verify the Auth server via `https://id.localtest.me/.well-known/openid-configuration`, and confirm `NODE_EXTRA_CA_CERTS` points to Caddy's CA:
 
   ```bash
   export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
