@@ -40,10 +40,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # 🔑 Build API *and its dependencies* (e.g., apps/shared) in topo order
-      - name: Build API & dependencies
-        run: |
-          cd apps/api
-          pnpm exec tsc -b
+      - name: Build shared library
+        run: cd apps/shared && pnpm exec tsc -b
+
+      - name: Build API
+        run: cd apps/api && pnpm exec tsc -b
 
       # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle
