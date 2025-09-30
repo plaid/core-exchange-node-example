@@ -20,11 +20,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable Corepack and pin pnpm
+      - name: Enable Corepack and install pnpm@10
         run: |
           corepack enable
-          corepack prepare pnpm@10
-          corepack use pnpm@10
+          corepack prepare pnpm@10 --activate
           pnpm -v
 
       # Install all workspace deps (cached) and build the API if it has a build step
