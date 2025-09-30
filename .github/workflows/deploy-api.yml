@@ -20,24 +20,27 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable Corepack and install pnpm@10
-        run: |
-          corepack enable
-          corepack prepare pnpm@10 --activate
-          pnpm -v
+      # Ensure pnpm@10 is on PATH
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
 
-      # Install all workspace deps (cached) and build the API if it has a build step
+      # (optional) sanity check
+      - run: |
+          node -v
+          pnpm -v
+          corepack -v || true
+
       - name: Install deps (workspace)
         run: pnpm install --frozen-lockfile
 
       - name: Build API
-        run: pnpm -C apps/api run build || true
+        run: pnpm --filter ./apps/api run build || true
 
-      # Produce a pruned, production-ready bundle for just apps/api
       - name: Create deploy bundle
         run: pnpm deploy --filter ./apps/api out/api
 
-      # Ship that bundle to the VM
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
@@ -54,5 +57,4 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: deploy
           key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            sudo systemctl restart plaidypus-api
+          script: sudo systemctl restart plaidypus-api
