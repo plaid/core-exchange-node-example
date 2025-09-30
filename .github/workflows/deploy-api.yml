@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'apps/api/**'
+      - 'apps/shared/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'package.json'
@@ -12,16 +13,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # Install pnpm (let it read version from package.json -> "packageManager")
+      # Install pnpm per docs; version comes from package.json "packageManager"
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          run_install: false   # don't auto-install here
+          run_install: false
 
-      # Node + pnpm cache
-      - name: Setup Node 22
+      - name: Setup Node 22 (enable pnpm cache)
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
@@ -34,15 +35,17 @@ jobs:
           pnpm -v
           which pnpm
 
-      - name: Install deps (workspace)
+      # Install workspace deps (cached)
+      - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: Build API
-        run: pnpm --filter ./apps/api run build || true
+      # 🔑 Build API *and its dependencies* (e.g., apps/shared) in topo order
+      - name: Build API & deps
+        run: pnpm --filter "{apps/api}..." run build
 
-      # Note: see pnpm deploy notes below if you hit a workspace setting error
+      # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle
-        run: pnpm deploy --filter ./apps/api out/api
+        run: pnpm deploy --prod --legacy --filter "{apps/api}" out/api
 
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
