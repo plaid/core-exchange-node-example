@@ -41,7 +41,11 @@ jobs:
 
       # 🔑 Build App *and its dependencies* (e.g., apps/shared) in topo order
       - name: Build shared library
-        run: cd apps/shared && pnpm exec tsc -b
+        run: |
+          cd apps/shared
+          pnpm exec tsc -b --verbose --force
+          echo "Build completed, checking output..."
+          ls -la dist/ || echo "ERROR: dist folder not created!"
 
       - name: Build App CSS
         run: cd apps/app && pnpm exec npm run css:build
