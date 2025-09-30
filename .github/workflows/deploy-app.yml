@@ -40,11 +40,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # 🔑 Build App *and its dependencies* (e.g., apps/shared) in topo order
-      - name: Build shared
-        run: pnpm --filter @apps/shared build
-
-      - name: Build App
-        run: pnpm --filter @apps/app build
+      - name: Build App & dependencies
+        run: |
+          cd apps/app
+          pnpm exec npm run css:build
+          pnpm exec tsc -b
 
       # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle

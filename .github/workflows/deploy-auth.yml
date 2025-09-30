@@ -40,11 +40,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # 🔑 Build Auth *and its dependencies* (e.g., apps/shared) in topo order
-      - name: Build shared
-        run: pnpm --filter @apps/shared build
-
-      - name: Build Auth
-        run: pnpm --filter @apps/auth build
+      - name: Build Auth & dependencies
+        run: |
+          cd apps/auth
+          pnpm exec npm run css:build
+          pnpm exec tsc -b
 
       # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle
