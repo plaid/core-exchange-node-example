@@ -4,8 +4,8 @@ on:
     paths:
       - 'apps/api/**'
       - 'pnpm-lock.yaml'
-      - 'package.json'
       - 'pnpm-workspace.yaml'
+      - 'package.json'
   workflow_dispatch:
 
 jobs:
@@ -15,6 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1) Install pnpm first (per docs)
+      - name: Setup pnpm@10
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      # 2) Setup Node + enable pnpm cache
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
@@ -22,35 +30,24 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      # This puts pnpm on PATH
-      - name: Setup pnpm@10
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-          run_install: false
-
-      # Redundant but harmless: ensures Corepack activation too
-      - name: Activate pnpm via Corepack
-        run: |
-          corepack enable
-          corepack prepare pnpm@10 --activate
-
-      # Prove pnpm is available before using it
-      - name: Preflight (print versions)
-        run: |
-          which pnpm || echo "pnpm NOT on PATH"
+      # 3) Prove pnpm is on PATH
+      - run: |
           node -v
           pnpm -v
+          which pnpm
 
-      - name: Install deps (workspace)
+      # 4) Install workspace deps (cached) and build app
+      - name: Install deps
         run: pnpm install --frozen-lockfile
 
       - name: Build API
         run: pnpm --filter ./apps/api run build || true
 
+      # 5) Produce a pruned, production-ready bundle for the API
       - name: Create deploy bundle
         run: pnpm deploy --filter ./apps/api out/api
 
+      # 6) Ship bundle to VM and restart service
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
