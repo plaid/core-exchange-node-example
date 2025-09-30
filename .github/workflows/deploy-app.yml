@@ -3,42 +3,67 @@ on:
   push:
     paths:
       - 'apps/app/**'
+      - 'apps/shared/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'apps/app/package-lock.json'
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build
-        working-directory: apps/app
+      # Install pnpm per docs; version comes from package.json "packageManager"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node 22 (enable pnpm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Preflight
         run: |
-          npm ci
-          npm run build || true
+          node -v
+          pnpm -v
+          which pnpm
+
+      # Install workspace deps (cached)
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      # 🔑 Build App *and its dependencies* (e.g., apps/shared) in topo order
+      - name: Build shared
+        run: pnpm --filter @apps/shared build
+
+      - name: Build App
+        run: pnpm --filter @apps/app build
+
+      # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
+      - name: Create deploy bundle
+        run: pnpm deploy --prod --legacy --filter "{apps/app}" out/app
 
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -az --delete --exclude=node_modules
-          path: apps/app/
+          switches: -az --delete
+          path: out/app/
           remote_path: /srv/apps/app/
           remote_host: ${{ secrets.VM_HOST }}
           remote_user: deploy
           remote_key: ${{ secrets.VM_SSH_KEY }}
 
-      - name: Install prod deps & restart
+      - name: Restart service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
           username: deploy
           key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            cd /srv/apps/app
-            npm ci --omit=dev
-            sudo systemctl restart plaidypus-app
+          script: sudo systemctl restart plaidypus-app
