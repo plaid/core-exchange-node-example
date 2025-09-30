@@ -12,17 +12,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 1) Install pnpm first (per docs)
-      - name: Setup pnpm@10
+      # Install pnpm (let it read version from package.json -> "packageManager")
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-          run_install: false
+          run_install: false   # don't auto-install here
 
-      # 2) Setup Node + enable pnpm cache
+      # Node + pnpm cache
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
@@ -30,24 +28,22 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      # 3) Prove pnpm is on PATH
-      - run: |
+      - name: Preflight
+        run: |
           node -v
           pnpm -v
           which pnpm
 
-      # 4) Install workspace deps (cached) and build app
-      - name: Install deps
+      - name: Install deps (workspace)
         run: pnpm install --frozen-lockfile
 
       - name: Build API
         run: pnpm --filter ./apps/api run build || true
 
-      # 5) Produce a pruned, production-ready bundle for the API
+      # Note: see pnpm deploy notes below if you hit a workspace setting error
       - name: Create deploy bundle
         run: pnpm deploy --filter ./apps/api out/api
 
-      # 6) Ship bundle to VM and restart service
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
