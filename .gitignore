@@ -8,8 +8,11 @@ coverage/
 
 # env
 .env
+.env.prod
 apps/**/.env
+apps/**/.env.prod
 packages/**/.env
+packages/**/.env.prod
 
 # editor
 .vscode/

@@ -29,23 +29,11 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Preflight
-        run: |
-          node -v
-          pnpm -v
-          which pnpm
-
-      # Install workspace deps (cached)
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      # 🔑 Build Auth *and its dependencies* (e.g., apps/shared) in topo order
       - name: Build shared library
-        run: |
-          cd apps/shared
-          pnpm exec tsc -b --verbose --force
-          echo "Build completed, checking output..."
-          ls -la dist/ || echo "ERROR: dist folder not created!"
+        run: cd apps/shared && pnpm exec tsc -b
 
       - name: Build Auth CSS
         run: cd apps/auth && pnpm exec npm run css:build
@@ -53,14 +41,13 @@ jobs:
       - name: Build Auth
         run: cd apps/auth && pnpm exec tsc -b
 
-      # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle
         run: pnpm deploy --prod --legacy --filter "{apps/auth}" out/auth
 
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -az --delete
+          switches: -az --delete --exclude='.env'
           path: out/auth/
           remote_path: /srv/apps/auth/
           remote_host: ${{ secrets.VM_HOST }}
