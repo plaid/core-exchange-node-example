@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - 'apps/api/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
   workflow_dispatch:
 
 jobs:
@@ -13,33 +16,44 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'apps/api/package-lock.json'
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Build
-        working-directory: apps/api
+      - name: Enable Corepack and pin pnpm
         run: |
-          npm ci
-          npm run build || true   # keep if you have a build step
+          corepack enable
+          corepack prepare pnpm@10
+          corepack use pnpm@10
+          pnpm -v
 
+      # Install all workspace deps (cached) and build the API if it has a build step
+      - name: Install deps (workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm -C apps/api run build || true
+
+      # Produce a pruned, production-ready bundle for just apps/api
+      - name: Create deploy bundle
+        run: pnpm deploy --filter ./apps/api out/api
+
+      # Ship that bundle to the VM
       - name: Rsync to VM
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -az --delete --exclude=node_modules
-          path: apps/api/
+          switches: -az --delete
+          path: out/api/
           remote_path: /srv/apps/api/
           remote_host: ${{ secrets.VM_HOST }}
           remote_user: deploy
           remote_key: ${{ secrets.VM_SSH_KEY }}
 
-      - name: Install prod deps & restart
+      - name: Restart service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
           username: deploy
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            cd /srv/apps/api
-            npm ci --omit=dev
             sudo systemctl restart plaidypus-api
