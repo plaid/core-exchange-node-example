@@ -29,11 +29,16 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch",
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": ["oauth", "security", "utilities", "educational"],
+  "keywords": [
+    "oauth",
+    "security",
+    "utilities",
+    "educational"
+  ],
   "author": "OAuth Educational Project",
   "license": "MIT",
   "dependencies": {

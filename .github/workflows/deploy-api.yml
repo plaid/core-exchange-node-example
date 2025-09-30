@@ -41,7 +41,7 @@ jobs:
 
       # 🔑 Build API *and its dependencies* (e.g., apps/shared) in topo order
       - name: Build API & deps
-        run: pnpm --filter "{apps/api}..." run build
+        run: pnpm -w exec tsc -b apps/shared apps/api
 
       # Produce a pruned, prod-ready bundle (avoid inject-workspace-packages requirement)
       - name: Create deploy bundle
