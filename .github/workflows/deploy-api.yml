@@ -43,6 +43,12 @@ jobs:
       - name: Build shared library
         run: cd apps/shared && pnpm exec tsc -b
 
+      - name: Debug - Check workspace setup
+        run: |
+          ls -la apps/api/node_modules/@apps/
+          ls -la apps/shared/dist/ || echo "No dist folder in shared"
+          cat apps/shared/package.json | grep -A5 exports
+
       - name: Build API
         run: cd apps/api && pnpm exec tsc -b
 
