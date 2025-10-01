@@ -26,6 +26,9 @@ export const createApiSecurityHeaders = (): RequestHandler => {
 export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: string ): RequestHandler => {
 	const isProduction = process.env.NODE_ENV === "production";
 
+	// Build formAction directive
+	const formAction = authServerUrl ? [ "'self'", authServerUrl ] : [ "'self'" ];
+
 	return helmet( {
 		// Allow inline scripts and styles for EJS templates in development
 		// In production, consider using nonces or CSP hashes
@@ -40,7 +43,7 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: s
 				objectSrc: [ "'none'" ],
 				mediaSrc: [ "'self'" ],
 				frameSrc: [ "'none'" ],
-				formAction: [ "'self'" ] // Explicitly set to 'self' only for relative form actions
+				formAction // Allow form submissions to self and optionally auth server
 			}
 		} : false, // Disable CSP in development for easier debugging
 		crossOriginEmbedderPolicy: false // Allow iframe usage if needed

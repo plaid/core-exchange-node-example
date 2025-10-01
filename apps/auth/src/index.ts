@@ -25,8 +25,8 @@ const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 const app = express();
 setupBasicExpress( app );
 
-// Security headers
-app.use( createWebSecurityHeaders() );
+// Security headers - pass ISSUER as authServerUrl to allow form submissions in OIDC flows
+app.use( createWebSecurityHeaders( undefined, ISSUER ) );
 
 // Template engine
 setupEJSTemplates( app, new URL( "../views", import.meta.url ).pathname );
