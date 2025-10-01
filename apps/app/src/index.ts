@@ -356,6 +356,88 @@ app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => 
 	}
 } );
 
+app.get( "/debug/tokens", async ( req: Request, res: Response ) => {
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie
+		? JSON.parse( tokensCookie )
+		: null;
+
+	if ( !tokens?.access_token ) {
+		return res.status( 401 ).send( "<h1>No tokens found</h1><p>Please <a href='/login'>login</a> first.</p>" );
+	}
+
+	// Decode JWT tokens to show payload
+	const decodeJwt = ( token: string ) => {
+		try {
+			const parts = token.split( "." );
+			if ( parts.length !== 3 ) return null;
+			const payload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString() );
+			return payload;
+		} catch {
+			return null;
+		}
+	};
+
+	const accessTokenPayload = tokens.access_token ? decodeJwt( tokens.access_token ) : null;
+	const idTokenPayload = tokens.id_token ? decodeJwt( tokens.id_token ) : null;
+
+	// Render as HTML
+	res.send( `
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Token Debug</title>
+	<style>
+		body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+		h1 { color: #4ec9b0; }
+		h2 { color: #569cd6; margin-top: 30px; }
+		pre { background: #252526; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #3e3e42; }
+		.token { word-break: break-all; color: #ce9178; }
+		.section { margin-bottom: 40px; }
+		a { color: #569cd6; }
+	</style>
+</head>
+<body>
+	<h1>🔐 OAuth Token Debug</h1>
+	<p><a href="/">← Back to home</a> | <a href="/logout">Logout</a></p>
+
+	<div class="section">
+		<h2>Access Token (Raw)</h2>
+		<pre class="token">${ tokens.access_token }</pre>
+	</div>
+
+	${ accessTokenPayload ? `
+	<div class="section">
+		<h2>Access Token (Decoded Payload)</h2>
+		<pre>${ JSON.stringify( accessTokenPayload, null, 2 ) }</pre>
+	</div>
+	` : "" }
+
+	${ tokens.id_token ? `
+	<div class="section">
+		<h2>ID Token (Raw)</h2>
+		<pre class="token">${ tokens.id_token }</pre>
+	</div>
+	` : "" }
+
+	${ idTokenPayload ? `
+	<div class="section">
+		<h2>ID Token (Decoded Payload)</h2>
+		<pre>${ JSON.stringify( idTokenPayload, null, 2 ) }</pre>
+	</div>
+	` : "" }
+
+	${ tokens.refresh_token ? `
+	<div class="section">
+		<h2>Refresh Token</h2>
+		<pre class="token">${ tokens.refresh_token }</pre>
+	</div>
+	` : "" }
+</body>
+</html>
+	` );
+} );
+
 app.get( "/logout", async ( req: Request, res: Response ) => {
 	logger.info( "Logout route called" );
 	const config = await ensureConfig();
