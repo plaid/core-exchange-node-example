@@ -4,7 +4,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-123",
 		accountNumberDisplay: "0123",
-		productName: "Primary Checking",
+		productName: "Everyday Checking",
 		status: "OPEN",
 		currency: {
 			currencyCode: "USD"
@@ -17,53 +17,92 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-456",
 		accountNumberDisplay: "0456",
-		productName: "Emergency Fund",
+		productName: "High-Yield Savings",
 		status: "OPEN",
 		currency: {
 			currencyCode: "USD"
 		},
-		accountType: "SAVINGS",
-		currentBalance: 15720.42,
-		availableBalance: 15720.42
+		accountType: "HIGHINTERESTSAVINGSACCOUNT",
+		currentBalance: 25340.87,
+		availableBalance: 25340.87
 	},
 	{
-		accountCategory: "CREDIT_ACCOUNT",
+		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-789",
 		accountNumberDisplay: "0789",
-		productName: "Travel Rewards Card",
+		productName: "12-Month CD",
 		status: "OPEN",
 		currency: {
 			currencyCode: "USD"
 		},
-		accountType: "CREDIT_CARD",
-		currentBalance: -452.12,
-		availableBalance: -452.12
+		accountType: "CD",
+		currentBalance: 50000.00,
+		availableBalance: 0.00
 	},
 	{
-		accountCategory: "INVESTMENT_ACCOUNT",
+		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-101",
 		accountNumberDisplay: "0101",
-		productName: "Retirement Portfolio",
+		productName: "Home Purchase Escrow",
 		status: "OPEN",
 		currency: {
 			currencyCode: "USD"
 		},
-		accountType: "INVESTMENT",
-		currentBalance: 87325.96,
-		availableBalance: 87325.96
+		accountType: "ESCROW",
+		currentBalance: 8750.00,
+		availableBalance: 8750.00
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-202",
 		accountNumberDisplay: "0202",
-		productName: "Joint Account",
+		productName: "Premier Money Market",
 		status: "OPEN",
 		currency: {
 			currencyCode: "USD"
 		},
-		accountType: "CHECKING",
-		currentBalance: 4275.31,
-		availableBalance: 4275.31
+		accountType: "MONEYMARKET",
+		currentBalance: 75420.55,
+		availableBalance: 75420.55
+	},
+	{
+		accountCategory: "DEPOSIT_ACCOUNT",
+		accountId: "account-303",
+		accountNumberDisplay: "0303",
+		productName: "Emergency Fund Savings",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "SAVINGS",
+		currentBalance: 12500.00,
+		availableBalance: 12500.00
+	},
+	{
+		accountCategory: "DEPOSIT_ACCOUNT",
+		accountId: "account-404",
+		accountNumberDisplay: "0404",
+		productName: "First Home Saver",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "FIRSTHOMESAVINGSACCOUNT",
+		currentBalance: 18900.25,
+		availableBalance: 18900.25
+	},
+	{
+		accountCategory: "DEPOSIT_ACCOUNT",
+		accountId: "account-505",
+		accountNumberDisplay: "0505",
+		productName: "Club Account",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "OTHERDEPOSIT",
+		currentBalance: 3250.00,
+		availableBalance: 3250.00
 	}
 ];
 
