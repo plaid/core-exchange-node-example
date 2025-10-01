@@ -153,17 +153,20 @@ export const accountContacts = {
 			{
 				type: "HOME",
 				country: "1",
-				number: "3127771926"
+				number: "3127771926",
+				network: "LANDLINE"
 			},
 			{
-				type: "CELL",
-				country: "53",
-				number: "45915607"
+				type: "PERSONAL",
+				country: "1",
+				number: "3129876543",
+				network: "CELLULAR"
 			},
 			{
 				type: "HOME",
 				country: "1",
-				number: "4157771926"
+				number: "4157771926",
+				network: "LANDLINE"
 			}
 		]
 	}
