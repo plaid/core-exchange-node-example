@@ -169,6 +169,241 @@ export const accountContacts = {
 				network: "LANDLINE"
 			}
 		]
+	},
+	"account-456": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "Jane",
+					middle: "Elizabeth",
+					last: "Austen"
+				}
+			}
+		],
+		emails: [
+			"jane.austen@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "123 Main Street",
+				city: "Austin",
+				region: "TX",
+				postalCode: "78701",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "5125551234",
+				network: "CELLULAR"
+			}
+		]
+	},
+	"account-789": {
+		holders: [
+			{
+				relationship: "SOLE_OWNER",
+				name: {
+					first: "Mark",
+					last: "Twain"
+				}
+			}
+		],
+		emails: [
+			"mark.twain@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "456 River Road",
+				city: "Hartford",
+				region: "CT",
+				postalCode: "06103",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "HOME",
+				country: "1",
+				number: "8605559876",
+				network: "LANDLINE"
+			}
+		]
+	},
+	"account-101": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "Virginia",
+					last: "Woolf"
+				}
+			}
+		],
+		emails: [
+			"virginia.woolf@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "789 Bloomsbury Way",
+				line2: "Unit 5B",
+				city: "Seattle",
+				region: "WA",
+				postalCode: "98101",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "2065554321",
+				network: "CELLULAR"
+			}
+		]
+	},
+	"account-202": {
+		holders: [
+			{
+				relationship: "PRIMARY_JOINT",
+				name: {
+					first: "F. Scott",
+					last: "Fitzgerald"
+				}
+			},
+			{
+				relationship: "SECONDARY_JOINT",
+				name: {
+					first: "Zelda",
+					last: "Fitzgerald"
+				}
+			}
+		],
+		emails: [
+			"f.fitzgerald@domain.tld",
+			"zelda.fitzgerald@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "100 Park Avenue",
+				line2: "Suite 2020",
+				city: "New York",
+				region: "NY",
+				postalCode: "10017",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "HOME",
+				country: "1",
+				number: "2125556789",
+				network: "LANDLINE"
+			},
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "9175553456",
+				network: "CELLULAR"
+			}
+		]
+	},
+	"account-303": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "Harper",
+					last: "Lee"
+				}
+			}
+		],
+		emails: [
+			"harper.lee@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "321 Oak Street",
+				city: "Monroeville",
+				region: "AL",
+				postalCode: "36460",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "HOME",
+				country: "1",
+				number: "2515557890",
+				network: "LANDLINE"
+			}
+		]
+	},
+	"account-404": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "Toni",
+					last: "Morrison"
+				}
+			}
+		],
+		emails: [
+			"toni.morrison@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "555 College Avenue",
+				city: "Princeton",
+				region: "NJ",
+				postalCode: "08540",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "6095552468",
+				network: "CELLULAR"
+			}
+		]
+	},
+	"account-505": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "James",
+					middle: "Arthur",
+					last: "Baldwin"
+				}
+			}
+		],
+		emails: [
+			"james.baldwin@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "137 West 131st Street",
+				city: "New York",
+				region: "NY",
+				postalCode: "10027",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "HOME",
+				country: "1",
+				number: "2125558642",
+				network: "LANDLINE"
+			}
+		]
 	}
 };
 
