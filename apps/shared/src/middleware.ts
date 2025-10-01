@@ -34,7 +34,7 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string ): RequestHandler 
 			directives: {
 				defaultSrc: [ "'self'" ],
 				styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
-				scriptSrc: [ "'self'" ],
+				scriptSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline scripts for EJS templates
 				imgSrc: [ "'self'", "data:", "https:" ],
 				connectSrc: apiBaseUrl ? [ "'self'", apiBaseUrl ] : [ "'self'" ],
 				fontSrc: [ "'self'" ],
