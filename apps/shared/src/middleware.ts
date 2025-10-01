@@ -23,7 +23,7 @@ export const createApiSecurityHeaders = (): RequestHandler => {
 /**
  * Security headers configuration for web applications with templates
  */
-export const createWebSecurityHeaders = ( apiBaseUrl?: string ): RequestHandler => {
+export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: string ): RequestHandler => {
 	const isProduction = process.env.NODE_ENV === "production";
 
 	return helmet( {
@@ -39,7 +39,8 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string ): RequestHandler 
 				fontSrc: [ "'self'" ],
 				objectSrc: [ "'none'" ],
 				mediaSrc: [ "'self'" ],
-				frameSrc: [ "'none'" ]
+				frameSrc: [ "'none'" ],
+				formAction: authServerUrl ? [ "'self'", authServerUrl ] : [ "'self'" ] // Allow form submissions to auth server
 			}
 		} : false, // Disable CSP in development for easier debugging
 		crossOriginEmbedderPolicy: false // Allow iframe usage if needed

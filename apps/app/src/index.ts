@@ -56,7 +56,7 @@ const app = express();
 setupBasicExpress( app );
 
 // Security headers
-app.use( createWebSecurityHeaders( API_BASE_URL ) );
+app.use( createWebSecurityHeaders( API_BASE_URL, ISSUER_URL ) );
 
 // Middleware
 app.use( cookieParser( COOKIE_SECRET ) );

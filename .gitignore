@@ -13,6 +13,7 @@ apps/**/.env
 apps/**/.env.prod
 packages/**/.env
 packages/**/.env.prod
+.config
 
 # editor
 .vscode/
