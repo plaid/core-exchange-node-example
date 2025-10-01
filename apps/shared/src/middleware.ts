@@ -23,11 +23,8 @@ export const createApiSecurityHeaders = (): RequestHandler => {
 /**
  * Security headers configuration for web applications with templates
  */
-export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: string ): RequestHandler => {
+export const createWebSecurityHeaders = ( apiBaseUrl?: string ): RequestHandler => {
 	const isProduction = process.env.NODE_ENV === "production";
-
-	// Build formAction directive
-	const formAction = authServerUrl ? [ "'self'", authServerUrl ] : [ "'self'" ];
 
 	return helmet( {
 		// Allow inline scripts and styles for EJS templates in development
@@ -42,8 +39,8 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: s
 				fontSrc: [ "'self'" ],
 				objectSrc: [ "'none'" ],
 				mediaSrc: [ "'self'" ],
-				frameSrc: [ "'none'" ],
-				formAction // Allow form submissions to self and optionally auth server
+				frameSrc: [ "'none'" ]
+				// Intentionally omitting form-action to allow same-origin form submissions in OIDC flows
 			}
 		} : false, // Disable CSP in development for easier debugging
 		crossOriginEmbedderPolicy: false // Allow iframe usage if needed
