@@ -40,7 +40,7 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string, authServerUrl?: s
 				objectSrc: [ "'none'" ],
 				mediaSrc: [ "'self'" ],
 				frameSrc: [ "'none'" ],
-				formAction: authServerUrl ? [ "'self'", authServerUrl ] : [ "'self'" ] // Allow form submissions to auth server
+				formAction: [ "'self'" ] // Explicitly set to 'self' only for relative form actions
 			}
 		} : false, // Disable CSP in development for easier debugging
 		crossOriginEmbedderPolicy: false // Allow iframe usage if needed
