@@ -98,6 +98,10 @@ const configuration: any = {
 	},
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions
+		refreshTokens: {
+			enabled: true,
+			rotateRefreshToken: true
+		},
 		rpInitiatedLogout: {
 			enabled: true,
 			logoutSource: async ( ctx: any, form: string ) => {
