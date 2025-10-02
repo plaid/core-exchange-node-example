@@ -9,6 +9,7 @@ coverage/
 # env
 .env
 .env.prod
+.env.clients.json
 apps/**/.env
 apps/**/.env.prod
 packages/**/.env

@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import { Provider, errors } from "oidc-provider";
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import {
 	logError,
 	getRequiredEnv,
@@ -17,10 +19,41 @@ const logger = createLogger( "op" );
 // Environment configuration
 
 const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
-const CLIENT_ID = getRequiredEnv( "CLIENT_ID", "dev-rp" );
-const CLIENT_SECRET = getRequiredEnv( "CLIENT_SECRET", "dev-secret" );
-const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI", "https://app.localtest.me/callback" );
 const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
+
+// Load clients from environment variable, file, or defaults
+function loadOIDCClients() {
+	// 1. Try OIDC_CLIENTS env var (JSON string)
+	if ( process.env.OIDC_CLIENTS ) {
+		logger.info( "Loading OIDC clients from OIDC_CLIENTS environment variable" );
+		return JSON.parse( process.env.OIDC_CLIENTS );
+	}
+
+	// 2. Try .env.clients.json file (for easier multi-client config)
+	const clientsFilePath = resolve( process.cwd(), ".env.clients.json" );
+	if ( existsSync( clientsFilePath ) ) {
+		logger.info( "Loading OIDC clients from .env.clients.json" );
+		const fileContent = readFileSync( clientsFilePath, "utf-8" );
+		return JSON.parse( fileContent );
+	}
+
+	// 3. Fall back to single client from env vars
+	logger.info( "Loading single OIDC client from CLIENT_ID/CLIENT_SECRET env vars" );
+	return [
+		{
+			client_id: getRequiredEnv( "CLIENT_ID", "dev-rp" ),
+			client_secret: getRequiredEnv( "CLIENT_SECRET", "dev-secret" ),
+			redirect_uris: [ getRequiredEnv( "REDIRECT_URI", "https://app.localtest.me/callback" ) ],
+			post_logout_redirect_uris: [ "https://app.localtest.me" ],
+			grant_types: [ "authorization_code", "refresh_token" ],
+			response_types: [ "code" ],
+			token_endpoint_auth_method: "client_secret_basic"
+		}
+	];
+}
+
+const OIDC_CLIENTS = loadOIDCClients();
+logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
 const app = express();
 setupBasicExpress( app );
@@ -51,21 +84,18 @@ const USERS = new Map<
 ] );
 
 const configuration: any = {
-	clients: [
-		{
-			client_id: CLIENT_ID,
-			client_secret: CLIENT_SECRET,
-			redirect_uris: [ REDIRECT_URI ],
-			post_logout_redirect_uris: [ "https://app.localtest.me" ],
-			grant_types: [ "authorization_code", "refresh_token" ],
-			response_types: [ "code" ],
-			token_endpoint_auth_method: "client_secret_basic"
-		}
-	],
+	clients: OIDC_CLIENTS,
 	claims: { openid: [ "sub" ], profile: [ "name" ], email: [ "email" ] },
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
 	pkce: { methods: [ "S256" ], required: () => true },
 	formats: { AccessToken: "jwt" },
+	ttl: {
+		Session: 24 * 60 * 60,        // 1 day
+		Grant: 365 * 24 * 60 * 60,    // 1 year
+		AccessToken: 60 * 60,          // 1 hour
+		IdToken: 60 * 60,              // 1 hour
+		RefreshToken: 14 * 24 * 60 * 60, // 14 days
+	},
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions
 		rpInitiatedLogout: {
