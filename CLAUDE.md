@@ -91,6 +91,15 @@ Key components:
 - In-memory user store (temporary)
 - Tailwind CSS build process
 
+Key features:
+
+- **Multiple client support**: Configure multiple OIDC clients via `.env.clients.json` or `OIDC_CLIENTS` environment variable
+- **Refresh token support**: Issues refresh tokens when `offline_access` scope is requested and client supports `refresh_token` grant type
+- **Configurable TTLs**: Session (1 day), Grant (1 year), AccessToken (1 hour), IdToken (1 hour), RefreshToken (14 days)
+- **Dynamic scope display**: Consent screen shows requested scopes with human-readable descriptions
+- **Forced interactions**: Authorization flow uses `prompt: "login consent"` to always show login and consent screens
+- **RP-initiated logout**: Supports logout with automatic form submission
+
 ### 2. Resource Server (API)
 
 - Located in `apps/api`
@@ -100,6 +109,7 @@ Key components:
 - Includes customer and account data repositories
 - Uses Pino for structured logging
 - Runs on port 3003
+- Implements FDX Core Exchange API specification (v6.3.1)
 
 Key components:
 
@@ -110,12 +120,24 @@ Key components:
 - Request validation utilities
 - Public health endpoint
 
+Available endpoints (FDX Core Exchange compliant):
+
+- `/api/cx/customers/current` - Get current customer information
+- `/api/cx/accounts` - List customer accounts
+- `/api/cx/accounts/{accountId}` - Get account details
+- `/api/cx/accounts/{accountId}/contact` - Get account contact information
+- `/api/cx/accounts/{accountId}/statements` - List account statements
+- `/api/cx/accounts/{accountId}/statements/{statementId}` - Download statement PDF
+- `/api/cx/accounts/{accountId}/transactions` - Get account transactions
+- `/api/cx/accounts/{accountId}/payment-networks` - Get payment network information
+- `/api/cx/accounts/{accountId}/asset-transfer-networks` - Get asset transfer network information
+
 ### 3. Client Application (APP)
 
 - Located in `apps/app`
 - Acts as a Relying Party using `openid-client`
 - Implements Authorization Code flow with PKCE
-- Stores tokens in HTTP-only cookies
+- Stores tokens in HTTP-only cookies (access token, refresh token, ID token)
 - Makes authenticated calls to the API
 - Uses EJS templates for views
 - Includes Tailwind CSS for styling
@@ -129,6 +151,15 @@ Key components:
 - API calls with access token
 - EJS view templates
 - Tailwind CSS build process
+
+Features:
+
+- **API Explorer**: Interactive UI for testing all FDX Core Exchange endpoints with parameter inputs
+- **Profile page**: View decoded ID token claims and user information at `/me`
+- **Token debug endpoint**: View raw and decoded tokens at `/debug/tokens`
+- **Quick API test**: Simple accounts endpoint test at `/accounts`
+- **Offline access**: Requests `offline_access` scope to receive refresh tokens
+- **Comprehensive scopes**: Requests `openid`, `email`, `profile`, `offline_access`, and `accounts:read` scopes
 
 ### Infrastructure
 
@@ -144,13 +175,54 @@ Key components:
 - ESLint configuration with TypeScript and Stylistic plugins
 - Pino structured logging throughout
 
+## Configuration
+
+### Client Configuration
+
+The authorization server supports multiple client configurations:
+
+1. **Single client** (default): Set `CLIENT_ID`, `CLIENT_SECRET`, and `REDIRECT_URI` in `.env`
+2. **Multiple clients**: Create `.env.clients.json` file in the project root (see `.env.clients.example.json`)
+3. **Environment variable**: Set `OIDC_CLIENTS` as a JSON string
+
+Each client configuration must include:
+- `client_id`: Unique client identifier
+- `client_secret`: Client secret for authentication
+- `redirect_uris`: Array of allowed redirect URIs
+- `post_logout_redirect_uris`: Array of allowed logout redirect URIs
+- `grant_types`: Array including `authorization_code` and optionally `refresh_token`
+- `response_types`: Array with `code`
+- `token_endpoint_auth_method`: Usually `client_secret_basic`
+
+### Scopes
+
+Supported scopes:
+- `openid` - Basic identity (required)
+- `profile` - Profile information (name)
+- `email` - Email address
+- `offline_access` - Offline access (enables refresh tokens)
+- `accounts:read` - Read access to account data
+
+### Token TTLs
+
+Default token lifetimes (configured in `apps/auth/src/index.ts`):
+- Session: 1 day (86400 seconds)
+- Grant: 1 year (31536000 seconds)
+- Access Token: 1 hour (3600 seconds)
+- ID Token: 1 hour (3600 seconds)
+- Refresh Token: 14 days (1209600 seconds)
+
 ## Testing the Flow
 
 1. Visit `https://id.localtest.me/.well-known/openid-configuration` to verify the Auth server is running
 2. Go to `https://app.localtest.me` and click "Login"
 3. Use demo credentials: `user@example.test` / `passw0rd!`
-4. Approve consent → redirected to the app
-5. Click "Call API" to test the protected resource access
+4. Approve consent (you'll see all requested scopes: openid, email, profile, offline_access, accounts:read)
+5. After redirect, explore the features:
+   - **API Explorer** (`/api-explorer`): Test all FDX Core Exchange endpoints interactively
+   - **Profile** (`/me`): View your ID token claims and user information
+   - **Token Debug** (`/debug/tokens`): Inspect raw and decoded access/ID/refresh tokens
+   - **Quick API Test** (`/accounts`): Simple test of the accounts endpoint
 
 ## Next Steps
 
