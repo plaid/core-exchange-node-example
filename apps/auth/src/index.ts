@@ -127,7 +127,7 @@ const configuration: any = {
 			) {
 				if ( resourceIndicator === "api://my-api" ) {
 					return {
-						scope: "accounts:read",
+						scope: "accounts:read offline_access",
 						audience: "api://my-api",
 						accessTokenFormat: "jwt",
 						jwt: {

@@ -148,8 +148,7 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		state,
 		code_challenge,
 		code_challenge_method: "S256",
-		resource: "api://my-api",
-		prompt: "login"
+		resource: "api://my-api"
 	} );
 	res.redirect( url.href );
 } );
