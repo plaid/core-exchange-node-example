@@ -148,8 +148,10 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		state,
 		code_challenge,
 		code_challenge_method: "S256",
+		prompt: "login consent",
 		resource: "api://my-api"
 	} );
+	logger.debug( { url: url.href }, "Authorization URL generated" );
 	res.redirect( url.href );
 } );
 

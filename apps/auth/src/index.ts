@@ -85,7 +85,12 @@ const USERS = new Map<
 
 const configuration: any = {
 	clients: OIDC_CLIENTS,
-	claims: { openid: [ "sub" ], profile: [ "name" ], email: [ "email" ] },
+	claims: {
+		openid: [ "sub" ],
+		profile: [ "name" ],
+		email: [ "email" ],
+		offline_access: []
+	},
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
 	pkce: { methods: [ "S256" ], required: () => true },
 	formats: { AccessToken: "jwt" },
@@ -96,12 +101,15 @@ const configuration: any = {
 		IdToken: 60 * 60,              // 1 hour
 		RefreshToken: 14 * 24 * 60 * 60, // 14 days
 	},
+	issueRefreshToken: async ( ctx: any, client: any, code: any ) => {
+		// Issue refresh token if client supports refresh_token grant and offline_access is requested
+		if ( !client.grantTypeAllowed( "refresh_token" ) ) {
+			return false;
+		}
+		return code.scopes.has( "offline_access" );
+	},
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions
-		refreshTokens: {
-			enabled: true,
-			rotateRefreshToken: true
-		},
 		rpInitiatedLogout: {
 			enabled: true,
 			logoutSource: async ( ctx: any, form: string ) => {
@@ -131,7 +139,7 @@ const configuration: any = {
 			) {
 				if ( resourceIndicator === "api://my-api" ) {
 					return {
-						scope: "accounts:read offline_access",
+						scope: "accounts:read",
 						audience: "api://my-api",
 						accessTokenFormat: "jwt",
 						jwt: {
@@ -175,7 +183,14 @@ async function main() {
 		const details = await provider.interactionDetails( req, res );
 		const prompt = details.prompt.name; // "login" or "consent"
 
-		res.render( "interaction", { uid, prompt } );
+		// Parse requested scopes for display
+		const requestedScopes = String( ( details.params as any )?.scope || "" )
+			.split( " " )
+			.filter( Boolean );
+
+		logger.debug( { requestedScopes, params: details.params }, "Interaction scopes" );
+
+		res.render( "interaction", { uid, prompt, scopes: requestedScopes } );
 	} );
 
 	app.post(

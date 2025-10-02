@@ -75,10 +75,19 @@
               <div class="mt-2 text-sm text-blue-700">
                 <p class="mb-2"><strong>The application is requesting access to:</strong></p>
                 <ul class="list-disc list-inside space-y-1">
-                  <li><code class="bg-blue-100 px-2 py-1 rounded text-xs font-mono">openid</code> - Basic identity</li>
-                  <li><code class="bg-blue-100 px-2 py-1 rounded text-xs font-mono">profile</code> - Profile information</li>
-                  <li><code class="bg-blue-100 px-2 py-1 rounded text-xs font-mono">email</code> - Email address</li>
-                  <li><code class="bg-blue-100 px-2 py-1 rounded text-xs font-mono">accounts:read</code> - Account data</li>
+                  <%
+                    const scopeDescriptions = {
+                      'openid': 'Basic identity',
+                      'profile': 'Profile information',
+                      'email': 'Email address',
+                      'offline_access': 'Offline access (refresh tokens)',
+                      'accounts:read': 'Account data'
+                    };
+
+                    scopes.forEach(scope => {
+                  %>
+                    <li><code class="bg-blue-100 px-2 py-1 rounded text-xs font-mono"><%= scope %></code> - <%= scopeDescriptions[scope] || 'Additional permissions' %></li>
+                  <% }); %>
                 </ul>
               </div>
             </div>
