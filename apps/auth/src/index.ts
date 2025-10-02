@@ -55,6 +55,19 @@ function loadOIDCClients() {
 const OIDC_CLIENTS = loadOIDCClients();
 logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
+// Extract per-client force refresh flag and provide sanitized client metadata to oidc-provider
+const FORCE_REFRESH_CLIENT_ID_SET = new Set<string>(
+	OIDC_CLIENTS
+		.filter( ( c: any ) => Boolean( ( c as any ).force_refresh_token ) )
+		.map( ( c: any ) => String( ( c as any ).client_id ) )
+);
+
+const SANITIZED_CLIENTS = OIDC_CLIENTS.map( ( c: any ) => {
+	// Remove internal flags not recognized by oidc-provider
+	const { force_refresh_token, ...rest } = c as any;
+	return rest;
+} );
+
 const app = express();
 setupBasicExpress( app );
 
@@ -84,7 +97,7 @@ const USERS = new Map<
 ] );
 
 const configuration: any = {
-	clients: OIDC_CLIENTS,
+	clients: SANITIZED_CLIENTS,
 	claims: {
 		openid: [ "sub" ],
 		profile: [ "name" ],
@@ -102,11 +115,16 @@ const configuration: any = {
 		RefreshToken: 14 * 24 * 60 * 60, // 14 days
 	},
 	issueRefreshToken: async ( ctx: any, client: any, code: any ) => {
-		// Issue refresh token if client supports refresh_token grant and offline_access is requested
+		// Issue refresh token if client supports refresh_token grant and either:
+		// - offline_access scope is requested (standard behavior), or
+		// - client has force_refresh_token flag set in .env.clients.json
 		if ( !client.grantTypeAllowed( "refresh_token" ) ) {
 			return false;
 		}
-		return code.scopes.has( "offline_access" );
+		const requestedOfflineAccess = code.scopes.has( "offline_access" );
+		const clientId = ( client as any ).clientId || ( client as any ).client_id;
+		const isForceEnabled = FORCE_REFRESH_CLIENT_ID_SET.has( String( clientId ) );
+		return requestedOfflineAccess || isForceEnabled;
 	},
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions

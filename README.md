@@ -90,6 +90,7 @@ Notes:
 
 - **Multiple client support**: Configure clients via `.env.clients.json` file (see `.env.clients.example.json` for format)
 - **Refresh tokens**: Automatically issued when `offline_access` scope is requested
+- **Refresh tokens**: Automatically issued when `offline_access` is requested; can be force-enabled per client via per-client `force_refresh_token: true` in `.env.clients.json`
 - **Configurable token TTLs**:
   - Session: 1 day
   - Access Token: 1 hour
@@ -156,6 +157,25 @@ REDIRECT_URI=https://app.localtest.me/callback
 COOKIE_SECRET=dev-cookie-secret-CHANGE-FOR-PRODUCTION
 API_AUDIENCE=api://my-api
 ```
+
+### Refresh Token Controls
+
+- Per-client flag in `.env.clients.json` to always issue refresh tokens, even if `offline_access` was not requested:
+
+  ```json
+  [
+    {
+      "client_id": "dev-rp",
+      "client_secret": "dev-secret",
+      "redirect_uris": ["https://app.localtest.me/callback"],
+      "post_logout_redirect_uris": ["https://app.localtest.me"],
+      "grant_types": ["authorization_code", "refresh_token"],
+      "response_types": ["code"],
+      "token_endpoint_auth_method": "client_secret_basic",
+      "force_refresh_token": true
+    }
+  ]
+  ```
 
 ### Multiple Client Configuration
 
