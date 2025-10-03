@@ -247,7 +247,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 			} ),
 			{ httpOnly: true, sameSite: "lax", secure: true, path: "/" }
 		);
-		res.redirect( "/" );
+		res.redirect( "/api-explorer" );
 	} catch ( error ) {
 		logError( logger, error, { context: "OAuth callback" } );
 		const sanitized = sanitizeError( error, "OAuth callback failed" );

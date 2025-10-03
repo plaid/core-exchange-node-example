@@ -297,7 +297,13 @@ async function main() {
 			session: details.session
 		}, "GET /interaction/:uid - Interaction details loaded" );
 
-		res.render( "interaction", { uid, prompt, scopes: requestedScopes } );
+		res.render( "interaction", {
+			uid,
+			prompt,
+			scopes: requestedScopes,
+			error: undefined,
+			email: undefined
+		} );
 	} );
 
 	app.post(
@@ -317,7 +323,21 @@ async function main() {
 			const user = USERS.get( email );
 			if ( !user || user.password != password ) {
 				logger.debug( { uid, email, userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
-				return res.status( 401 ).send( "Invalid credentials" );
+
+				// Get interaction details to extract scopes for re-rendering
+				const details = await provider.interactionDetails( req, res );
+				const requestedScopes = String( details.params.scope || "" )
+					.split( " " )
+					.filter( Boolean );
+
+				// Re-render login form with error message
+				return res.render( "interaction", {
+					uid,
+					prompt: "login",
+					scopes: requestedScopes,
+					error: "Invalid email or password. Please try again.",
+					email  // Preserve the email field
+				} );
 			}
 
 			logger.debug( {

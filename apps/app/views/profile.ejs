@@ -120,14 +120,23 @@
           Test API Endpoints
         </a>
         
-        <a href="/accounts" 
+        <a href="/accounts"
            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
           Quick API Test
         </a>
-        
+
+        <button onclick="refreshTokens()"
+                class="inline-flex items-center px-4 py-2 border border-indigo-300 rounded-md font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
+                <%= !tokens || !tokens.refresh_token ? 'disabled' : '' %>>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh Tokens
+        </button>
+
         <a href="/logout" 
            class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,6 +146,69 @@
         </a>
       </div>
     </div>
+
+    <!-- Refresh Token Result -->
+    <div id="refresh-result" class="mt-8 hidden"></div>
   </div>
+
+  <script>
+    async function refreshTokens() {
+      const resultDiv = document.getElementById('refresh-result');
+      resultDiv.classList.remove('hidden');
+      resultDiv.innerHTML = `
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-blue-800 font-medium">Refreshing tokens...</span>
+          </div>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/api/refresh', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          resultDiv.innerHTML = `
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+              <div class="flex items-center mb-4">
+                <svg class="h-6 w-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-green-800">Tokens Refreshed Successfully!</h3>
+              </div>
+              <div class="space-y-2 text-sm">
+                <p class="text-green-700"><strong>New Access Token:</strong> <code class="bg-green-100 px-2 py-1 rounded">${data.access_token?.substring(0, 50)}...</code></p>
+                ${data.refresh_token ? '<p class="text-green-700"><strong>New Refresh Token:</strong> Received</p>' : ''}
+                ${data.id_token ? '<p class="text-green-700"><strong>New ID Token:</strong> Received</p>' : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          throw new Error(data.error || 'Token refresh failed');
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span class="text-red-800 font-medium">Error: ${error.message}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  </script>
 </body>
 </html>
