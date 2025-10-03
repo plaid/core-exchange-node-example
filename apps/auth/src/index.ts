@@ -191,10 +191,31 @@ const configuration: any = {
 			}
 		},
 		resourceIndicators: {
+			// RFC 8707 - Resource Indicators for OAuth 2.0
+			// This feature is REQUIRED to issue JWT access tokens in oidc-provider v7+
+			// Without this, all access tokens will be opaque (random strings)
 			enabled: true,
-			// This is required in v7+ to issue JWT access tokens
-			// The accessTokenFormat property controls whether tokens are JWT or opaque
-			defaultResource: () => "api://my-api",  // Default resource when client doesn't specify one
+
+			// defaultResource: Called during authorization when client doesn't provide resource parameter
+			// Returns the default resource indicator (audience) for the access token
+			// Must be an absolute URI without fragment (e.g., "https://api.example.com" or "api://my-api")
+			defaultResource: () => "api://my-api",
+
+			// getResourceServerInfo: CRITICAL - This determines the access token format
+			// Called whenever a resource indicator needs to be validated/configured
+			// The returned object MUST include accessTokenFormat to get JWT tokens
+			//
+			// Parameters:
+			//   - ctx: OIDC context (contains request info, client, params)
+			//   - resourceIndicator: The resource URI (e.g., "api://my-api")
+			//   - client: The OIDC client making the request
+			//
+			// Returns ResourceServerInfo object with:
+			//   - scope: Space-separated allowed scopes for this resource
+			//   - audience: The aud claim value in the JWT (usually same as resourceIndicator)
+			//   - accessTokenFormat: "jwt" | "opaque" | "paseto" - MUST be "jwt" for JWT tokens
+			//   - accessTokenTTL: Token lifetime in seconds
+			//   - jwt: (optional) { sign, encrypt } algorithms for additional JWT customization
 			getResourceServerInfo: async ( _ctx: unknown, resourceIndicator: unknown, client: unknown ) => {
 				logger.debug( {
 					resourceIndicator,
@@ -204,14 +225,21 @@ const configuration: any = {
 				const config = {
 					scope: "openid profile email offline_access accounts:read",
 					audience: "api://my-api",
-					accessTokenFormat: "jwt" as const,
+					accessTokenFormat: "jwt" as const,  // CRITICAL: Must be "jwt" to issue JWT tokens
 					accessTokenTTL: 60 * 60  // 1 hour
 				};
 
 				logger.debug( { config }, "getResourceServerInfo returning config" );
 				return config;
 			},
-			// Use the resource from the original authorization grant for token/refresh requests
+
+			// useGrantedResource: Controls whether to reuse resource from original authorization
+			// When true: Token/refresh requests can omit resource parameter and use stored value
+			// When false: Every token request MUST include resource parameter
+			//
+			// IMPORTANT: Even with this set to true, the client SHOULD send the resource
+			// parameter in token exchange requests for RFC 8707 compliance and to avoid
+			// edge cases with openid scope + userinfo endpoint (which defaults to opaque tokens)
 			useGrantedResource: async () => true
 		}
 	},

@@ -205,6 +205,134 @@ The authorization server loads clients in this priority order:
 
 If you change `OP_ISSUER` or ports, also update the client registration (redirect URI) and restart.
 
+## JWT Access Tokens with Resource Indicators (RFC 8707)
+
+This implementation uses **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This is critical for APIs that need to validate tokens locally using JWT verification.
+
+### Why Resource Indicators?
+
+In `oidc-provider` v7+, the `formats.AccessToken: "jwt"` configuration was **deprecated**. To issue JWT access tokens, you **must** use the Resource Indicators feature (`resourceIndicators`).
+
+### How It Works
+
+The access token format is determined by the `accessTokenFormat` property returned from `getResourceServerInfo()`:
+
+```typescript
+resourceIndicators: {
+  enabled: true,
+  getResourceServerInfo: async (ctx, resourceIndicator, client) => {
+    return {
+      scope: "openid profile email accounts:read",
+      audience: "api://my-api",
+      accessTokenFormat: "jwt",  // CRITICAL: This makes tokens JWT instead of opaque
+      accessTokenTTL: 3600
+    };
+  }
+}
+```
+
+### Critical Implementation Details
+
+**The `resource` parameter MUST be sent in THREE places:**
+
+1. **Authorization Request** (`/login` route):
+   ```typescript
+   const url = client.buildAuthorizationUrl(config, {
+     redirect_uri: REDIRECT_URI,
+     scope: "openid email profile offline_access accounts:read",
+     resource: "api://my-api"  // <-- Stores resource in authorization code
+   });
+   ```
+
+2. **Token Exchange Request** (`/callback` route):
+   ```typescript
+   const tokenSet = await client.authorizationCodeGrant(
+     config,
+     currentUrl,
+     { pkceCodeVerifier, expectedState },
+     { resource: "api://my-api" }  // <-- Triggers JWT token issuance
+   );
+   ```
+
+3. **Refresh Token Request** (`/refresh` route):
+   ```typescript
+   const tokenSet = await client.refreshTokenGrant(
+     config,
+     refreshToken,
+     { resource: "api://my-api" }  // <-- Ensures refreshed token is also JWT
+   );
+   ```
+
+### Why All Three Are Required
+
+**Without `resource` in token exchange**, `oidc-provider` has special behavior:
+- If `openid` scope is present AND no `resource` parameter is in the token request
+- oidc-provider issues an **opaque token** for the UserInfo endpoint
+- This happens **even if** you configured `getResourceServerInfo` to return JWT format
+
+From `oidc-provider` source code (`lib/helpers/resolve_resource.js`):
+```javascript
+// If openid scope exists and no resource parameter in token request,
+// oidc-provider defaults to opaque token for UserInfo endpoint
+case !ctx.oidc.params.resource && (!config.userinfo.enabled || !scopes.has('openid')):
+  resource = model.resource;
+  break;
+```
+
+### Verifying JWT Tokens
+
+You can verify the token format in debug logs:
+
+```bash
+LOG_LEVEL=debug pnpm dev
+```
+
+Look for the token response log:
+```json
+{
+  "accessTokenLength": 719,        // JWT: ~700-900 chars
+  "accessTokenParts": 3,           // JWT: 3 parts (header.payload.signature)
+  "accessTokenPrefix": "eyJhbGci"  // JWT: Base64 "eyJ" prefix
+}
+```
+
+**Opaque tokens** (incorrect):
+- Length: 43 characters
+- Parts: 1 (single random string)
+- No Base64 prefix
+
+### Resource Indicator Format
+
+Resource indicators must be:
+- Absolute URIs (e.g., `https://api.example.com` or `api://my-api`)
+- **Without** fragment components (`#`)
+- Can include path components
+
+Examples:
+```typescript
+// ✅ Valid
+"api://my-api"
+"https://api.example.com"
+"https://api.example.com/v1"
+
+// ❌ Invalid
+"my-api"                           // Not absolute URI
+"https://api.example.com#section"  // Contains fragment
+```
+
+### Configuration Reference
+
+**Auth Server** (`apps/auth/src/index.ts`):
+- `resourceIndicators.enabled`: Must be `true`
+- `resourceIndicators.defaultResource()`: Default resource when client doesn't specify
+- `resourceIndicators.getResourceServerInfo()`: **Critical** - returns `accessTokenFormat: "jwt"`
+- `resourceIndicators.useGrantedResource()`: Allows reusing resource from auth request
+
+**Client** (`apps/app/src/index.ts`):
+- Authorization URL: Include `resource` parameter
+- Token exchange: Include `resource` in 4th parameter
+- Refresh token: Include `resource` in 3rd parameter
+
 ## Debugging OAuth Flows
 
 To enable detailed debug logging of the OAuth/OIDC flow, add this to your `.env` file:
@@ -215,10 +343,10 @@ LOG_LEVEL=debug
 
 With debug logging enabled, you'll see detailed information about:
 
-- **Authorization requests**: client_id, redirect_uri, scopes, response_type, state
+- **Authorization requests**: client_id, redirect_uri, scopes, response_type, state, resource
 - **Login attempts**: email provided, authentication success/failure
-- **Consent flow**: grants created/reused, scopes granted, claims requested
-- **Token issuance**: refresh token decisions, offline_access scope handling
+- **Consent flow**: grants created/reused, scopes granted, claims requested, resource indicators
+- **Token issuance**: refresh token decisions, resource server info, token format (JWT vs opaque)
 - **Account lookups**: subject lookups and claim retrieval
 
 Debug logs are output in JSON format via Pino. Example log entry:
@@ -244,7 +372,7 @@ pnpm dev | grep -i "debug\|error"
 Or filter by specific OAuth events:
 
 ```bash
-pnpm dev | grep "interaction\|login\|consent\|issueRefreshToken"
+pnpm dev | grep "interaction\|login\|consent\|issueRefreshToken\|getResourceServerInfo"
 ```
 
 ## Next steps

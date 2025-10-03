@@ -143,6 +143,9 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		path: "/"
 	} );
 
+	// RFC 8707 - Resource Indicators for OAuth 2.0
+	// The 'resource' parameter specifies the target API (audience) for the access token
+	// This tells the authorization server which resource server the token will be used with
 	const url = client.buildAuthorizationUrl( config, {
 		redirect_uri: REDIRECT_URI,
 		scope: "openid email profile offline_access accounts:read",
@@ -150,7 +153,7 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		code_challenge,
 		code_challenge_method: "S256",
 		prompt: "login consent",
-		resource: "api://my-api"
+		resource: API_AUDIENCE  // Resource indicator - must be absolute URI without fragment
 	} );
 	logger.debug( { url: url.href }, "Authorization URL generated" );
 	res.redirect( url.href );
@@ -210,6 +213,18 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		logger.debug( { expectedState: cookieVal.state }, "- Expected state" );
 		logger.debug( { codeVerifierPresent: !!cookieVal.code_verifier }, "- Code verifier present" );
 
+		// CRITICAL: The 'resource' parameter MUST be included in the token exchange
+		// Per RFC 8707, the resource parameter should be sent in BOTH:
+		//   1. Authorization request (above in /login route)
+		//   2. Token exchange request (here)
+		//
+		// Why both are needed:
+		// - Authorization request: Stores resource in the authorization code
+		// - Token exchange: Tells the server which resource to issue the token for
+		//
+		// Without resource in token exchange, oidc-provider may issue an opaque token
+		// for the UserInfo endpoint instead of a JWT for your API, especially when
+		// the 'openid' scope is present.
 		const tokenSet = await client.authorizationCodeGrant(
 			config,
 			currentUrl,
@@ -218,7 +233,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 				expectedState: cookieVal.state
 			},
 			{
-				resource: API_AUDIENCE  // Include resource parameter in token exchange
+				resource: API_AUDIENCE  // Resource indicator for token exchange (RFC 8707)
 			}
 		);
 
@@ -264,8 +279,9 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 		}, "POST /refresh - Attempting refresh" );
 
 		// Use refreshTokenGrant to exchange refresh token for new tokens
+		// The resource parameter must be included here too for the same reasons as above
 		const tokenSet = await client.refreshTokenGrant( config!, tokens.refresh_token, {
-			resource: API_AUDIENCE  // Include resource parameter in token exchange
+			resource: API_AUDIENCE  // Resource indicator for refresh token exchange (RFC 8707)
 		} );
 
 		logger.debug( {
