@@ -8,14 +8,21 @@ import { getOptionalEnv, getEnvBoolean } from "./environment.js";
 /**
  * Standard logger configuration for development
  */
-export const createDevelopmentLogger = () => pino( {
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true
+export const createDevelopmentLogger = ( serviceName?: string ) => {
+	const logLevel = getOptionalEnv( "LOG_LEVEL", "info" );
+	return pino( {
+		level: logLevel,
+		...( serviceName && { name: serviceName } ),
+		transport: {
+			target: "pino-pretty",
+			options: {
+				colorize: true,
+				// Ensure pino-pretty doesn't filter out debug logs
+				minimumLevel: logLevel
+			}
 		}
-	}
-} );
+	} );
+};
 
 /**
  * Standard logger configuration for production
@@ -33,7 +40,7 @@ export const createLogger = ( serviceName?: string ) => {
 	const isDevelopment = process.env.NODE_ENV !== "production";
 
 	if ( isDevelopment ) {
-		return createDevelopmentLogger();
+		return createDevelopmentLogger( serviceName );
 	}
 
 	return createProductionLogger( serviceName );

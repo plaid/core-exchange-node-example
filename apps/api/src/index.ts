@@ -47,29 +47,67 @@ app.use( express.json() );
 // Auth middleware
 app.use( async ( req: Request, res: Response, next: NextFunction ) => {
 	if ( req.path.startsWith( "/public" ) ) return next();
+
+	logger.debug( {
+		method: req.method,
+		path: req.path,
+		query: req.query,
+		hasAuthHeader: !!req.headers["authorization"]
+	}, "API request received" );
+
 	const auth = req.headers["authorization"] || "";
 	const token =
 		typeof auth === "string" && auth.startsWith( "Bearer " ) ? auth.slice( 7 ) : "";
+
 	if ( !token ) {
+		logger.debug( {
+			path: req.path,
+			authHeader: auth ? "present but invalid format" : "missing"
+		}, "Token validation failed - No bearer token" );
 		const error = new AuthenticationError( "Missing access token" );
 		return res.status( 401 ).json( sanitizeError( error, "Authentication required" ) );
 	}
+
+	// Log token structure (first/last 10 chars for debugging without exposing full token)
+	logger.debug( {
+		path: req.path,
+		tokenPrefix: token.substring( 0, 10 ),
+		tokenSuffix: token.substring( token.length - 10 ),
+		tokenLength: token.length
+	}, "Token received, attempting validation" );
+
 	try {
 		const parts = token.split( "." );
 		if ( parts.length !== 3 ) {
 			logger.warn( {
 				parts: parts.length,
 				tokenLength: token.length
-				// Don't log the actual token for security
 			}, "Access token not a compact JWS" );
 		}
 		const { payload } = await jwtVerify( token, JWKS, {
 			issuer: ISSUER,
 			audience: AUDIENCE
 		} );
+
+		logger.debug( {
+			path: req.path,
+			sub: payload.sub,
+			scope: payload.scope,
+			clientId: payload.client_id,
+			iss: payload.iss,
+			aud: payload.aud,
+			exp: payload.exp,
+			iat: payload.iat
+		}, "Token validation successful" );
+
 		( req as AuthenticatedRequest ).user = payload;
 		next();
 	} catch ( e ) {
+		logger.debug( {
+			path: req.path,
+			errorName: e instanceof Error ? e.name : "unknown",
+			errorMessage: e instanceof Error ? e.message : "unknown"
+		}, "Token validation failed" );
 		logError( logger, e, { context: "JWT verification" } );
 		const error = new AuthenticationError( "Invalid access token" );
 		return res.status( 401 ).json( sanitizeError( error, "Authentication failed" ) );

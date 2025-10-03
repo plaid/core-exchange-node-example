@@ -124,8 +124,7 @@ app.get( "/", async ( req: Request, res: Response ) => {
 	const tokens: TokenSet | null = tokensCookie
 		? JSON.parse( tokensCookie )
 		: null;
-	if ( !tokens?.access_token ) return res.redirect( "/login" );
-	res.redirect( "/api-explorer" );
+	res.render( "index", { tokens } );
 } );
 
 app.get( "/login", async ( _req: Request, res: Response ) => {
@@ -233,6 +232,67 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 	} catch ( error ) {
 		logError( logger, error, { context: "OAuth callback" } );
 		const sanitized = sanitizeError( error, "OAuth callback failed" );
+		res.status( 400 ).json( sanitized );
+	}
+} );
+
+// Refresh token endpoint - manually trigger a token refresh
+app.post( "/refresh", async ( req: Request, res: Response ) => {
+	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
+	const tokens: TokenSet | null = tokensCookie ? JSON.parse( tokensCookie ) : null;
+
+	logger.debug( {
+		hasTokens: !!tokens,
+		hasRefreshToken: !!tokens?.refresh_token
+	}, "POST /refresh - Refresh token request" );
+
+	if ( !tokens?.refresh_token ) {
+		logger.debug( "POST /refresh - No refresh token available" );
+		return res.status( 400 ).json( { error: "No refresh token available" } );
+	}
+
+	try {
+		await ensureConfig();
+
+		logger.debug( {
+			refreshTokenPrefix: tokens.refresh_token.substring( 0, 10 ),
+			refreshTokenLength: tokens.refresh_token.length
+		}, "POST /refresh - Attempting refresh" );
+
+		// Use refreshTokenGrant to exchange refresh token for new tokens
+		const tokenSet = await client.refreshTokenGrant( config!, tokens.refresh_token );
+
+		logger.debug( {
+			newAccessTokenIssued: !!tokenSet.access_token,
+			newRefreshTokenIssued: !!tokenSet.refresh_token,
+			newIdTokenIssued: !!tokenSet.id_token
+		}, "POST /refresh - Refresh successful" );
+
+		// Update tokens in cookie
+		res.cookie(
+			"tokens",
+			JSON.stringify( {
+				access_token: tokenSet.access_token,
+				refresh_token: tokenSet.refresh_token || tokens.refresh_token, // Keep old refresh token if no new one
+				id_token: tokenSet.id_token || tokens.id_token // Keep old ID token if no new one
+			} ),
+			{ httpOnly: true, sameSite: "lax", secure: true, path: "/" }
+		);
+
+		res.json( {
+			success: true,
+			message: "Tokens refreshed successfully",
+			accessTokenIssued: !!tokenSet.access_token,
+			refreshTokenIssued: !!tokenSet.refresh_token,
+			idTokenIssued: !!tokenSet.id_token
+		} );
+	} catch ( error ) {
+		logger.debug( {
+			errorName: error instanceof Error ? error.name : "unknown",
+			errorMessage: error instanceof Error ? error.message : "unknown"
+		}, "POST /refresh - Refresh failed" );
+		logError( logger, error, { context: "Token refresh" } );
+		const sanitized = sanitizeError( error, "Token refresh failed" );
 		res.status( 400 ).json( sanitized );
 	}
 } );

@@ -14,7 +14,17 @@ import {
 } from "@apps/shared";
 
 // Create logger for OP service
+// Debug logging can be enabled by setting LOG_LEVEL=debug in your .env file
+// This will log detailed information about:
+// - OAuth authorization requests (client_id, redirect_uri, scopes, state)
+// - Login attempts (email, success/failure)
+// - Consent flow (grants, scopes, claims)
+// - Token issuance decisions (refresh tokens, access tokens)
+// - Account lookups and claim retrieval
 const logger = createLogger( "op" );
+
+// Log the current log level on startup for debugging
+logger.info( { logLevel: logger.level, envLogLevel: process.env.LOG_LEVEL }, "Logger initialized" );
 
 // Environment configuration
 
@@ -133,13 +143,27 @@ const configuration: any = {
 		// Issue refresh token if client supports refresh_token grant and either:
 		// - offline_access scope is requested (standard behavior), or
 		// - client has force_refresh_token flag set in .env.clients.json
-		if ( !client.grantTypeAllowed( "refresh_token" ) ) {
+		const clientId = client.clientId || client.client_id;
+		const grantTypeAllowed = client.grantTypeAllowed( "refresh_token" );
+
+		if ( !grantTypeAllowed ) {
+			logger.debug( { clientId }, "issueRefreshToken - Client does not support refresh_token grant type" );
 			return false;
 		}
+
 		const requestedOfflineAccess = code.scopes.has( "offline_access" );
-		const clientId = client.clientId || client.client_id;
 		const isForceEnabled = FORCE_REFRESH_CLIENT_ID_SET.has( String( clientId ) );
-		return requestedOfflineAccess || isForceEnabled;
+		const willIssue = requestedOfflineAccess || isForceEnabled;
+
+		logger.debug( {
+			clientId,
+			requestedOfflineAccess,
+			isForceEnabled,
+			willIssueRefreshToken: willIssue,
+			scopes: Array.from( code.scopes )
+		}, "issueRefreshToken - Refresh token decision" );
+
+		return willIssue;
 	},
 	features: {
 		devInteractions: { enabled: false }, // we provide our own interactions
@@ -191,15 +215,23 @@ const configuration: any = {
 	audience: async () => "api://my-api",
 	// Adapter TODO: move to Postgres adapter for persistence in real testing
 	// See oidc-provider docs for Adapter interface
-	findAccount: async ( _ctx: unknown, sub: string ) => ( {
-		accountId: sub,
-		async claims() {
-			// naive mapping: sub is the user id
-			for ( const [ , u ] of USERS )
-				if ( u.id === sub ) return { sub, email: u.email, name: u.name };
-			return { sub };
-		}
-	} ),
+	findAccount: async ( _ctx: unknown, sub: string ) => {
+		logger.debug( { sub }, "findAccount - Looking up account" );
+		return {
+			accountId: sub,
+			async claims() {
+				// naive mapping: sub is the user id
+				for ( const [ , u ] of USERS ) {
+					if ( u.id === sub ) {
+						logger.debug( { sub, email: u.email, name: u.name }, "findAccount - Claims retrieved" );
+						return { sub, email: u.email, name: u.name };
+					}
+				}
+				logger.debug( { sub }, "findAccount - No user found, returning minimal claims" );
+				return { sub };
+			}
+		};
+	},
 	interactions: {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		url: ( _ctx: unknown, interaction: any ) => `/interaction/${ interaction.uid }`
@@ -214,6 +246,8 @@ async function main() {
 	// Interactions (login + consent) in-process for simplicity
 	app.get( "/interaction/:uid", async ( req: Request, res: Response ) => {
 		const { uid } = req.params;
+		logger.debug( { uid, query: req.query, cookies: req.cookies }, "GET /interaction/:uid - Request received" );
+
 		const details = await provider.interactionDetails( req, res );
 		const prompt = details.prompt.name; // "login" or "consent"
 
@@ -222,7 +256,16 @@ async function main() {
 			.split( " " )
 			.filter( Boolean );
 
-		logger.debug( { requestedScopes, params: details.params }, "Interaction scopes" );
+		logger.debug( {
+			uid,
+			prompt,
+			requestedScopes,
+			clientId: details.params.client_id,
+			redirectUri: details.params.redirect_uri,
+			responseType: details.params.response_type,
+			state: details.params.state,
+			session: details.session
+		}, "GET /interaction/:uid - Interaction details loaded" );
 
 		res.render( "interaction", { uid, prompt, scopes: requestedScopes } );
 	} );
@@ -231,21 +274,47 @@ async function main() {
 		"/interaction/:uid/login",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
+			const { uid } = req.params;
 			const email = String( req.body?.email || "" );
 			const password = String( req.body?.password || "" );
 
+			logger.debug( {
+				uid,
+				email,
+				passwordProvided: !!password
+			}, "POST /interaction/:uid/login - Login attempt" );
+
 			const user = USERS.get( email );
 			if ( !user || user.password != password ) {
+				logger.debug( { uid, email, userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
 				return res.status( 401 ).send( "Invalid credentials" );
 			}
+
+			logger.debug( {
+				uid,
+				email,
+				userId: user.id
+			}, "POST /interaction/:uid/login - Authentication successful" );
 
 			const result = {
 				login: { accountId: user.id }
 				// You can remember the login with a cookie/session in a real app
 			};
+
+			logger.debug( {
+				uid,
+				result
+			}, "POST /interaction/:uid/login - Submitting login result to provider" );
+
 			const redirectTo = await provider.interactionResult( req, res, result, {
 				mergeWithLastSubmission: false
 			} );
+
+			logger.debug( {
+				uid,
+				redirectTo
+			}, "POST /interaction/:uid/login - Redirecting to next step" );
+
 			return res.redirect( 303, redirectTo );
 		}
 	);
@@ -254,8 +323,19 @@ async function main() {
 		"/interaction/:uid/confirm",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
+			const { uid } = req.params;
+			logger.debug( { uid }, "POST /interaction/:uid/confirm - Consent confirmation received" );
+
 			const details = await provider.interactionDetails( req, res );
 			const { grantId, prompt } = details;
+
+			logger.debug( {
+				uid,
+				clientId: details.params.client_id,
+				existingGrantId: grantId,
+				accountId: details.session?.accountId,
+				requestedScopes: details.params.scope
+			}, "POST /interaction/:uid/confirm - Processing consent" );
 
 			// Reuse existing grant or create a new one
 			const grant = grantId
@@ -265,10 +345,16 @@ async function main() {
 					clientId: details.params.client_id as string
 				} );
 
+			logger.debug( {
+				uid,
+				grantMode: grantId ? "existing" : "new"
+			}, "POST /interaction/:uid/confirm - Grant initialized" );
+
 			// Always include originally requested scopes from the authorization request
 			const requestedScopes = String( details.params.scope || "" ).trim();
 			if ( requestedScopes ) {
 				grant.addOIDCScope( requestedScopes );
+				logger.debug( { uid, requestedScopes }, "POST /interaction/:uid/confirm - Added OIDC scopes from params" );
 			}
 
 			// Grant exactly what is being requested by this prompt
@@ -278,6 +364,7 @@ async function main() {
         | undefined;
 			if ( missingOIDCScopes && missingOIDCScopes.length > 0 ) {
 				grant.addOIDCScope( missingOIDCScopes.join( " " ) );
+				logger.debug( { uid, missingOIDCScopes }, "POST /interaction/:uid/confirm - Added missing OIDC scopes" );
 			}
 
 			const missingOIDCClaims = promptDetails?.missingOIDCClaims as
@@ -285,6 +372,7 @@ async function main() {
         | undefined;
 			if ( missingOIDCClaims && Object.keys( missingOIDCClaims ).length > 0 ) {
 				grant.addOIDCClaims( Object.keys( missingOIDCClaims ) );
+				logger.debug( { uid, missingOIDCClaims: Object.keys( missingOIDCClaims ) }, "POST /interaction/:uid/confirm - Added missing OIDC claims" );
 			}
 
 			const missingResourceScopes = promptDetails?.missingResourceScopes as
@@ -296,19 +384,81 @@ async function main() {
 				) ) {
 					if ( scopes.length > 0 ) {
 						grant.addResourceScope( resourceIndicator, scopes.join( " " ) );
+						logger.debug( { uid, resourceIndicator, scopes }, "POST /interaction/:uid/confirm - Added resource scopes" );
 					}
 				}
 			}
 
 			const finalGrantId = await grant.save();
+			logger.debug( { uid, finalGrantId }, "POST /interaction/:uid/confirm - Grant saved" );
 
 			const result = { consent: { grantId: finalGrantId } };
+
+			logger.debug( {
+				uid,
+				result
+			}, "POST /interaction/:uid/confirm - Submitting consent result to provider" );
+
 			const redirectTo = await provider.interactionResult( req, res, result, {
 				mergeWithLastSubmission: true
 			} );
+
+			logger.debug( {
+				uid,
+				redirectTo
+			}, "POST /interaction/:uid/confirm - Redirecting to callback" );
+
 			return res.redirect( 303, redirectTo );
 		}
 	);
+
+	// Log all OIDC provider requests for debugging
+	app.use( ( req: Request, res: Response, next ) => {
+		// Log token endpoint requests (POST /token)
+		if ( req.path === "/token" && req.method === "POST" ) {
+			logger.debug( {
+				method: req.method,
+				path: req.path,
+				grantType: req.body?.grant_type,
+				clientId: req.body?.client_id,
+				code: req.body?.code ? "present" : "missing",
+				refreshToken: req.body?.refresh_token ? "present" : "missing"
+			}, "POST /token - Token request received" );
+		}
+
+		// Log authorization endpoint requests (GET /auth)
+		if ( req.path === "/auth" && req.method === "GET" ) {
+			logger.debug( {
+				method: req.method,
+				path: req.path,
+				clientId: req.query.client_id,
+				redirectUri: req.query.redirect_uri,
+				responseType: req.query.response_type,
+				scope: req.query.scope,
+				state: req.query.state
+			}, "GET /auth - Authorization request received" );
+		}
+
+		// Intercept response to log token response
+		const originalJson = res.json.bind( res );
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		res.json = function ( body: any ) {
+			if ( req.path === "/token" ) {
+				logger.debug( {
+					path: req.path,
+					accessTokenIssued: !!body.access_token,
+					idTokenIssued: !!body.id_token,
+					refreshTokenIssued: !!body.refresh_token,
+					tokenType: body.token_type,
+					expiresIn: body.expires_in,
+					scope: body.scope
+				}, "POST /token - Token response sent" );
+			}
+			return originalJson( body );
+		};
+
+		next();
+	} );
 
 	// Hand off all other routes to oidc-provider
 	app.use( ( req: Request, res: Response ) => {

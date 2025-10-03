@@ -205,6 +205,48 @@ The authorization server loads clients in this priority order:
 
 If you change `OP_ISSUER` or ports, also update the client registration (redirect URI) and restart.
 
+## Debugging OAuth Flows
+
+To enable detailed debug logging of the OAuth/OIDC flow, add this to your `.env` file:
+
+```bash
+LOG_LEVEL=debug
+```
+
+With debug logging enabled, you'll see detailed information about:
+
+- **Authorization requests**: client_id, redirect_uri, scopes, response_type, state
+- **Login attempts**: email provided, authentication success/failure
+- **Consent flow**: grants created/reused, scopes granted, claims requested
+- **Token issuance**: refresh token decisions, offline_access scope handling
+- **Account lookups**: subject lookups and claim retrieval
+
+Debug logs are output in JSON format via Pino. Example log entry:
+
+```json
+{
+  "level": 20,
+  "time": 1234567890,
+  "name": "op",
+  "uid": "abc123",
+  "clientId": "dev-rp",
+  "requestedScopes": ["openid", "email", "profile", "offline_access"],
+  "msg": "GET /interaction/:uid - Interaction details loaded"
+}
+```
+
+To watch logs in real-time during development:
+
+```bash
+pnpm dev | grep -i "debug\|error"
+```
+
+Or filter by specific OAuth events:
+
+```bash
+pnpm dev | grep "interaction\|login\|consent\|issueRefreshToken"
+```
+
 ## Next steps
 
 - Implement a **Postgres Adapter** for `oidc-provider` so codes/sessions/grants persist.

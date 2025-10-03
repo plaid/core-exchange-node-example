@@ -30,7 +30,11 @@
     --color-blue-600: oklch(54.6% 0.245 262.881);
     --color-blue-700: oklch(48.8% 0.243 264.376);
     --color-blue-800: oklch(42.4% 0.199 265.638);
+    --color-indigo-50: oklch(96.2% 0.018 272.314);
+    --color-indigo-100: oklch(93% 0.034 272.788);
+    --color-indigo-300: oklch(78.5% 0.115 274.713);
     --color-indigo-500: oklch(58.5% 0.233 277.117);
+    --color-indigo-700: oklch(45.7% 0.24 277.023);
     --color-gray-50: oklch(98.5% 0.002 247.839);
     --color-gray-100: oklch(96.7% 0.003 264.542);
     --color-gray-200: oklch(92.8% 0.006 264.531);
@@ -240,6 +244,9 @@
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
   }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
   .mt-8 {
     margin-top: calc(var(--spacing) * 8);
   }
@@ -332,6 +339,9 @@
   }
   .flex-shrink-0 {
     flex-shrink: 0;
+  }
+  .cursor-not-allowed {
+    cursor: not-allowed;
   }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -451,6 +461,9 @@
   .border-green-200 {
     border-color: var(--color-green-200);
   }
+  .border-indigo-300 {
+    border-color: var(--color-indigo-300);
+  }
   .border-red-200 {
     border-color: var(--color-red-200);
   }
@@ -483,6 +496,9 @@
   }
   .bg-green-100 {
     background-color: var(--color-green-100);
+  }
+  .bg-indigo-50 {
+    background-color: var(--color-indigo-50);
   }
   .bg-red-50 {
     background-color: var(--color-red-50);
@@ -610,6 +626,9 @@
   .text-green-800 {
     color: var(--color-green-800);
   }
+  .text-indigo-700 {
+    color: var(--color-indigo-700);
+  }
   .text-orange-600 {
     color: var(--color-orange-600);
   }
@@ -630,6 +649,9 @@
   }
   .text-white {
     color: var(--color-white);
+  }
+  .opacity-50 {
+    opacity: 50%;
   }
   .shadow-sm {
     --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
@@ -670,6 +692,13 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-gray-100);
+      }
+    }
+  }
+  .hover\:bg-indigo-100 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-indigo-100);
       }
     }
   }
