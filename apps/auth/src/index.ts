@@ -445,6 +445,8 @@ async function main() {
 
 		// Intercept response to log token response
 		const originalSend = res.send.bind( res );
+		const originalEnd = res.end.bind( res );
+
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		res.send = function ( body: any ) {
 			if ( req.path === "/token" && req.method === "POST" ) {
@@ -458,13 +460,35 @@ async function main() {
 						tokenType: parsed.token_type,
 						expiresIn: parsed.expires_in,
 						scope: parsed.scope
-					}, "POST /token - Token response sent" );
+					}, "POST /token - Token response sent (via send)" );
 				} catch {
-					// If parsing fails, just log that a response was sent
 					logger.debug( { path: req.path }, "POST /token - Response sent (could not parse)" );
 				}
 			}
 			return originalSend( body );
+		};
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		res.end = function ( chunk?: any, ...args: any[] ) {
+			if ( req.path === "/token" && req.method === "POST" && chunk ) {
+				try {
+					const parsed = typeof chunk === "string" ? JSON.parse( chunk ) : chunk;
+					if ( parsed.access_token ) {
+						logger.debug( {
+							path: req.path,
+							accessTokenIssued: !!parsed.access_token,
+							idTokenIssued: !!parsed.id_token,
+							refreshTokenIssued: !!parsed.refresh_token,
+							tokenType: parsed.token_type,
+							expiresIn: parsed.expires_in,
+							scope: parsed.scope
+						}, "POST /token - Token response sent (via end)" );
+					}
+				} catch {
+					// Ignore parsing errors
+				}
+			}
+			return originalEnd( chunk, ...args );
 		};
 
 		next();
