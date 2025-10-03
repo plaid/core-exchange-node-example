@@ -134,18 +134,6 @@ const configuration: any = {
 	},
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
 	pkce: { methods: [ "S256" ], required: () => true },
-	formats: {
-		AccessToken: "jwt"
-	},
-	// Force JWT access tokens by always providing an audience
-	// This is the key - without audience, oidc-provider defaults to opaque tokens
-	async extraAccessTokenClaims( _ctx: unknown, token: unknown ) {
-		// Adding extra claims forces JWT format
-		return {
-			aud: "api://my-api",  // Set default audience for all access tokens
-			scope: ( token as { scope?: string } )?.scope || "openid"
-		};
-	},
 	ttl: {
 		Session: 24 * 60 * 60,        // 1 day
 		Grant: 365 * 24 * 60 * 60,    // 1 year
@@ -203,10 +191,19 @@ const configuration: any = {
 			}
 		},
 		resourceIndicators: {
-			enabled: false  // Disable to force JWT for all access tokens
+			enabled: true,
+			// This is required in v7+ to issue JWT access tokens
+			// The accessTokenFormat property controls whether tokens are JWT or opaque
+			getResourceServerInfo: async () => {
+				return {
+					scope: "openid profile email offline_access accounts:read",
+					audience: "api://my-api",
+					accessTokenFormat: "jwt",
+					accessTokenTTL: 60 * 60  // 1 hour
+				};
+			}
 		}
 	},
-	audience: async () => "api://my-api",
 	// Adapter TODO: move to Postgres adapter for persistence in real testing
 	// See oidc-provider docs for Adapter interface
 	findAccount: async ( _ctx: unknown, sub: string ) => {
