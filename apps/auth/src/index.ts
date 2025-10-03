@@ -135,7 +135,16 @@ const configuration: any = {
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
 	pkce: { methods: [ "S256" ], required: () => true },
 	formats: {
-		AccessToken: async () => "jwt"  // Always return JWT format for access tokens
+		AccessToken: "jwt"
+	},
+	// Force JWT access tokens by always providing an audience
+	// This is the key - without audience, oidc-provider defaults to opaque tokens
+	async extraAccessTokenClaims( _ctx: unknown, token: unknown ) {
+		// Adding extra claims forces JWT format
+		return {
+			aud: "api://my-api",  // Set default audience for all access tokens
+			scope: ( token as { scope?: string } )?.scope || "openid"
+		};
 	},
 	ttl: {
 		Session: 24 * 60 * 60,        // 1 day
