@@ -97,6 +97,10 @@ setupBasicExpress( app );
 // Security headers
 app.use( createWebSecurityHeaders() );
 
+// Body parsers (needed to log token request parameters)
+app.use( express.urlencoded( { extended: false } ) );
+app.use( express.json() );
+
 // Template engine
 setupEJSTemplates( app, new URL( "../views", import.meta.url ).pathname );
 
@@ -440,21 +444,27 @@ async function main() {
 		}
 
 		// Intercept response to log token response
-		const originalJson = res.json.bind( res );
+		const originalSend = res.send.bind( res );
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		res.json = function ( body: any ) {
-			if ( req.path === "/token" ) {
-				logger.debug( {
-					path: req.path,
-					accessTokenIssued: !!body.access_token,
-					idTokenIssued: !!body.id_token,
-					refreshTokenIssued: !!body.refresh_token,
-					tokenType: body.token_type,
-					expiresIn: body.expires_in,
-					scope: body.scope
-				}, "POST /token - Token response sent" );
+		res.send = function ( body: any ) {
+			if ( req.path === "/token" && req.method === "POST" ) {
+				try {
+					const parsed = typeof body === "string" ? JSON.parse( body ) : body;
+					logger.debug( {
+						path: req.path,
+						accessTokenIssued: !!parsed.access_token,
+						idTokenIssued: !!parsed.id_token,
+						refreshTokenIssued: !!parsed.refresh_token,
+						tokenType: parsed.token_type,
+						expiresIn: parsed.expires_in,
+						scope: parsed.scope
+					}, "POST /token - Token response sent" );
+				} catch {
+					// If parsing fails, just log that a response was sent
+					logger.debug( { path: req.path }, "POST /token - Response sent (could not parse)" );
+				}
 			}
-			return originalJson( body );
+			return originalSend( body );
 		};
 
 		next();
