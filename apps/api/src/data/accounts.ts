@@ -129,7 +129,8 @@ export const accounts = [
 		},
 		accountType: "MORTGAGE",
 		accountNumber: "MORT-9876-2021",
-		principalBalance: 285000.00,  // Amount owed (required)
+		currentBalance: 285000.00,  // Total amount owed
+		principalBalance: 285000.00,  // Principal balance (required)
 		originalPrincipal: 320000.00,
 		interestRate: 3.75,  // Required
 		interestRateType: "FIXED",  // Required
@@ -145,7 +146,8 @@ export const accounts = [
 			currencyCode: "USD"
 		},
 		accountType: "AUTOLOAN",
-		principalBalance: 18750.25,  // Amount owed (required)
+		currentBalance: 18750.25,  // Total amount owed
+		principalBalance: 18750.25,  // Principal balance (required)
 		originalPrincipal: 32000.00,
 		interestRate: 4.5,  // Required
 		interestRateType: "FIXED"  // Required

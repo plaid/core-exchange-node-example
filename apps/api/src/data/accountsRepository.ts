@@ -14,7 +14,17 @@ interface Account {
 	currency: Currency;
 	accountType: string;
 	currentBalance: number;
-	availableBalance: number;
+	availableBalance?: number;  // Optional - not present on all account types
+	// Line of Credit fields
+	availableCredit?: number;
+	creditLine?: number;
+	// Loan fields
+	accountNumber?: string;
+	principalBalance?: number;
+	originalPrincipal?: number;
+	interestRate?: number;
+	interestRateType?: string;
+	loanTerm?: number;
 }
 
 interface Name {
