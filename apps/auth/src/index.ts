@@ -134,7 +134,9 @@ const configuration: any = {
 	},
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
 	pkce: { methods: [ "S256" ], required: () => true },
-	formats: { AccessToken: "jwt" },
+	formats: {
+		AccessToken: async () => "jwt"  // Always return JWT format for access tokens
+	},
 	ttl: {
 		Session: 24 * 60 * 60,        // 1 day
 		Grant: 365 * 24 * 60 * 60,    // 1 year
