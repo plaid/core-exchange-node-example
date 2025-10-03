@@ -474,11 +474,24 @@ async function main() {
 				try {
 					const parsed = typeof chunk === "string" ? JSON.parse( chunk ) : chunk;
 					if ( parsed.access_token ) {
+						// Count dots to determine JWT format (should have 2 dots = 3 parts)
+						const accessTokenParts = parsed.access_token ? parsed.access_token.split( "." ).length : 0;
+						const idTokenParts = parsed.id_token ? parsed.id_token.split( "." ).length : 0;
+						const refreshTokenParts = parsed.refresh_token ? parsed.refresh_token.split( "." ).length : 0;
+
 						logger.debug( {
 							path: req.path,
 							accessTokenIssued: !!parsed.access_token,
+							accessTokenLength: parsed.access_token ? parsed.access_token.length : 0,
+							accessTokenParts,
+							accessTokenPrefix: parsed.access_token ? parsed.access_token.substring( 0, 20 ) : "",
 							idTokenIssued: !!parsed.id_token,
+							idTokenLength: parsed.id_token ? parsed.id_token.length : 0,
+							idTokenParts,
 							refreshTokenIssued: !!parsed.refresh_token,
+							refreshTokenLength: parsed.refresh_token ? parsed.refresh_token.length : 0,
+							refreshTokenParts,
+							refreshTokenPrefix: parsed.refresh_token ? parsed.refresh_token.substring( 0, 20 ) : "",
 							tokenType: parsed.token_type,
 							expiresIn: parsed.expires_in,
 							scope: parsed.scope
