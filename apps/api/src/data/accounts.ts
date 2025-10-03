@@ -103,6 +103,52 @@ export const accounts = [
 		accountType: "OTHERDEPOSIT",
 		currentBalance: 3250.00,
 		availableBalance: 3250.00
+	},
+	{
+		accountCategory: "LOC_ACCOUNT",
+		accountId: "account-601",
+		accountNumberDisplay: "4532",
+		productName: "Platinum Rewards Credit Card",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "CREDITCARD",
+		currentBalance: 2845.50,  // Amount owed
+		availableCredit: 17154.50,  // Available credit
+		creditLine: 20000.00  // Credit limit
+	},
+	{
+		accountCategory: "LOAN_ACCOUNT",
+		accountId: "account-602",
+		accountNumberDisplay: "9876",
+		productName: "Home Mortgage Loan",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "MORTGAGE",
+		accountNumber: "MORT-9876-2021",
+		principalBalance: 285000.00,  // Amount owed (required)
+		originalPrincipal: 320000.00,
+		interestRate: 3.75,  // Required
+		interestRateType: "FIXED",  // Required
+		loanTerm: 360  // months
+	},
+	{
+		accountCategory: "LOAN_ACCOUNT",
+		accountId: "account-603",
+		accountNumberDisplay: "1234",
+		productName: "Auto Loan - 2022 Vehicle",
+		status: "OPEN",
+		currency: {
+			currencyCode: "USD"
+		},
+		accountType: "AUTOLOAN",
+		principalBalance: 18750.25,  // Amount owed (required)
+		originalPrincipal: 32000.00,
+		interestRate: 4.5,  // Required
+		interestRateType: "FIXED"  // Required
 	}
 ];
 
@@ -402,6 +448,109 @@ export const accountContacts = {
 				country: "1",
 				number: "2125558642",
 				network: "LANDLINE"
+			}
+		]
+	},
+	"account-601": {
+		holders: [
+			{
+				relationship: "PRIMARY",
+				name: {
+					first: "Langston",
+					last: "Hughes"
+				}
+			}
+		],
+		emails: [
+			"langston.hughes@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "20 East 127th Street",
+				city: "New York",
+				region: "NY",
+				postalCode: "10035",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "2125559988",
+				network: "CELLULAR"
+			}
+		]
+	},
+	"account-602": {
+		holders: [
+			{
+				relationship: "PRIMARY_JOINT",
+				name: {
+					first: "Willa",
+					last: "Cather"
+				}
+			},
+			{
+				relationship: "SECONDARY_JOINT",
+				name: {
+					first: "Edith",
+					last: "Lewis"
+				}
+			}
+		],
+		emails: [
+			"willa.cather@domain.tld",
+			"edith.lewis@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "5 Bank Street",
+				line2: "Apartment 8B",
+				city: "New York",
+				region: "NY",
+				postalCode: "10014",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "HOME",
+				country: "1",
+				number: "2125553344",
+				network: "LANDLINE"
+			}
+		]
+	},
+	"account-603": {
+		holders: [
+			{
+				relationship: "SOLE_OWNER",
+				name: {
+					first: "Zora",
+					middle: "Neale",
+					last: "Hurston"
+				}
+			}
+		],
+		emails: [
+			"zora.hurston@domain.tld"
+		],
+		addresses: [
+			{
+				line1: "1734 School Court Street",
+				city: "Eatonville",
+				region: "FL",
+				postalCode: "32751",
+				country: "US"
+			}
+		],
+		telephones: [
+			{
+				type: "PERSONAL",
+				country: "1",
+				number: "4075556677",
+				network: "CELLULAR"
 			}
 		]
 	}
