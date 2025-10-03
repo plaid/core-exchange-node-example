@@ -17,6 +17,7 @@ import {
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	globalThis.crypto = webcrypto as any;
 }
 

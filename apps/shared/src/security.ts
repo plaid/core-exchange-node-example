@@ -108,6 +108,7 @@ export class NotFoundError extends Error {
 /**
  * Log errors securely (avoiding sensitive data in logs)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function logError( logger: any, error: unknown, context?: Record<string, unknown> ) {
 	if ( error instanceof Error ) {
 		logger.error( {

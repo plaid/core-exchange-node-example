@@ -55,16 +55,29 @@ function loadOIDCClients() {
 const OIDC_CLIENTS = loadOIDCClients();
 logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
+// Define client type with optional force_refresh_token flag
+interface OIDCClientConfig {
+	client_id: string;
+	client_secret: string;
+	redirect_uris: string[];
+	post_logout_redirect_uris: string[];
+	grant_types: string[];
+	response_types: string[];
+	token_endpoint_auth_method: string;
+	force_refresh_token?: boolean;
+}
+
 // Extract per-client force refresh flag and provide sanitized client metadata to oidc-provider
 const FORCE_REFRESH_CLIENT_ID_SET = new Set<string>(
 	OIDC_CLIENTS
-		.filter( ( c: any ) => Boolean( ( c as any ).force_refresh_token ) )
-		.map( ( c: any ) => String( ( c as any ).client_id ) )
+		.filter( ( c: OIDCClientConfig ) => Boolean( c.force_refresh_token ) )
+		.map( ( c: OIDCClientConfig ) => String( c.client_id ) )
 );
 
-const SANITIZED_CLIENTS = OIDC_CLIENTS.map( ( c: any ) => {
+const SANITIZED_CLIENTS = OIDC_CLIENTS.map( ( c: OIDCClientConfig ) => {
 	// Remove internal flags not recognized by oidc-provider
-	const { force_refresh_token, ...rest } = c as any;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+	const { force_refresh_token, ...rest } = c;
 	return rest;
 } );
 
@@ -96,6 +109,7 @@ const USERS = new Map<
 	]
 ] );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const configuration: any = {
 	clients: SANITIZED_CLIENTS,
 	claims: {
@@ -112,9 +126,10 @@ const configuration: any = {
 		Grant: 365 * 24 * 60 * 60,    // 1 year
 		AccessToken: 60 * 60,          // 1 hour
 		IdToken: 60 * 60,              // 1 hour
-		RefreshToken: 14 * 24 * 60 * 60, // 14 days
+		RefreshToken: 14 * 24 * 60 * 60 // 14 days
 	},
-	issueRefreshToken: async ( ctx: any, client: any, code: any ) => {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	issueRefreshToken: async ( _ctx: unknown, client: any, code: any ) => {
 		// Issue refresh token if client supports refresh_token grant and either:
 		// - offline_access scope is requested (standard behavior), or
 		// - client has force_refresh_token flag set in .env.clients.json
@@ -122,7 +137,7 @@ const configuration: any = {
 			return false;
 		}
 		const requestedOfflineAccess = code.scopes.has( "offline_access" );
-		const clientId = ( client as any ).clientId || ( client as any ).client_id;
+		const clientId = client.clientId || client.client_id;
 		const isForceEnabled = FORCE_REFRESH_CLIENT_ID_SET.has( String( clientId ) );
 		return requestedOfflineAccess || isForceEnabled;
 	},
@@ -130,7 +145,7 @@ const configuration: any = {
 		devInteractions: { enabled: false }, // we provide our own interactions
 		rpInitiatedLogout: {
 			enabled: true,
-			logoutSource: async ( ctx: any, form: string ) => {
+			logoutSource: async ( _ctx: unknown, form: string ) => {
 				// Auto-submit immediately without showing any page
 				return `<!DOCTYPE html>
 				<html>
@@ -152,7 +167,7 @@ const configuration: any = {
 			enabled: true,
 			// When a resource is requested, return Resource Server config
 			async getResourceServerInfo(
-				_ctx: any,
+				_ctx: unknown,
 				resourceIndicator: string
 			) {
 				if ( resourceIndicator === "api://my-api" ) {
@@ -176,7 +191,7 @@ const configuration: any = {
 	audience: async () => "api://my-api",
 	// Adapter TODO: move to Postgres adapter for persistence in real testing
 	// See oidc-provider docs for Adapter interface
-	findAccount: async ( _ctx: any, sub: string ) => ( {
+	findAccount: async ( _ctx: unknown, sub: string ) => ( {
 		accountId: sub,
 		async claims() {
 			// naive mapping: sub is the user id
@@ -186,7 +201,8 @@ const configuration: any = {
 		}
 	} ),
 	interactions: {
-		url: ( ctx: any, interaction: any ) => `/interaction/${ interaction.uid }`
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		url: ( _ctx: unknown, interaction: any ) => `/interaction/${ interaction.uid }`
 	}
 };
 
@@ -197,12 +213,12 @@ async function main() {
 
 	// Interactions (login + consent) in-process for simplicity
 	app.get( "/interaction/:uid", async ( req: Request, res: Response ) => {
-		const { uid } = req.params as any;
+		const { uid } = req.params;
 		const details = await provider.interactionDetails( req, res );
 		const prompt = details.prompt.name; // "login" or "consent"
 
 		// Parse requested scopes for display
-		const requestedScopes = String( ( details.params as any )?.scope || "" )
+		const requestedScopes = String( details.params.scope || "" )
 			.split( " " )
 			.filter( Boolean );
 
@@ -215,9 +231,8 @@ async function main() {
 		"/interaction/:uid/login",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			// const { uid } = req.params as any; // uid not used in this handler
-			const email = ( req.body as any )?.email || "";
-			const password = ( req.body as any )?.password || "";
+			const email = String( req.body?.email || "" );
+			const password = String( req.body?.password || "" );
 
 			const user = USERS.get( email );
 			if ( !user || user.password != password ) {
@@ -239,7 +254,6 @@ async function main() {
 		"/interaction/:uid/confirm",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			// const { uid } = req.params as any; // uid not used in this handler
 			const details = await provider.interactionDetails( req, res );
 			const { grantId, prompt } = details;
 
@@ -252,30 +266,30 @@ async function main() {
 				} );
 
 			// Always include originally requested scopes from the authorization request
-			const requestedScopes = String(
-				( details.params as any )?.scope || ""
-			).trim();
+			const requestedScopes = String( details.params.scope || "" ).trim();
 			if ( requestedScopes ) {
 				grant.addOIDCScope( requestedScopes );
 			}
 
 			// Grant exactly what is being requested by this prompt
-			const missingOIDCScopes = ( prompt as any )?.details?.missingOIDCScopes as
+			const promptDetails = prompt.details as Record<string, unknown> | undefined;
+			const missingOIDCScopes = promptDetails?.missingOIDCScopes as
         | string[]
         | undefined;
 			if ( missingOIDCScopes && missingOIDCScopes.length > 0 ) {
 				grant.addOIDCScope( missingOIDCScopes.join( " " ) );
 			}
 
-			const missingOIDCClaims = ( prompt as any )?.details?.missingOIDCClaims as
+			const missingOIDCClaims = promptDetails?.missingOIDCClaims as
         | Record<string, unknown>
         | undefined;
 			if ( missingOIDCClaims && Object.keys( missingOIDCClaims ).length > 0 ) {
 				grant.addOIDCClaims( Object.keys( missingOIDCClaims ) );
 			}
 
-			const missingResourceScopes = ( prompt as any )?.details
-				?.missingResourceScopes as Record<string, string[]> | undefined;
+			const missingResourceScopes = promptDetails?.missingResourceScopes as
+				| Record<string, string[]>
+				| undefined;
 			if ( missingResourceScopes ) {
 				for ( const [ resourceIndicator, scopes ] of Object.entries(
 					missingResourceScopes

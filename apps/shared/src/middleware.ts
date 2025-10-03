@@ -60,6 +60,7 @@ export const createCustomSecurityHeaders = ( options: HelmetOptions ): RequestHa
 /**
  * Common Express app setup utilities
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const setupBasicExpress = ( app: any ) => {
 	// Disable x-powered-by header
 	app.disable( "x-powered-by" );
@@ -71,6 +72,7 @@ export const setupBasicExpress = ( app: any ) => {
 /**
  * Setup EJS template engine
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const setupEJSTemplates = ( app: any, viewsPath: string ) => {
 	app.set( "view engine", "ejs" );
 	app.set( "views", viewsPath );
@@ -80,6 +82,7 @@ export const setupEJSTemplates = ( app: any, viewsPath: string ) => {
  * Setup static file serving
  * Note: Pass express.static as staticHandler from the calling app
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const setupStaticFiles = ( app: any, staticHandler: any, staticPath: string, urlPath = "/public" ) => {
 	app.use( urlPath, staticHandler( staticPath ) );
 };

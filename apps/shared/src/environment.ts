@@ -9,6 +9,7 @@
 export function getRequiredEnv( name: string, fallback?: string ): string {
 	const value = process.env[name] || fallback;
 	if ( !value ) {
+		// eslint-disable-next-line no-console
 		console.error( `Missing required environment variable: ${ name }` );
 		process.exit( 1 );
 	}
@@ -23,6 +24,7 @@ export function getRequiredEnvNumber( name: string, fallback?: number ): number 
 	const value = process.env[name];
 	const num = value ? Number( value ) : fallback;
 	if ( num === undefined || isNaN( num ) ) {
+		// eslint-disable-next-line no-console
 		console.error( `Environment variable ${ name } must be a valid number${ fallback !== undefined ? `, got: ${ value }` : "" }` );
 		process.exit( 1 );
 	}
@@ -59,6 +61,7 @@ export function validateRequiredEnvVars( requiredVars: string[] ): void {
 	}
 
 	if ( missing.length > 0 ) {
+		// eslint-disable-next-line no-console
 		console.error( `Missing required environment variables: ${ missing.join( ", " ) }` );
 		process.exit( 1 );
 	}

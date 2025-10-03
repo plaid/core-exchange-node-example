@@ -103,7 +103,9 @@ app.use( ( req, res ) => {
 app.use( ( error: unknown, req: Request, res: Response ) => {
 	logError( logger, error, { path: req.path, method: req.method } );
 	const sanitized = sanitizeError( error );
-	const statusCode = ( error as any )?.statusCode || 500;
+	const statusCode = typeof error === "object" && error !== null && "statusCode" in error
+		? ( error as { statusCode: number } ).statusCode
+		: 500;
 	res.status( statusCode ).json( sanitized );
 } );
 
