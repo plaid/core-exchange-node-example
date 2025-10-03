@@ -194,6 +194,7 @@ const configuration: any = {
 			enabled: true,
 			// This is required in v7+ to issue JWT access tokens
 			// The accessTokenFormat property controls whether tokens are JWT or opaque
+			defaultResource: () => "api://my-api",  // Default resource when client doesn't specify one
 			getResourceServerInfo: async () => {
 				return {
 					scope: "openid profile email offline_access accounts:read",
