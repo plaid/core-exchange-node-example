@@ -203,28 +203,7 @@ const configuration: any = {
 			}
 		},
 		resourceIndicators: {
-			enabled: true,
-			// When a resource is requested, return Resource Server config
-			async getResourceServerInfo(
-				_ctx: unknown,
-				resourceIndicator: string
-			) {
-				if ( resourceIndicator === "api://my-api" ) {
-					return {
-						scope: "accounts:read",
-						audience: "api://my-api",
-						accessTokenFormat: "jwt",
-						jwt: {
-							sign: { alg: "RS256" }
-						}
-					};
-				}
-				throw new Error( "Unknown resource indicator" );
-			},
-			// Ensure we use the resource-specific token format
-			useGrantedResource() {
-				return true;
-			}
+			enabled: false  // Disable to force JWT for all access tokens
 		}
 	},
 	audience: async () => "api://my-api",
