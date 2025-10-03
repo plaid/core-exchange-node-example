@@ -32,3 +32,6 @@ certs/*
 
 # claude
 .claude/
+
+# misc
+apps/**/corex.yaml
