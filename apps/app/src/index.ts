@@ -51,6 +51,7 @@ const CLIENT_ID = getRequiredEnv( "CLIENT_ID" );
 const CLIENT_SECRET = getRequiredEnv( "CLIENT_SECRET" );
 const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI" );
 const API_BASE_URL = getRequiredEnv( "API_BASE_URL" );
+const API_AUDIENCE = getRequiredEnv( "API_AUDIENCE" );
 const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET" );
 
 const app = express();
@@ -215,6 +216,9 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 			{
 				pkceCodeVerifier: cookieVal.code_verifier,
 				expectedState: cookieVal.state
+			},
+			{
+				resource: API_AUDIENCE  // Include resource parameter in token exchange
 			}
 		);
 
@@ -260,7 +264,9 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 		}, "POST /refresh - Attempting refresh" );
 
 		// Use refreshTokenGrant to exchange refresh token for new tokens
-		const tokenSet = await client.refreshTokenGrant( config!, tokens.refresh_token );
+		const tokenSet = await client.refreshTokenGrant( config!, tokens.refresh_token, {
+			resource: API_AUDIENCE  // Include resource parameter in token exchange
+		} );
 
 		logger.debug( {
 			newAccessTokenIssued: !!tokenSet.access_token,

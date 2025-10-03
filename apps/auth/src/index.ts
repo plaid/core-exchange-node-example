@@ -195,7 +195,7 @@ const configuration: any = {
 			// This is required in v7+ to issue JWT access tokens
 			// The accessTokenFormat property controls whether tokens are JWT or opaque
 			defaultResource: () => "api://my-api",  // Default resource when client doesn't specify one
-			getResourceServerInfo: async ( ctx: unknown, resourceIndicator: unknown, client: unknown ) => {
+			getResourceServerInfo: async ( _ctx: unknown, resourceIndicator: unknown, client: unknown ) => {
 				logger.debug( {
 					resourceIndicator,
 					clientId: ( client as { clientId?: string } )?.clientId
@@ -210,7 +210,9 @@ const configuration: any = {
 
 				logger.debug( { config }, "getResourceServerInfo returning config" );
 				return config;
-			}
+			},
+			// Use the resource from the original authorization grant for token/refresh requests
+			useGrantedResource: async () => true
 		}
 	},
 	// Adapter TODO: move to Postgres adapter for persistence in real testing
