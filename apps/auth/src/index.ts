@@ -195,13 +195,21 @@ const configuration: any = {
 			// This is required in v7+ to issue JWT access tokens
 			// The accessTokenFormat property controls whether tokens are JWT or opaque
 			defaultResource: () => "api://my-api",  // Default resource when client doesn't specify one
-			getResourceServerInfo: async () => {
-				return {
+			getResourceServerInfo: async ( ctx: unknown, resourceIndicator: unknown, client: unknown ) => {
+				logger.debug( {
+					resourceIndicator,
+					clientId: ( client as { clientId?: string } )?.clientId
+				}, "getResourceServerInfo called" );
+
+				const config = {
 					scope: "openid profile email offline_access accounts:read",
 					audience: "api://my-api",
-					accessTokenFormat: "jwt",
+					accessTokenFormat: "jwt" as const,
 					accessTokenTTL: 60 * 60  // 1 hour
 				};
+
+				logger.debug( { config }, "getResourceServerInfo returning config" );
+				return config;
 			}
 		}
 	},
