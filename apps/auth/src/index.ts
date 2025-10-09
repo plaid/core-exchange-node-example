@@ -110,7 +110,7 @@ app.use( "/public", express.static( new URL( "../public", import.meta.url ).path
 // Very minimal in-memory user store
 const USERS = new Map<
 	string,
-	{ id: string; email: string; password: string; name: string }
+	{ id: string; email: string; password: string; name: string; oauthAuthorized: boolean }
 >( [
 	[
 		"user@example.test",
@@ -118,7 +118,18 @@ const USERS = new Map<
 			id: "user_123",
 			email: "user@example.test",
 			password: "passw0rd!",
-			name: "Dev User"
+			name: "Dev User",
+			oauthAuthorized: true
+		}
+	],
+	[
+		"blocked@example.test",
+		{
+			id: "user_456",
+			email: "blocked@example.test",
+			password: "passw0rd!",
+			name: "Blocked User",
+			oauthAuthorized: false
 		}
 	]
 ] );
@@ -268,6 +279,70 @@ const configuration: any = {
 	}
 };
 
+/**
+ * Helper function to redirect back to the client with an OAuth error
+ * @param redirectUri - The client's redirect URI
+ * @param state - The state parameter from the original request
+ * @param errorCode - OAuth error code (invalid_request, invalid_client, etc.)
+ * @param errorDescription - Human-readable error description
+ */
+function redirectWithOAuthError(
+	res: Response,
+	redirectUri: string,
+	state: string | undefined,
+	errorCode: string,
+	errorDescription?: string
+) {
+	const url = new URL( redirectUri );
+	url.searchParams.append( "error", errorCode );
+	if ( errorDescription ) {
+		url.searchParams.append( "error_description", errorDescription );
+	}
+	if ( state ) {
+		url.searchParams.append( "state", state );
+	}
+
+	logger.info( {
+		redirectUri,
+		errorCode,
+		errorDescription,
+		state
+	}, "Redirecting to client with OAuth error" );
+
+	res.redirect( 303, url.toString() );
+}
+
+/**
+ * Determines the appropriate OAuth error code based on the error type
+ */
+function mapErrorToOAuthCode( error: unknown ): { code: string; description: string } {
+	const errorMessage = error instanceof Error ? error.message : String( error );
+	const lowerMessage = errorMessage.toLowerCase();
+
+	// Map common error patterns to OAuth error codes
+	if ( lowerMessage.includes( "missing" ) || lowerMessage.includes( "required" ) ) {
+		return { code: "invalid_request", description: "The request is missing a required parameter." };
+	}
+	if ( lowerMessage.includes( "client" ) && lowerMessage.includes( "auth" ) ) {
+		return { code: "invalid_client", description: "Client authentication failed." };
+	}
+	if ( lowerMessage.includes( "grant" ) || lowerMessage.includes( "expired" ) || lowerMessage.includes( "revoked" ) ) {
+		return { code: "invalid_grant", description: errorMessage };
+	}
+	if ( lowerMessage.includes( "unauthorized" ) ) {
+		return { code: "unauthorized_client", description: "The authenticated client is not authorized to use this authorization grant type." };
+	}
+	if ( lowerMessage.includes( "grant type" ) || lowerMessage.includes( "unsupported" ) ) {
+		return { code: "unsupported_grant_type", description: "The authorization grant type is not supported by the authorization server." };
+	}
+	if ( lowerMessage.includes( "scope" ) ) {
+		return { code: "invalid_scope", description: "The requested scope is invalid, unknown, or malformed." };
+	}
+
+	// Default to invalid_request for unclassified errors
+	return { code: "invalid_request", description: errorMessage };
+}
+
 async function main() {
 	const provider = new Provider( ISSUER, configuration );
 	// Trust reverse proxy headers (e.g., x-forwarded-proto from Caddy)
@@ -275,97 +350,156 @@ async function main() {
 
 	// Interactions (login + consent) in-process for simplicity
 	app.get( "/interaction/:uid", async ( req: Request, res: Response ) => {
-		const { uid } = req.params;
-		logger.debug( { uid, query: req.query, cookies: req.cookies }, "GET /interaction/:uid - Request received" );
+		try {
+			const { uid } = req.params;
+			logger.debug( { uid, query: req.query, cookies: req.cookies }, "GET /interaction/:uid - Request received" );
 
-		const details = await provider.interactionDetails( req, res );
-		const prompt = details.prompt.name; // "login" or "consent"
+			const details = await provider.interactionDetails( req, res );
+			const prompt = details.prompt.name; // "login" or "consent"
 
-		// Parse requested scopes for display
-		const requestedScopes = String( details.params.scope || "" )
-			.split( " " )
-			.filter( Boolean );
+			// Parse requested scopes for display
+			const requestedScopes = String( details.params.scope || "" )
+				.split( " " )
+				.filter( Boolean );
 
-		logger.debug( {
-			uid,
-			prompt,
-			requestedScopes,
-			clientId: details.params.client_id,
-			redirectUri: details.params.redirect_uri,
-			responseType: details.params.response_type,
-			state: details.params.state,
-			session: details.session
-		}, "GET /interaction/:uid - Interaction details loaded" );
+			logger.debug( {
+				uid,
+				prompt,
+				requestedScopes,
+				clientId: details.params.client_id,
+				redirectUri: details.params.redirect_uri,
+				responseType: details.params.response_type,
+				state: details.params.state,
+				session: details.session
+			}, "GET /interaction/:uid - Interaction details loaded" );
 
-		res.render( "interaction", {
-			uid,
-			prompt,
-			scopes: requestedScopes,
-			error: undefined,
-			email: undefined
-		} );
+			res.render( "interaction", {
+				uid,
+				prompt,
+				scopes: requestedScopes,
+				error: undefined,
+				email: undefined
+			} );
+		} catch ( error ) {
+			logError( logger, error, { context: "GET /interaction/:uid" } );
+
+			// Try to get interaction details to extract redirect_uri and state
+			try {
+				const details = await provider.interactionDetails( req, res );
+				const redirectUri = details.params.redirect_uri as string;
+				const state = details.params.state as string | undefined;
+
+				const { code, description } = mapErrorToOAuthCode( error );
+				return redirectWithOAuthError( res, redirectUri, state, code, description );
+			} catch ( detailsError ) {
+				// If we can't get interaction details, return a generic error page
+				logError( logger, detailsError, { context: "GET /interaction/:uid - Failed to get interaction details" } );
+				return res.status( 400 ).send( "Invalid or expired interaction" );
+			}
+		}
 	} );
 
 	app.post(
 		"/interaction/:uid/login",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			const { uid } = req.params;
-			const email = String( req.body?.email || "" );
-			const password = String( req.body?.password || "" );
+			try {
+				const { uid } = req.params;
+				const email = String( req.body?.email || "" );
+				const password = String( req.body?.password || "" );
 
-			logger.debug( {
-				uid,
-				email,
-				passwordProvided: !!password
-			}, "POST /interaction/:uid/login - Login attempt" );
-
-			const user = USERS.get( email );
-			if ( !user || user.password != password ) {
-				logger.debug( { uid, email, userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
-
-				// Get interaction details to extract scopes for re-rendering
-				const details = await provider.interactionDetails( req, res );
-				const requestedScopes = String( details.params.scope || "" )
-					.split( " " )
-					.filter( Boolean );
-
-				// Re-render login form with error message
-				return res.render( "interaction", {
+				logger.debug( {
 					uid,
-					prompt: "login",
-					scopes: requestedScopes,
-					error: "Invalid email or password. Please try again.",
-					email  // Preserve the email field
+					email,
+					passwordProvided: !!password
+				}, "POST /interaction/:uid/login - Login attempt" );
+
+				const user = USERS.get( email );
+				if ( !user || user.password != password ) {
+					logger.debug( { uid, email, userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
+
+					// Get interaction details to extract scopes for re-rendering
+					const details = await provider.interactionDetails( req, res );
+					const requestedScopes = String( details.params.scope || "" )
+						.split( " " )
+						.filter( Boolean );
+
+					// Re-render login form with error message
+					return res.render( "interaction", {
+						uid,
+						prompt: "login",
+						scopes: requestedScopes,
+						error: "Invalid email or password. Please try again.",
+						email  // Preserve the email field
+					} );
+				}
+
+				logger.debug( {
+					uid,
+					email,
+					userId: user.id,
+					oauthAuthorized: user.oauthAuthorized
+				}, "POST /interaction/:uid/login - Authentication successful" );
+
+				// Check if user is authorized for OAuth
+				if ( !user.oauthAuthorized ) {
+					logger.warn( {
+						uid,
+						email,
+						userId: user.id
+					}, "POST /interaction/:uid/login - User not authorized for OAuth" );
+
+					// Get interaction details to redirect with error
+					const details = await provider.interactionDetails( req, res );
+					const redirectUri = details.params.redirect_uri as string;
+					const state = details.params.state as string | undefined;
+
+					return redirectWithOAuthError(
+						res,
+						redirectUri,
+						state,
+						"unauthorized_client",
+						"This account is not authorized to connect via OAuth."
+					);
+				}
+
+				const result = {
+					login: { accountId: user.id }
+					// You can remember the login with a cookie/session in a real app
+				};
+
+				logger.debug( {
+					uid,
+					result
+				}, "POST /interaction/:uid/login - Submitting login result to provider" );
+
+				const redirectTo = await provider.interactionResult( req, res, result, {
+					mergeWithLastSubmission: false
 				} );
+
+				logger.debug( {
+					uid,
+					redirectTo
+				}, "POST /interaction/:uid/login - Redirecting to next step" );
+
+				return res.redirect( 303, redirectTo );
+			} catch ( error ) {
+				logError( logger, error, { context: "POST /interaction/:uid/login" } );
+
+				// Try to get interaction details to redirect with error
+				try {
+					const details = await provider.interactionDetails( req, res );
+					const redirectUri = details.params.redirect_uri as string;
+					const state = details.params.state as string | undefined;
+
+					const { code, description } = mapErrorToOAuthCode( error );
+					return redirectWithOAuthError( res, redirectUri, state, code, description );
+				} catch ( detailsError ) {
+					// If we can't get interaction details, return a generic error
+					logError( logger, detailsError, { context: "POST /interaction/:uid/login - Failed to get interaction details" } );
+					return res.status( 400 ).send( "Invalid or expired interaction" );
+				}
 			}
-
-			logger.debug( {
-				uid,
-				email,
-				userId: user.id
-			}, "POST /interaction/:uid/login - Authentication successful" );
-
-			const result = {
-				login: { accountId: user.id }
-				// You can remember the login with a cookie/session in a real app
-			};
-
-			logger.debug( {
-				uid,
-				result
-			}, "POST /interaction/:uid/login - Submitting login result to provider" );
-
-			const redirectTo = await provider.interactionResult( req, res, result, {
-				mergeWithLastSubmission: false
-			} );
-
-			logger.debug( {
-				uid,
-				redirectTo
-			}, "POST /interaction/:uid/login - Redirecting to next step" );
-
-			return res.redirect( 303, redirectTo );
 		}
 	);
 
@@ -373,92 +507,110 @@ async function main() {
 		"/interaction/:uid/confirm",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			const { uid } = req.params;
-			logger.debug( { uid }, "POST /interaction/:uid/confirm - Consent confirmation received" );
+			try {
+				const { uid } = req.params;
+				logger.debug( { uid }, "POST /interaction/:uid/confirm - Consent confirmation received" );
 
-			const details = await provider.interactionDetails( req, res );
-			const { grantId, prompt } = details;
+				const details = await provider.interactionDetails( req, res );
+				const { grantId, prompt } = details;
 
-			logger.debug( {
-				uid,
-				clientId: details.params.client_id,
-				existingGrantId: grantId,
-				accountId: details.session?.accountId,
-				requestedScopes: details.params.scope
-			}, "POST /interaction/:uid/confirm - Processing consent" );
+				logger.debug( {
+					uid,
+					clientId: details.params.client_id,
+					existingGrantId: grantId,
+					accountId: details.session?.accountId,
+					requestedScopes: details.params.scope
+				}, "POST /interaction/:uid/confirm - Processing consent" );
 
-			// Reuse existing grant or create a new one
-			const grant = grantId
-				? await provider.Grant.find( grantId )
-				: new provider.Grant( {
-					accountId: details.session!.accountId!,
-					clientId: details.params.client_id as string
-				} );
+				// Reuse existing grant or create a new one
+				const grant = grantId
+					? await provider.Grant.find( grantId )
+					: new provider.Grant( {
+						accountId: details.session!.accountId!,
+						clientId: details.params.client_id as string
+					} );
 
-			logger.debug( {
-				uid,
-				grantMode: grantId ? "existing" : "new"
-			}, "POST /interaction/:uid/confirm - Grant initialized" );
+				logger.debug( {
+					uid,
+					grantMode: grantId ? "existing" : "new"
+				}, "POST /interaction/:uid/confirm - Grant initialized" );
 
-			// Always include originally requested scopes from the authorization request
-			const requestedScopes = String( details.params.scope || "" ).trim();
-			if ( requestedScopes ) {
-				grant.addOIDCScope( requestedScopes );
-				logger.debug( { uid, requestedScopes }, "POST /interaction/:uid/confirm - Added OIDC scopes from params" );
-			}
+				// Always include originally requested scopes from the authorization request
+				const requestedScopes = String( details.params.scope || "" ).trim();
+				if ( requestedScopes ) {
+					grant.addOIDCScope( requestedScopes );
+					logger.debug( { uid, requestedScopes }, "POST /interaction/:uid/confirm - Added OIDC scopes from params" );
+				}
 
-			// Grant exactly what is being requested by this prompt
-			const promptDetails = prompt.details as Record<string, unknown> | undefined;
-			const missingOIDCScopes = promptDetails?.missingOIDCScopes as
-        | string[]
-        | undefined;
-			if ( missingOIDCScopes && missingOIDCScopes.length > 0 ) {
-				grant.addOIDCScope( missingOIDCScopes.join( " " ) );
-				logger.debug( { uid, missingOIDCScopes }, "POST /interaction/:uid/confirm - Added missing OIDC scopes" );
-			}
+				// Grant exactly what is being requested by this prompt
+				const promptDetails = prompt.details as Record<string, unknown> | undefined;
+				const missingOIDCScopes = promptDetails?.missingOIDCScopes as
+	        | string[]
+	        | undefined;
+				if ( missingOIDCScopes && missingOIDCScopes.length > 0 ) {
+					grant.addOIDCScope( missingOIDCScopes.join( " " ) );
+					logger.debug( { uid, missingOIDCScopes }, "POST /interaction/:uid/confirm - Added missing OIDC scopes" );
+				}
 
-			const missingOIDCClaims = promptDetails?.missingOIDCClaims as
-        | Record<string, unknown>
-        | undefined;
-			if ( missingOIDCClaims && Object.keys( missingOIDCClaims ).length > 0 ) {
-				grant.addOIDCClaims( Object.keys( missingOIDCClaims ) );
-				logger.debug( { uid, missingOIDCClaims: Object.keys( missingOIDCClaims ) }, "POST /interaction/:uid/confirm - Added missing OIDC claims" );
-			}
+				const missingOIDCClaims = promptDetails?.missingOIDCClaims as
+	        | Record<string, unknown>
+	        | undefined;
+				if ( missingOIDCClaims && Object.keys( missingOIDCClaims ).length > 0 ) {
+					grant.addOIDCClaims( Object.keys( missingOIDCClaims ) );
+					logger.debug( { uid, missingOIDCClaims: Object.keys( missingOIDCClaims ) }, "POST /interaction/:uid/confirm - Added missing OIDC claims" );
+				}
 
-			const missingResourceScopes = promptDetails?.missingResourceScopes as
-				| Record<string, string[]>
-				| undefined;
-			if ( missingResourceScopes ) {
-				for ( const [ resourceIndicator, scopes ] of Object.entries(
-					missingResourceScopes
-				) ) {
-					if ( scopes.length > 0 ) {
-						grant.addResourceScope( resourceIndicator, scopes.join( " " ) );
-						logger.debug( { uid, resourceIndicator, scopes }, "POST /interaction/:uid/confirm - Added resource scopes" );
+				const missingResourceScopes = promptDetails?.missingResourceScopes as
+					| Record<string, string[]>
+					| undefined;
+				if ( missingResourceScopes ) {
+					for ( const [ resourceIndicator, scopes ] of Object.entries(
+						missingResourceScopes
+					) ) {
+						if ( scopes.length > 0 ) {
+							grant.addResourceScope( resourceIndicator, scopes.join( " " ) );
+							logger.debug( { uid, resourceIndicator, scopes }, "POST /interaction/:uid/confirm - Added resource scopes" );
+						}
 					}
 				}
+
+				const finalGrantId = await grant.save();
+				logger.debug( { uid, finalGrantId }, "POST /interaction/:uid/confirm - Grant saved" );
+
+				const result = { consent: { grantId: finalGrantId } };
+
+				logger.debug( {
+					uid,
+					result
+				}, "POST /interaction/:uid/confirm - Submitting consent result to provider" );
+
+				const redirectTo = await provider.interactionResult( req, res, result, {
+					mergeWithLastSubmission: true
+				} );
+
+				logger.debug( {
+					uid,
+					redirectTo
+				}, "POST /interaction/:uid/confirm - Redirecting to callback" );
+
+				return res.redirect( 303, redirectTo );
+			} catch ( error ) {
+				logError( logger, error, { context: "POST /interaction/:uid/confirm" } );
+
+				// Try to get interaction details to redirect with error
+				try {
+					const details = await provider.interactionDetails( req, res );
+					const redirectUri = details.params.redirect_uri as string;
+					const state = details.params.state as string | undefined;
+
+					const { code, description } = mapErrorToOAuthCode( error );
+					return redirectWithOAuthError( res, redirectUri, state, code, description );
+				} catch ( detailsError ) {
+					// If we can't get interaction details, return a generic error
+					logError( logger, detailsError, { context: "POST /interaction/:uid/confirm - Failed to get interaction details" } );
+					return res.status( 400 ).send( "Invalid or expired interaction" );
+				}
 			}
-
-			const finalGrantId = await grant.save();
-			logger.debug( { uid, finalGrantId }, "POST /interaction/:uid/confirm - Grant saved" );
-
-			const result = { consent: { grantId: finalGrantId } };
-
-			logger.debug( {
-				uid,
-				result
-			}, "POST /interaction/:uid/confirm - Submitting consent result to provider" );
-
-			const redirectTo = await provider.interactionResult( req, res, result, {
-				mergeWithLastSubmission: true
-			} );
-
-			logger.debug( {
-				uid,
-				redirectTo
-			}, "POST /interaction/:uid/confirm - Redirecting to callback" );
-
-			return res.redirect( 303, redirectTo );
 		}
 	);
 
