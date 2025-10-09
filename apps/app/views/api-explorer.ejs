@@ -14,8 +14,12 @@
       background-color: var(--plaid-light-gray);
     }
     .endpoint-item.selected {
-      background-color: var(--plaid-mint-light);
-      border-color: var(--plaid-mint);
+      background-color: var(--plaid-blue-sky-200);
+      border-color: var(--plaid-blue-sky-400);
+    }
+    .endpoint-item.selected .method-badge {
+      background-color: var(--plaid-credit-lime-600);
+      color: var(--plaid-white);
     }
     .json-response {
       font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
@@ -69,7 +73,7 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/customers/current" data-method="GET">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Current Customer</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/customers/current</div>
               </div>
@@ -83,7 +87,7 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts" data-method="GET" data-params='{"offset": "0", "limit": "10"}'>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">List Accounts</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts</div>
                 <div class="text-xs text-plaid-mint-600 mt-1">Params: offset, limit</div>
@@ -92,25 +96,25 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}" data-method="GET" data-requires-account="true">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Account Details</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}</div>
-                <div class="text-xs text-plaid-gold-standard-600 mt-1">Requires accountId from List Accounts</div>
+                <div class="text-xs text-plaid-piggy-bank-700 mt-1">Requires accountId from List Accounts</div>
               </div>
 
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/contact" data-method="GET" data-requires-account="true">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Account Contact</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/contact</div>
-                <div class="text-xs text-plaid-gold-standard-600 mt-1">Requires accountId</div>
+                <div class="text-xs text-plaid-piggy-bank-700 mt-1">Requires accountId</div>
               </div>
 
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/statements" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10", "startTime": "", "endTime": ""}'>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Account Statements</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/statements</div>
                 <div class="text-xs text-plaid-mint-600 mt-1">Params: offset, limit, startTime, endTime</div>
@@ -119,16 +123,16 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/statements/{statementId}" data-method="GET" data-requires-account="true" data-requires-statement="true">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Statement PDF</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/statements/{statementId}</div>
-                <div class="text-xs text-plaid-gold-standard-600 mt-1">Requires accountId and statementId</div>
+                <div class="text-xs text-plaid-piggy-bank-700 mt-1">Requires accountId and statementId</div>
               </div>
 
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/transactions" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10", "startTime": "", "endTime": ""}'>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Account Transactions</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/transactions</div>
                 <div class="text-xs text-plaid-mint-600 mt-1">Params: offset, limit, startTime, endTime</div>
@@ -137,7 +141,7 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/payment-networks" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10"}'>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Payment Networks</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/payment-networks</div>
                 <div class="text-xs text-plaid-mint-600 mt-1">Params: offset, limit</div>
@@ -146,7 +150,7 @@
               <div class="endpoint-item border border-plaid-blue-sky-200 rounded-md p-3" data-endpoint="/api/fdx/v6/accounts/{accountId}/asset-transfer-networks" data-method="GET" data-requires-account="true" data-params='{"offset": "0", "limit": "10"}'>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-plaid-black">Get Asset Transfer Networks</span>
-                  <span class="px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
+                  <span class="method-badge px-2 py-1 bg-plaid-credit-lime-200 text-plaid-credit-lime-700 text-xs font-medium rounded">GET</span>
                 </div>
                 <div class="text-xs text-plaid-gray mt-1">/api/fdx/v6/accounts/{accountId}/asset-transfer-networks</div>
                 <div class="text-xs text-plaid-mint-600 mt-1">Params: offset, limit</div>
