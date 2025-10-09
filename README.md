@@ -1,73 +1,173 @@
-# OIDC + Express Monorepo
+# Core Exchange Sample Implementation
 
-Pure Node.js OIDC stack using **Express**, **oidc-provider**, **openid-client**, and **jose**. Local HTTPS is provided by **Caddy** using its **internal CA**.
+<p align="center">
+  <img src="apps/app/public/plaidypus-200.png" alt="Plaidypus Logo" width="200">
+</p>
 
-## Services
+A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/) with OpenID Connect and FDX Core Exchange API v6.3. We built this with TypeScript, Express, and battle-tested OAuth libraries so you can see how all the pieces fit together.
 
-- **Auth** (`apps/auth`) – Authorization Server (OpenID Provider) using `oidc-provider` within Express. Supports multiple client configurations, refresh tokens, and configurable TTLs.
-- **API** (`apps/api`) – Protected resource server implementing FDX Core Exchange API v6.3.1. Validates JWTs with `jose` against the Auth server's JWKS.
-- **APP** (`apps/app`) – Relying Party (client) using `openid-client` (Authorization Code + PKCE). Features an API Explorer, token debugging, and profile viewer.
+## What's Inside
 
-## Prereqs (macOS)
+**The Core Stuff:**
+
+- **TypeScript** (v5.9) with ESM modules everywhere
+- **Node.js** (v22+) - Yes, you need the latest
+- **pnpm** (v10) - For managing our monorepo workspace
+
+**OAuth/OIDC (the important bits):**
+
+- **oidc-provider** (v9) - Standards-compliant OpenID Provider
+- **openid-client** (v6) - Certified Relying Party client
+- **jose** (v6) - JWT validation and JWKS handling
+
+**Infrastructure:**
+
+- **Express** (v5) - Our HTTP server framework
+- **Caddy** - Reverse proxy that handles HTTPS with zero config
+- **Pino** - Fast, structured JSON logging
+- **Helmet** - Security headers on by default
+
+**Frontend:**
+
+- **EJS** - Server-side templates (keeping it simple)
+- **Tailwind CSS** (v4) - Utility-first styling
+- **tsx** - TypeScript execution with hot reload
+
+**Development:**
+
+- **concurrently** - Runs multiple services at once
+- **ESLint** - Keeps our code consistent
+
+## How It's Organized
+
+This monorepo has three main apps and some shared utilities:
+
+### Authorization Server (`apps/auth`)
+
+The OpenID Provider. This is where users log in and grant permissions. We're using `oidc-provider` (embedded in Express) to handle the OAuth dance—authentication, authorization, and token issuance. It supports multiple clients, refresh tokens with configurable lifetimes, and resource indicators (RFC 8707) for JWT access tokens. Right now it uses in-memory storage, but we have our eye on a PostgreSQL adapter.
+
+**What it does:** Login and consent UI (with EJS + Tailwind), configurable scopes and claims, forced interaction flows, RP-initiated logout
+
+### Resource Server (`apps/api`)
+
+The protected API implementing FDX Core Exchange API v6.3. Every request gets validated—we check JWT access tokens using `jose` against the Auth server's JWKS endpoint and enforce scope-based authorization. Customer and account data live here, accessed via a repository pattern.
+
+**Endpoints you get:** Customer info, account details, statements, transactions, contact info, payment and asset transfer network data
+
+### Client Application (`apps/app`)
+
+The Relying Party—basically, the app that needs to access protected data. Built with `openid-client` (a certified library), it shows you how to do Authorization Code flow with PKCE properly. We built an interactive API explorer so you can poke around, plus tools for debugging tokens and viewing profile data. Tokens are stored in HTTP-only cookies for security.
+
+**The fun stuff:** API Explorer UI, token inspection, refresh token handling, automatic OIDC discovery that retries until it connects
+
+### Shared Package (`apps/shared`)
+
+Common utilities and TypeScript configs that all three apps use. Managed with pnpm workspaces.
+
+## Getting Started
+
+### What You Need (macOS)
 
 ```bash
 brew install node pnpm caddy
 ```
 
-## Setup
+**Version requirements:**
+
+- Node.js ≥22.0.0 (we enforce this in `package.json`)
+- pnpm ≥10.15.1
+- Caddy (latest is fine)
+
+### Installation
 
 ```bash
 pnpm install
 ```
 
-### Run Caddy (HTTPS reverse proxy)
+This installs dependencies for all workspace packages. We're using pnpm workspaces with an `apps/*` pattern—it's a nice way to manage a monorepo.
 
-Caddy will generate and use its **internal CA**. It can also install that root CA into your system trust store.
+## Commands You'll Use
 
-#### Option A (recommended): bind 443 and trust Caddy CA
+### Development Mode
 
 ```bash
-# From repo root
-sudo caddy run --config ./caddyfile
-# Run in a separate terminal
-sudo caddy trust         # installs Caddy's internal CA root into the macOS trust store
+pnpm dev              # Run all three services with hot reload
+pnpm dev:auth         # Just the Authorization Server
+pnpm dev:api          # Just the Resource Server
+pnpm dev:app          # Just the Client Application
 ```
 
-- Sites: `https://id.localtest.me`, `https://app.localtest.me`, `https://api.localtest.me` (all proxied to localhost ports).
-- If your browser still warns about certs, reopen it or check the Keychain for the Caddy root.
+### Production Mode
 
-#### Option B (no sudo): use a high port like 8443
+```bash
+pnpm build            # Build everything (TypeScript + CSS)
+pnpm --filter @apps/auth start   # Start Auth server
+pnpm --filter @apps/api start    # Start API server
+pnpm --filter @apps/app start    # Start Client app
+```
 
-Edit the `caddyfile` to add a listener port to each site, e.g.:
+### Other Helpful Commands
 
-```sh
+```bash
+pnpm lint             # Check code style
+pnpm lint:fix         # Fix what can be auto-fixed
+pnpm caddy            # Start the reverse proxy (needs sudo)
+```
+
+### Setting Up HTTPS with Caddy
+
+Caddy generates its own internal CA and handles TLS certificates automatically. Pretty neat.
+
+#### Option A: Bind to port 443 (recommended)
+
+```bash
+# From the repo root
+sudo caddy run --config ./caddyfile
+
+# In another terminal, trust Caddy's CA
+sudo caddy trust
+```
+
+This gives you nice URLs:
+
+- `https://id.localtest.me` (Auth server)
+- `https://app.localtest.me` (Client app)
+- `https://api.localtest.me` (API server)
+
+If your browser still complains about certificates, restart it or check your Keychain for the Caddy root CA.
+
+#### Option B: No sudo? Use a high port
+
+Edit the `caddyfile` and add a port to each site:
+
+```caddyfile
 :8443 {
   tls internal
   reverse_proxy localhost:3001
 }
 ```
 
-Then use `https://localhost:8443` (and update `.env` issuer/redirects accordingly). Sticking to port 443 avoids changing issuer/redirect URIs.
+Then update your `.env` to use `https://localhost:8443` for the issuer and redirect URIs. Port 443 is easier, but this works if you can't use sudo.
 
-### Run the Node apps (in another terminal)
+### Running the Apps
 
-Node does not use the macOS system trust store for TLS. We point Node to Caddy's internal CA so HTTPS calls to `*.localtest.me` validate correctly.
+Node.js doesn't use the macOS system trust store for TLS, so we need to point it to Caddy's CA manually.
 
 ```bash
-# Root dev command automatically sets NODE_EXTRA_CA_CERTS for macOS
+# The easy way—this sets NODE_EXTRA_CA_CERTS for you
 pnpm dev
 
-# If you run apps individually, set this once per terminal session:
+# Running apps individually? Set this in your terminal first:
 export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
 ```
 
-Notes:
+**A few notes:**
 
-- The client app retries OIDC issuer discovery on startup. You can start the Node apps before Caddy/Auth; the app will log retries until `https://id.localtest.me` is reachable.
-- Still recommended: start Caddy first for faster startup and fewer retries.
-- If you renamed the project folder or switched terminals, ensure `NODE_EXTRA_CA_CERTS` is set in your current shell or use the root `pnpm dev` which sets it automatically.
+- You can actually start the Node apps before Caddy is ready. The client app will retry OIDC discovery until `https://id.localtest.me` responds. (You'll see some retry logs, but it'll eventually connect.)
+- That said, starting Caddy first is faster and less noisy.
+- If you switch terminals, remember to set `NODE_EXTRA_CA_CERTS` again—or just use `pnpm dev` which handles it for you.
 
-## Test the flow
+## Quick Start
 
 1. Visit **<https://id.localtest.me/.well-known/openid-configuration>** – discovery JSON should load.
 2. Go to **<https://app.localtest.me>** and click **Login**.
@@ -89,8 +189,7 @@ Notes:
 ### Authorization Server (Auth)
 
 - **Multiple client support**: Configure clients via `.env.clients.json` file (see `.env.clients.example.json` for format)
-- **Refresh tokens**: Automatically issued when `offline_access` scope is requested
-- **Refresh tokens**: Automatically issued when `offline_access` is requested; can be force-enabled per client via per-client `force_refresh_token: true` in `.env.clients.json`
+- **Refresh token support**: Automatically issued when `offline_access` scope is requested; can be force-enabled per client via `force_refresh_token: true` in `.env.clients.json`
 - **Configurable token TTLs**:
   - Session: 1 day
   - Access Token: 1 hour
@@ -102,7 +201,7 @@ Notes:
 
 ### Resource Server (API)
 
-Implements FDX Core Exchange API v6.3.1 with the following endpoints:
+Implements FDX Core Exchange API v6.3 with the following endpoints:
 
 - **Customer**: `/api/fdx/v6/customers/current`
 - **Accounts**: `/api/fdx/v6/accounts`, `/api/fdx/v6/accounts/{accountId}`
@@ -236,6 +335,7 @@ resourceIndicators: {
 **The `resource` parameter MUST be sent in THREE places:**
 
 1. **Authorization Request** (`/login` route):
+
    ```typescript
    const url = client.buildAuthorizationUrl(config, {
      redirect_uri: REDIRECT_URI,
@@ -245,6 +345,7 @@ resourceIndicators: {
    ```
 
 2. **Token Exchange Request** (`/callback` route):
+
    ```typescript
    const tokenSet = await client.authorizationCodeGrant(
      config,
@@ -255,6 +356,7 @@ resourceIndicators: {
    ```
 
 3. **Refresh Token Request** (`/refresh` route):
+
    ```typescript
    const tokenSet = await client.refreshTokenGrant(
      config,
@@ -266,11 +368,13 @@ resourceIndicators: {
 ### Why All Three Are Required
 
 **Without `resource` in token exchange**, `oidc-provider` has special behavior:
+
 - If `openid` scope is present AND no `resource` parameter is in the token request
 - oidc-provider issues an **opaque token** for the UserInfo endpoint
 - This happens **even if** you configured `getResourceServerInfo` to return JWT format
 
 From `oidc-provider` source code (`lib/helpers/resolve_resource.js`):
+
 ```javascript
 // If openid scope exists and no resource parameter in token request,
 // oidc-provider defaults to opaque token for UserInfo endpoint
@@ -288,6 +392,7 @@ LOG_LEVEL=debug pnpm dev
 ```
 
 Look for the token response log:
+
 ```json
 {
   "accessTokenLength": 719,        // JWT: ~700-900 chars
@@ -297,6 +402,7 @@ Look for the token response log:
 ```
 
 **Opaque tokens** (incorrect):
+
 - Length: 43 characters
 - Parts: 1 (single random string)
 - No Base64 prefix
@@ -304,11 +410,13 @@ Look for the token response log:
 ### Resource Indicator Format
 
 Resource indicators must be:
+
 - Absolute URIs (e.g., `https://api.example.com` or `api://my-api`)
 - **Without** fragment components (`#`)
 - Can include path components
 
 Examples:
+
 ```typescript
 // ✅ Valid
 "api://my-api"
@@ -323,12 +431,14 @@ Examples:
 ### Configuration Reference
 
 **Auth Server** (`apps/auth/src/index.ts`):
+
 - `resourceIndicators.enabled`: Must be `true`
 - `resourceIndicators.defaultResource()`: Default resource when client doesn't specify
 - `resourceIndicators.getResourceServerInfo()`: **Critical** - returns `accessTokenFormat: "jwt"`
 - `resourceIndicators.useGrantedResource()`: Allows reusing resource from auth request
 
 **Client** (`apps/app/src/index.ts`):
+
 - Authorization URL: Include `resource` parameter
 - Token exchange: Include `resource` in 4th parameter
 - Refresh token: Include `resource` in 3rd parameter
@@ -375,8 +485,12 @@ Or filter by specific OAuth events:
 pnpm dev | grep "interaction\|login\|consent\|issueRefreshToken\|getResourceServerInfo"
 ```
 
-## Next steps
+## Roadmap
 
-- Implement a **Postgres Adapter** for `oidc-provider` so codes/sessions/grants persist.
-- Replace the in-memory user with a DB table + bcrypt/argon2.
-- Add a small E2E test (Playwright/Cypress) to drive login → consent → API call.
+This implementation uses in-memory storage for demonstration purposes. Production deployments should consider:
+
+- **Persistent storage**: Implement PostgreSQL adapter for `oidc-provider` to persist authorization codes, sessions, and grants across restarts
+- **User authentication**: Replace in-memory user store with database-backed authentication using bcrypt or Argon2 password hashing
+- **End-to-end testing**: Add automated E2E tests using Playwright or Cypress to verify complete authentication flows
+- **Production hardening**: Add rate limiting, audit logging, and monitoring instrumentation
+- **Client registration API**: Dynamic client registration endpoint for self-service OAuth client onboarding
