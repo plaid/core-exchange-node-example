@@ -15,7 +15,7 @@
       <p class="text-plaid-dark-gray mt-2">Your authenticated user information from the ID token</p>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
       <h2 class="text-lg font-semibold text-plaid-black mb-4">User Information</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Token Status -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
       <h2 class="text-lg font-semibold text-plaid-black mb-4">Authentication Status</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -108,7 +108,7 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
       <h2 class="text-lg font-semibold text-plaid-black mb-4">Quick Actions</h2>
 
       <div class="flex flex-wrap gap-4">
@@ -121,7 +121,7 @@
         </a>
 
         <a href="/accounts"
-           class="inline-flex items-center px-4 py-2 border border-plaid-gray rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
+           class="inline-flex items-center px-4 py-2 border border-plaid-blue-sky-200 rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
@@ -129,7 +129,7 @@
         </a>
 
         <button onclick="refreshTokens()"
-                class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-400 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
+                class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-200 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
                 <%= !tokens || !tokens.refresh_token ? 'disabled' : '' %>>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -138,7 +138,7 @@
         </button>
 
         <a href="/logout"
-           class="inline-flex items-center px-4 py-2 border border-plaid-piggy-bank-400 rounded-md font-medium text-plaid-piggy-bank-700 bg-plaid-piggy-bank-200 hover:bg-plaid-piggy-bank-400 transition-colors">
+           class="inline-flex items-center px-4 py-2 border border-plaid-piggy-bank-200 rounded-md font-medium text-plaid-piggy-bank-700 bg-plaid-piggy-bank-200 hover:bg-plaid-piggy-bank-400 transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
           </svg>
@@ -156,7 +156,7 @@
       const resultDiv = document.getElementById('refresh-result');
       resultDiv.classList.remove('hidden');
       resultDiv.innerHTML = `
-        <div class="bg-plaid-mint-200 border border-plaid-mint-400 rounded-lg p-4">
+        <div class="bg-plaid-mint-200 border border-plaid-mint-200 rounded-lg p-4">
           <div class="flex items-center">
             <svg class="animate-spin h-5 w-5 text-plaid-mint-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -179,7 +179,7 @@
 
         if (response.ok) {
           resultDiv.innerHTML = `
-            <div class="bg-plaid-credit-lime-200 border border-plaid-credit-lime-400 rounded-lg p-6">
+            <div class="bg-plaid-credit-lime-200 border border-plaid-credit-lime-200 rounded-lg p-6">
               <div class="flex items-center mb-4">
                 <svg class="h-6 w-6 text-plaid-credit-lime-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -198,7 +198,7 @@
         }
       } catch (error) {
         resultDiv.innerHTML = `
-          <div class="bg-plaid-piggy-bank-200 border border-plaid-piggy-bank-400 rounded-lg p-4">
+          <div class="bg-plaid-piggy-bank-200 border border-plaid-piggy-bank-200 rounded-lg p-4">
             <div class="flex items-center">
               <svg class="h-5 w-5 text-plaid-piggy-bank-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>

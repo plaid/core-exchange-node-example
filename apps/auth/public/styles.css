@@ -7,12 +7,6 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
-    --color-red-50: oklch(97.1% 0.013 17.38);
-    --color-red-200: oklch(88.5% 0.062 18.334);
-    --color-red-400: oklch(70.4% 0.191 22.216);
-    --color-red-700: oklch(50.5% 0.213 27.518);
-    --color-red-800: oklch(44.4% 0.177 26.899);
-    --color-gray-500: oklch(55.1% 0.027 264.364);
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-md: 28rem;
@@ -30,10 +24,16 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
+    --color-plaid-mint-200: #D8FEF3;
+    --color-plaid-mint-400: #42F0CD;
+    --color-plaid-mint-600: #088181;
+    --color-plaid-blue-sky-200: #CCF8FF;
+    --color-plaid-blue-sky-400: #51D2FB;
     --color-plaid-piggy-bank-200: #F9DBFF;
-    --color-plaid-piggy-bank-400: #EE99FF;
     --color-plaid-piggy-bank-600: #BB33D7;
     --color-plaid-piggy-bank-700: #8F29A3;
+    --color-plaid-gold-standard-400: #FBDE51;
+    --color-plaid-credit-lime-400: #7CF042;
     --color-plaid-light-gray: #F8F9FA;
     --color-plaid-gray: #6C757D;
     --color-plaid-dark-gray: #495057;
@@ -282,17 +282,29 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .border-plaid-gray {
-    border-color: var(--color-plaid-gray);
+  .border-plaid-blue-sky-200 {
+    border-color: var(--color-plaid-blue-sky-200);
   }
-  .border-plaid-piggy-bank-400 {
-    border-color: var(--color-plaid-piggy-bank-400);
+  .border-plaid-mint-200 {
+    border-color: var(--color-plaid-mint-200);
+  }
+  .border-plaid-piggy-bank-200 {
+    border-color: var(--color-plaid-piggy-bank-200);
   }
   .border-transparent {
     border-color: transparent;
   }
+  .bg-plaid-credit-lime-400 {
+    background-color: var(--color-plaid-credit-lime-400);
+  }
   .bg-plaid-light-gray {
     background-color: var(--color-plaid-light-gray);
+  }
+  .bg-plaid-mint-200 {
+    background-color: var(--color-plaid-mint-200);
+  }
+  .bg-plaid-mint-400 {
+    background-color: var(--color-plaid-mint-400);
   }
   .bg-plaid-piggy-bank-200 {
     background-color: var(--color-plaid-piggy-bank-200);
@@ -347,9 +359,6 @@
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
   }
-  .text-gray-500 {
-    color: var(--color-gray-500);
-  }
   .text-plaid-black {
     color: var(--color-plaid-black);
   }
@@ -358,6 +367,9 @@
   }
   .text-plaid-gray {
     color: var(--color-plaid-gray);
+  }
+  .text-plaid-mint-600 {
+    color: var(--color-plaid-mint-600);
   }
   .text-plaid-piggy-bank-600 {
     color: var(--color-plaid-piggy-bank-600);
@@ -383,11 +395,30 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
+  .hover\:bg-plaid-blue-sky-400 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-plaid-blue-sky-400);
+      }
+    }
+  }
+  .hover\:bg-plaid-gold-standard-400 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-plaid-gold-standard-400);
+      }
+    }
+  }
   .hover\:bg-plaid-light-gray {
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-plaid-light-gray);
       }
+    }
+  }
+  .focus\:border-plaid-mint-400 {
+    &:focus {
+      border-color: var(--color-plaid-mint-400);
     }
   }
   .focus\:ring-2 {
@@ -399,6 +430,11 @@
   .focus\:ring-plaid-gray {
     &:focus {
       --tw-ring-color: var(--color-plaid-gray);
+    }
+  }
+  .focus\:ring-plaid-mint-400 {
+    &:focus {
+      --tw-ring-color: var(--color-plaid-mint-400);
     }
   }
   .focus\:ring-offset-2 {

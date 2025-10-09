@@ -1,4 +1,4 @@
-<nav class="bg-white border-b border-plaid-gray mb-8">
+<nav class="bg-white border-b border-plaid-blue-sky-200 mb-8">
   <div class="max-w-6xl mx-auto px-4">
     <div class="flex items-center justify-between h-16">
       <!-- Logo/Title -->
@@ -46,12 +46,12 @@
         <div class="flex items-center space-x-2">
           <% if (!tokens) { %>
             <a href="/login"
-               class="inline-flex items-center px-3 py-2 border border-plaid-mint-400 rounded-md text-sm font-medium text-plaid-mint-700 bg-plaid-mint-200 hover:bg-plaid-mint-400 transition-colors">
+               class="inline-flex items-center px-3 py-2 border border-plaid-mint-200 rounded-md text-sm font-medium text-plaid-mint-700 bg-plaid-mint-200 hover:bg-plaid-mint-400 transition-colors">
               Login
             </a>
           <% } else { %>
             <a href="/logout"
-               class="inline-flex items-center px-3 py-2 border border-plaid-gray rounded-md text-sm font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
+               class="inline-flex items-center px-3 py-2 border border-plaid-blue-sky-200 rounded-md text-sm font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
               Logout
             </a>
           <% } %>
@@ -74,7 +74,7 @@
 
     <!-- Mobile menu -->
     <div class="md:hidden mobile-menu" id="mobile-menu" style="display: none;">
-      <div class="px-2 pt-2 pb-3 space-y-1 border-t border-plaid-gray">
+      <div class="px-2 pt-2 pb-3 space-y-1 border-t border-plaid-blue-sky-200">
         <a href="/api-explorer"
            class="<%= currentPage === 'api-explorer' ? 'bg-plaid-mint-200 text-plaid-mint-700' : 'text-plaid-dark-gray hover:text-plaid-black' %> block px-3 py-2 rounded-md text-base font-medium transition-colors">
           API Explorer
