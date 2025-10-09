@@ -13,29 +13,30 @@
 
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-plaid-black">Core Exchange API Demo</h1>
-        <p class="text-plaid-dark-gray mt-2">Experience the Core Exchange API in action</p>
+        <h1 class="text-3xl font-bold text-plaid-black">Core Exchange API Playground</h1>
+        <p class="text-plaid-dark-gray mt-2">Time to kick the tires on Core Exchange!</p>
       </div>
 
       <!-- About Section -->
       <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-8">
-        <h2 class="text-lg font-semibold text-plaid-black mb-4">About This Demo</h2>
+        <h2 class="text-lg font-semibold text-plaid-black mb-4">What's Under the Hood</h2>
         <div class="prose prose-sm max-w-none text-plaid-dark-gray">
           <p class="mb-3">
-            This application demonstrates a complete implementation of the <strong>Core Exchange API v6.3.1</strong>
-            specification using OpenID Connect for authentication and authorization.
+            A full-stack reference implementation of <strong>Core Exchange API v6.3</strong> with
+            proper OAuth 2.0 + OpenID Connect flows. Everything you need to build secure, modern financial integrations.
           </p>
           <p class="mb-3">
-            The demo includes three main components:
+            The three-service architecture:
           </p>
           <ul class="list-disc list-inside space-y-2 mb-3">
-            <li><strong>Authorization Server</strong> - OpenID Provider handling authentication and token issuance</li>
-            <li><strong>Resource Server (API)</strong> - Protected API implementing Core Exchange endpoints</li>
-            <li><strong>Client Application</strong> - This application acting as a Relying Party</li>
+            <li><strong>Authorization Server</strong> - OIDC Provider juggling auth flows and minting tokens</li>
+            <li><strong>Resource Server (API)</strong> - JWT-protected API serving up financial data like it's 2025</li>
+            <li><strong>Client App (RP)</strong> - This guy right here, doing the PKCE dance and making authenticated
+              requests</li>
           </ul>
           <p>
-            You can explore account data, transactions, statements, and other financial information through
-            the interactive API Explorer after authenticating.
+            Once you're authenticated, explore the API Explorer to test every endpoint and see sample data
+            flowing through a production-ready architecture. You've got this.
           </p>
         </div>
       </div>
@@ -51,18 +52,18 @@
               </path>
             </svg>
           </div>
-          <h3 class="text-2xl font-bold text-plaid-black mb-2">Get Started</h3>
-          <p class="text-plaid-dark-gray mb-6">Sign in to explore the Core Exchange API with demo financial data</p>
+          <h3 class="text-2xl font-bold text-plaid-black mb-2">Ready to Authenticate?</h3>
+          <p class="text-plaid-dark-gray mb-6">Fire up an OAuth flow and get yourself some shiny JWT tokens</p>
           <a href="/login"
             class="inline-flex items-center px-6 py-3 bg-plaid-mint-600 border border-transparent rounded-md text-base font-medium text-white hover:bg-plaid-mint-700 transition-colors shadow-sm">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
             </svg>
-            Sign In to Continue
+            Start the OIDC Flow
           </a>
           <p class="text-sm text-plaid-gray mt-4">
-            Demo credentials: <code class="bg-white px-2 py-1 rounded">user@example.test</code> /
+            Test credentials: <code class="bg-white px-2 py-1 rounded">user@example.test</code> /
             <code class="bg-white px-2 py-1 rounded">passw0rd!</code>
           </p>
         </div>
@@ -82,7 +83,8 @@
                 </div>
                 <div class="ml-4">
                   <h3 class="text-sm font-semibold text-plaid-black group-hover:text-plaid-mint-700">API Explorer</h3>
-                  <p class="text-sm text-plaid-dark-gray mt-1">Test all Core Exchange endpoints interactively</p>
+                  <p class="text-sm text-plaid-dark-gray mt-1">Test every endpoint right in your browser,
+                    authenticated and ready to go</p>
                 </div>
               </a>
 
@@ -96,8 +98,10 @@
                   </svg>
                 </div>
                 <div class="ml-4">
-                  <h3 class="text-sm font-semibold text-plaid-black group-hover:text-plaid-mint-700">Profile</h3>
-                  <p class="text-sm text-plaid-dark-gray mt-1">View your ID token claims and authentication status</p>
+                  <h3 class="text-sm font-semibold text-plaid-black group-hover:text-plaid-mint-700">Token Inspector
+                  </h3>
+                  <p class="text-sm text-plaid-dark-gray mt-1">Decode your ID token and see what claims you're carrying
+                    around</p>
                 </div>
               </a>
 
@@ -111,8 +115,9 @@
                   </svg>
                 </div>
                 <div class="ml-4">
-                  <h3 class="text-sm font-semibold text-plaid-black group-hover:text-plaid-mint-700">Quick API Test</h3>
-                  <p class="text-sm text-plaid-dark-gray mt-1">Simple test of the accounts endpoint</p>
+                  <h3 class="text-sm font-semibold text-plaid-black group-hover:text-plaid-mint-700">Quick Smoke Test
+                  </h3>
+                  <p class="text-sm text-plaid-dark-gray mt-1">Hit <code>/accounts</code> and watch the magic happen</p>
                 </div>
               </a>
             </div>
@@ -129,9 +134,8 @@
                     </path>
                   </svg>
                 </div>
-                <h3 class="text-sm font-semibold text-plaid-black mb-2">Secure Authentication</h3>
-                <p class="text-sm text-plaid-dark-gray">OAuth 2.0 & OpenID Connect with PKCE for secure authorization
-                  flows</p>
+                <h3 class="text-sm font-semibold text-plaid-black mb-2">Battle-Tested Auth</h3>
+                <p class="text-sm text-plaid-dark-gray">OAuth 2.0 + OIDC with PKCE</p>
               </div>
 
               <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
@@ -142,8 +146,8 @@
                     </path>
                   </svg>
                 </div>
-                <h3 class="text-sm font-semibold text-plaid-black mb-2">FDX Compliant</h3>
-                <p class="text-sm text-plaid-dark-gray">Implements Core Exchange API v6.3.1 specification endpoints</p>
+                <h3 class="text-sm font-semibold text-plaid-black mb-2">Spec-Compliant APIs</h3>
+                <p class="text-sm text-plaid-dark-gray">100% Core Exchange v6.3</p>
               </div>
 
               <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
@@ -155,9 +159,10 @@
                     </path>
                   </svg>
                 </div>
-                <h3 class="text-sm font-semibold text-plaid-black mb-2">Token Refresh</h3>
-                <p class="text-sm text-plaid-dark-gray">Supports offline access with refresh tokens for extended
-                  sessions</p>
+                <h3 class="text-sm font-semibold text-plaid-black mb-2">Long-Lived Sessions</h3>
+                <p class="text-sm text-plaid-dark-gray">Refresh tokens for when you need that sweet, sweet
+                  <code>offline_access</code>
+                </p>
               </div>
             </div>
     </div>
