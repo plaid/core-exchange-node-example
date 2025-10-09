@@ -122,15 +122,15 @@ Key components:
 
 Available endpoints (FDX Core Exchange compliant):
 
-- `/api/cx/customers/current` - Get current customer information
-- `/api/cx/accounts` - List customer accounts
-- `/api/cx/accounts/{accountId}` - Get account details
-- `/api/cx/accounts/{accountId}/contact` - Get account contact information
-- `/api/cx/accounts/{accountId}/statements` - List account statements
-- `/api/cx/accounts/{accountId}/statements/{statementId}` - Download statement PDF
-- `/api/cx/accounts/{accountId}/transactions` - Get account transactions
-- `/api/cx/accounts/{accountId}/payment-networks` - Get payment network information
-- `/api/cx/accounts/{accountId}/asset-transfer-networks` - Get asset transfer network information
+- `/api/fdx/v6/customers/current` - Get current customer information
+- `/api/fdx/v6/accounts` - List customer accounts
+- `/api/fdx/v6/accounts/{accountId}` - Get account details
+- `/api/fdx/v6/accounts/{accountId}/contact` - Get account contact information
+- `/api/fdx/v6/accounts/{accountId}/statements` - List account statements
+- `/api/fdx/v6/accounts/{accountId}/statements/{statementId}` - Download statement PDF
+- `/api/fdx/v6/accounts/{accountId}/transactions` - Get account transactions
+- `/api/fdx/v6/accounts/{accountId}/payment-networks` - Get payment network information
+- `/api/fdx/v6/accounts/{accountId}/asset-transfer-networks` - Get asset transfer network information
 
 ### 3. Client Application (APP)
 

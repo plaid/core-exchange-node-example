@@ -119,8 +119,8 @@ app.get( "/public/health", ( _req: Request, res: Response ) =>
 );
 
 // Routes
-app.use( "/api/cx", customersRouter );
-app.use( "/api/cx", accountsRouter );
+app.use( "/api/fdx/v6", customersRouter );
+app.use( "/api/fdx/v6", accountsRouter );
 
 // app.get( "/accounts", ( req: Request, res: Response ) => {
 // 	const scope = String( ( req as any ).user?.scope || "" ).split( " " );

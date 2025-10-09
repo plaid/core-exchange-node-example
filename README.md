@@ -104,12 +104,12 @@ Notes:
 
 Implements FDX Core Exchange API v6.3.1 with the following endpoints:
 
-- **Customer**: `/api/cx/customers/current`
-- **Accounts**: `/api/cx/accounts`, `/api/cx/accounts/{accountId}`
-- **Statements**: `/api/cx/accounts/{accountId}/statements`, `/api/cx/accounts/{accountId}/statements/{statementId}`
-- **Transactions**: `/api/cx/accounts/{accountId}/transactions`
-- **Contact**: `/api/cx/accounts/{accountId}/contact`
-- **Networks**: `/api/cx/accounts/{accountId}/payment-networks`, `/api/cx/accounts/{accountId}/asset-transfer-networks`
+- **Customer**: `/api/fdx/v6/customers/current`
+- **Accounts**: `/api/fdx/v6/accounts`, `/api/fdx/v6/accounts/{accountId}`
+- **Statements**: `/api/fdx/v6/accounts/{accountId}/statements`, `/api/fdx/v6/accounts/{accountId}/statements/{statementId}`
+- **Transactions**: `/api/fdx/v6/accounts/{accountId}/transactions`
+- **Contact**: `/api/fdx/v6/accounts/{accountId}/contact`
+- **Networks**: `/api/fdx/v6/accounts/{accountId}/payment-networks`, `/api/fdx/v6/accounts/{accountId}/asset-transfer-networks`
 
 All endpoints require valid JWT access tokens with appropriate scopes.
 
