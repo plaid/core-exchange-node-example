@@ -192,17 +192,17 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 					<title>Authorization Cancelled</title>
 					<link href="/public/styles.css" rel="stylesheet">
 				</head>
-				<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+				<body class="bg-plaid-light-gray min-h-screen flex items-center justify-center">
 					<div class="max-w-md w-full mx-4">
 						<div class="bg-white rounded-lg shadow-lg p-8">
 							<div class="text-center">
-								<svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<svg class="mx-auto h-12 w-12 text-plaid-piggy-bank" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
 								</svg>
-								<h2 class="mt-4 text-2xl font-bold text-gray-900">Authorization Cancelled</h2>
-								<p class="mt-2 text-gray-600">${ errorDescription }</p>
+								<h2 class="mt-4 text-2xl font-semibold text-plaid-black">Authorization Cancelled</h2>
+								<p class="mt-2 text-plaid-gray">${ errorDescription }</p>
 								<div class="mt-6">
-									<a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+									<a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-plaid-black bg-plaid-mint hover:bg-plaid-blue-sky focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plaid-mint">
 										Return Home
 									</a>
 								</div>

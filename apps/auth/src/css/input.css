@@ -1,1 +1,133 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&family=Inconsolata:wght@400;700&display=swap');
+
+@theme {
+  /* Plaid Brand Colors - Mint */
+  --color-plaid-mint-200: #D8FEF3;
+  --color-plaid-mint-400: #42F0CD;
+  --color-plaid-mint-450: #10D1B7;
+  --color-plaid-mint-600: #088181;
+  --color-plaid-mint-700: #034049;
+
+  /* Plaid Brand Colors - Blue Sky */
+  --color-plaid-blue-sky-200: #CCF8FF;
+  --color-plaid-blue-sky-400: #51D2FB;
+  --color-plaid-blue-sky-450: #0DADF2;
+  --color-plaid-blue-sky-600: #0B7BBC;
+  --color-plaid-blue-sky-700: #07578D;
+
+  /* Plaid Brand Colors - Royal Purple */
+  --color-plaid-royal-purple-200: #E6E6FF;
+  --color-plaid-royal-purple-400: #A3A3FF;
+  --color-plaid-royal-purple-450: #8B8BF9;
+  --color-plaid-royal-purple-600: #5E5ED9;
+  --color-plaid-royal-purple-700: #4444A7;
+
+  /* Plaid Brand Colors - Piggy Bank */
+  --color-plaid-piggy-bank-200: #F9DBFF;
+  --color-plaid-piggy-bank-400: #EE99FF;
+  --color-plaid-piggy-bank-450: #E574FB;
+  --color-plaid-piggy-bank-600: #BB33D7;
+  --color-plaid-piggy-bank-700: #8F29A3;
+
+  /* Plaid Brand Colors - Gold Standard */
+  --color-plaid-gold-standard-200: #FFF6D8;
+  --color-plaid-gold-standard-400: #FBDE51;
+  --color-plaid-gold-standard-450: #EBCB00;
+  --color-plaid-gold-standard-600: #807700;
+  --color-plaid-gold-standard-700: #615E00;
+
+  /* Plaid Brand Colors - Credit Lime */
+  --color-plaid-credit-lime-200: #E8FED7;
+  --color-plaid-credit-lime-400: #7CF042;
+  --color-plaid-credit-lime-450: #46DA10;
+  --color-plaid-credit-lime-600: #188108;
+  --color-plaid-credit-lime-700: #0B5C05;
+
+  /* Neutral colors */
+  --color-plaid-white: #FFFFFF;
+  --color-plaid-light-gray: #F8F9FA;
+  --color-plaid-gray: #6C757D;
+  --color-plaid-dark-gray: #495057;
+  --color-plaid-black: #002C37;
+
+  /* Plaid Brand Fonts */
+  --font-family-sans: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
+}
+
+:root {
+  /* CSS Variables for custom usage - Mint */
+  --plaid-mint-200: #D8FEF3;
+  --plaid-mint-400: #42F0CD;
+  --plaid-mint-450: #10D1B7;
+  --plaid-mint-600: #088181;
+  --plaid-mint-700: #034049;
+  --plaid-mint: #42F0CD; /* Default to 400 */
+  --plaid-mint-light: #D8FEF3; /* Alias for 200 */
+
+  /* CSS Variables for custom usage - Blue Sky */
+  --plaid-blue-sky-200: #CCF8FF;
+  --plaid-blue-sky-400: #51D2FB;
+  --plaid-blue-sky-450: #0DADF2;
+  --plaid-blue-sky-600: #0B7BBC;
+  --plaid-blue-sky-700: #07578D;
+  --plaid-blue-sky: #51D2FB; /* Default to 400 */
+
+  /* CSS Variables for custom usage - Royal Purple */
+  --plaid-royal-purple-200: #E6E6FF;
+  --plaid-royal-purple-400: #A3A3FF;
+  --plaid-royal-purple-450: #8B8BF9;
+  --plaid-royal-purple-600: #5E5ED9;
+  --plaid-royal-purple-700: #4444A7;
+  --plaid-royal-purple: #A3A3FF; /* Default to 400 */
+
+  /* CSS Variables for custom usage - Piggy Bank */
+  --plaid-piggy-bank-200: #F9DBFF;
+  --plaid-piggy-bank-400: #EE99FF;
+  --plaid-piggy-bank-450: #E574FB;
+  --plaid-piggy-bank-600: #BB33D7;
+  --plaid-piggy-bank-700: #8F29A3;
+  --plaid-piggy-bank: #EE99FF; /* Default to 400 */
+
+  /* CSS Variables for custom usage - Gold Standard */
+  --plaid-gold-standard-200: #FFF6D8;
+  --plaid-gold-standard-400: #FBDE51;
+  --plaid-gold-standard-450: #EBCB00;
+  --plaid-gold-standard-600: #807700;
+  --plaid-gold-standard-700: #615E00;
+  --plaid-gold-standard: #FBDE51; /* Default to 400 */
+
+  /* CSS Variables for custom usage - Credit Lime */
+  --plaid-credit-lime-200: #E8FED7;
+  --plaid-credit-lime-400: #7CF042;
+  --plaid-credit-lime-450: #46DA10;
+  --plaid-credit-lime-600: #188108;
+  --plaid-credit-lime-700: #0B5C05;
+  --plaid-credit-lime: #7CF042; /* Default to 400 */
+
+  /* Neutral colors */
+  --plaid-white: #FFFFFF;
+  --plaid-light-gray: #F8F9FA;
+  --plaid-gray: #6C757D;
+  --plaid-dark-gray: #495057;
+  --plaid-black: #002C37;
+
+  /* Font variables */
+  --font-heading: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-code: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
+}
+
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+
+code, pre {
+  font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
+}

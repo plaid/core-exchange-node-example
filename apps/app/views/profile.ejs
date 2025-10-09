@@ -6,62 +6,62 @@
   <title>Profile - Dev Client</title>
   <link href="/public/styles.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-plaid-light-gray min-h-screen">
   <%- include('partials/navigation', { tokens, currentPage: 'profile' }) %>
-  
+
   <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Profile</h1>
-      <p class="text-gray-600 mt-2">Your authenticated user information from the ID token</p>
+      <h1 class="text-3xl font-bold text-plaid-black">Profile</h1>
+      <p class="text-plaid-dark-gray mt-2">Your authenticated user information from the ID token</p>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">User Information</h2>
-      
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+      <h2 class="text-lg font-semibold text-plaid-black mb-4">User Information</h2>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Basic Info -->
         <div class="space-y-4">
           <div>
-            <label class="text-sm font-medium text-gray-500">Subject (User ID)</label>
-            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded"><%= userInfo.sub %></p>
+            <label class="text-sm font-medium text-plaid-gray">Subject (User ID)</label>
+            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded"><%= userInfo.sub %></p>
           </div>
-          
+
           <div>
-            <label class="text-sm font-medium text-gray-500">Email</label>
-            <p class="mt-1 text-sm text-gray-900"><%= userInfo.email || 'Not provided' %></p>
+            <label class="text-sm font-medium text-plaid-gray">Email</label>
+            <p class="mt-1 text-sm text-plaid-black"><%= userInfo.email || 'Not provided' %></p>
           </div>
-          
+
           <div>
-            <label class="text-sm font-medium text-gray-500">Name</label>
-            <p class="mt-1 text-sm text-gray-900"><%= userInfo.name || 'Not provided' %></p>
+            <label class="text-sm font-medium text-plaid-gray">Name</label>
+            <p class="mt-1 text-sm text-plaid-black"><%= userInfo.name || 'Not provided' %></p>
           </div>
         </div>
-        
+
         <!-- Token Info -->
         <div class="space-y-4">
           <div>
-            <label class="text-sm font-medium text-gray-500">Issuer</label>
-            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded break-all"><%= userInfo.iss %></p>
+            <label class="text-sm font-medium text-plaid-gray">Issuer</label>
+            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded break-all"><%= userInfo.iss %></p>
           </div>
-          
+
           <div>
-            <label class="text-sm font-medium text-gray-500">Audience</label>
-            <p class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded break-all"><%= userInfo.aud %></p>
+            <label class="text-sm font-medium text-plaid-gray">Audience</label>
+            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded break-all"><%= userInfo.aud %></p>
           </div>
-          
+
           <div>
-            <label class="text-sm font-medium text-gray-500">Issued At</label>
-            <p class="mt-1 text-sm text-gray-900">
+            <label class="text-sm font-medium text-plaid-gray">Issued At</label>
+            <p class="mt-1 text-sm text-plaid-black">
               <%= new Date(userInfo.iat * 1000).toLocaleString() %>
-              <span class="text-gray-500">(<%= userInfo.iat %>)</span>
+              <span class="text-plaid-gray">(<%= userInfo.iat %>)</span>
             </p>
           </div>
-          
+
           <div>
-            <label class="text-sm font-medium text-gray-500">Expires At</label>
-            <p class="mt-1 text-sm text-gray-900">
+            <label class="text-sm font-medium text-plaid-gray">Expires At</label>
+            <p class="mt-1 text-sm text-plaid-black">
               <%= new Date(userInfo.exp * 1000).toLocaleString() %>
-              <span class="text-gray-500">(<%= userInfo.exp %>)</span>
+              <span class="text-plaid-gray">(<%= userInfo.exp %>)</span>
             </p>
           </div>
         </div>
@@ -69,38 +69,38 @@
     </div>
 
     <!-- Token Status -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Authentication Status</h2>
-      
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+      <h2 class="text-lg font-semibold text-plaid-black mb-4">Authentication Status</h2>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center p-4 bg-green-50 rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
-          <h3 class="text-sm font-medium text-green-800">ID Token</h3>
-          <p class="text-xs text-green-600 mt-1">Valid & Verified</p>
+          <h3 class="text-sm font-medium text-plaid-credit-lime-700">ID Token</h3>
+          <p class="text-xs text-plaid-credit-lime-600 mt-1">Valid & Verified</p>
         </div>
-        
-        <div class="text-center p-4 bg-green-50 rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
             </svg>
           </div>
-          <h3 class="text-sm font-medium text-green-800">Access Token</h3>
-          <p class="text-xs text-green-600 mt-1">Available for API calls</p>
+          <h3 class="text-sm font-medium text-plaid-credit-lime-700">Access Token</h3>
+          <p class="text-xs text-plaid-credit-lime-600 mt-1">Available for API calls</p>
         </div>
-        
-        <div class="text-center p-4 <%= tokens.refresh_token ? 'bg-green-50' : 'bg-gray-50' %> rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 <%= tokens.refresh_token ? 'bg-green-100' : 'bg-gray-100' %> rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 <%= tokens.refresh_token ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <div class="text-center p-4 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-200' : 'bg-plaid-light-gray' %> rounded-lg">
+          <div class="flex items-center justify-center w-12 h-12 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-400' : 'bg-plaid-gray' %> rounded-full mx-auto mb-3">
+            <svg class="w-6 h-6 <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
           </div>
-          <h3 class="text-sm font-medium <%= tokens.refresh_token ? 'text-green-800' : 'text-gray-600' %>">Refresh Token</h3>
-          <p class="text-xs <%= tokens.refresh_token ? 'text-green-600' : 'text-gray-500' %> mt-1">
+          <h3 class="text-sm font-medium <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>">Refresh Token</h3>
+          <p class="text-xs <%= tokens.refresh_token ? 'text-plaid-credit-lime-600' : 'text-plaid-gray' %> mt-1">
             <%= tokens.refresh_token ? 'Available' : 'Not Available' %>
           </p>
         </div>
@@ -108,20 +108,20 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-      
+    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-gray p-6">
+      <h2 class="text-lg font-semibold text-plaid-black mb-4">Quick Actions</h2>
+
       <div class="flex flex-wrap gap-4">
-        <a href="/api-explorer" 
-           class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-white hover:bg-blue-700 transition-colors">
+        <a href="/api-explorer"
+           class="inline-flex items-center px-4 py-2 bg-plaid-mint-600 border border-transparent rounded-md font-medium text-white hover:bg-plaid-mint-700 transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
           </svg>
           Test API Endpoints
         </a>
-        
+
         <a href="/accounts"
-           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+           class="inline-flex items-center px-4 py-2 border border-plaid-gray rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
@@ -129,7 +129,7 @@
         </a>
 
         <button onclick="refreshTokens()"
-                class="inline-flex items-center px-4 py-2 border border-indigo-300 rounded-md font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
+                class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-400 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
                 <%= !tokens || !tokens.refresh_token ? 'disabled' : '' %>>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -137,8 +137,8 @@
           Refresh Tokens
         </button>
 
-        <a href="/logout" 
-           class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors">
+        <a href="/logout"
+           class="inline-flex items-center px-4 py-2 border border-plaid-piggy-bank-400 rounded-md font-medium text-plaid-piggy-bank-700 bg-plaid-piggy-bank-200 hover:bg-plaid-piggy-bank-400 transition-colors">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
           </svg>
@@ -156,13 +156,13 @@
       const resultDiv = document.getElementById('refresh-result');
       resultDiv.classList.remove('hidden');
       resultDiv.innerHTML = `
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="bg-plaid-mint-200 border border-plaid-mint-400 rounded-lg p-4">
           <div class="flex items-center">
-            <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-5 w-5 text-plaid-mint-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span class="text-blue-800 font-medium">Refreshing tokens...</span>
+            <span class="text-plaid-mint-700 font-medium">Refreshing tokens...</span>
           </div>
         </div>
       `;
@@ -179,17 +179,17 @@
 
         if (response.ok) {
           resultDiv.innerHTML = `
-            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+            <div class="bg-plaid-credit-lime-200 border border-plaid-credit-lime-400 rounded-lg p-6">
               <div class="flex items-center mb-4">
-                <svg class="h-6 w-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-6 w-6 text-plaid-credit-lime-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <h3 class="text-lg font-semibold text-green-800">Tokens Refreshed Successfully!</h3>
+                <h3 class="text-lg font-semibold text-plaid-credit-lime-700">Tokens Refreshed Successfully!</h3>
               </div>
               <div class="space-y-2 text-sm">
-                <p class="text-green-700"><strong>New Access Token:</strong> <code class="bg-green-100 px-2 py-1 rounded">${data.access_token?.substring(0, 50)}...</code></p>
-                ${data.refresh_token ? '<p class="text-green-700"><strong>New Refresh Token:</strong> Received</p>' : ''}
-                ${data.id_token ? '<p class="text-green-700"><strong>New ID Token:</strong> Received</p>' : ''}
+                <p class="text-plaid-credit-lime-700"><strong>New Access Token:</strong> <code class="bg-plaid-credit-lime-400 px-2 py-1 rounded">${data.access_token?.substring(0, 50)}...</code></p>
+                ${data.refresh_token ? '<p class="text-plaid-credit-lime-700"><strong>New Refresh Token:</strong> Received</p>' : ''}
+                ${data.id_token ? '<p class="text-plaid-credit-lime-700"><strong>New ID Token:</strong> Received</p>' : ''}
               </div>
             </div>
           `;
@@ -198,12 +198,12 @@
         }
       } catch (error) {
         resultDiv.innerHTML = `
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="bg-plaid-piggy-bank-200 border border-plaid-piggy-bank-400 rounded-lg p-4">
             <div class="flex items-center">
-              <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 text-plaid-piggy-bank-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <span class="text-red-800 font-medium">Error: ${error.message}</span>
+              <span class="text-plaid-piggy-bank-700 font-medium">Error: ${error.message}</span>
             </div>
           </div>
         `;

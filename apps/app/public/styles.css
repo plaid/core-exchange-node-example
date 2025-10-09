@@ -12,7 +12,6 @@
     --color-red-200: oklch(88.5% 0.062 18.334);
     --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-400: oklch(70.4% 0.191 22.216);
-    --color-red-500: oklch(63.7% 0.237 25.331);
     --color-red-600: oklch(57.7% 0.245 27.325);
     --color-red-700: oklch(50.5% 0.213 27.518);
     --color-red-800: oklch(44.4% 0.177 26.899);
@@ -35,8 +34,6 @@
     --color-indigo-50: oklch(96.2% 0.018 272.314);
     --color-indigo-100: oklch(93% 0.034 272.788);
     --color-indigo-300: oklch(78.5% 0.115 274.713);
-    --color-indigo-500: oklch(58.5% 0.233 277.117);
-    --color-indigo-600: oklch(51.1% 0.262 276.966);
     --color-indigo-700: oklch(45.7% 0.24 277.023);
     --color-purple-100: oklch(94.6% 0.033 307.174);
     --color-purple-600: oklch(55.8% 0.288 302.321);
@@ -78,6 +75,27 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
+    --color-plaid-mint-200: #D8FEF3;
+    --color-plaid-mint-400: #42F0CD;
+    --color-plaid-mint-600: #088181;
+    --color-plaid-mint-700: #034049;
+    --color-plaid-blue-sky-200: #CCF8FF;
+    --color-plaid-royal-purple-200: #E6E6FF;
+    --color-plaid-royal-purple-400: #A3A3FF;
+    --color-plaid-royal-purple-600: #5E5ED9;
+    --color-plaid-royal-purple-700: #4444A7;
+    --color-plaid-piggy-bank-200: #F9DBFF;
+    --color-plaid-piggy-bank-400: #EE99FF;
+    --color-plaid-piggy-bank-600: #BB33D7;
+    --color-plaid-piggy-bank-700: #8F29A3;
+    --color-plaid-credit-lime-200: #E8FED7;
+    --color-plaid-credit-lime-400: #7CF042;
+    --color-plaid-credit-lime-600: #188108;
+    --color-plaid-credit-lime-700: #0B5C05;
+    --color-plaid-light-gray: #F8F9FA;
+    --color-plaid-gray: #6C757D;
+    --color-plaid-dark-gray: #495057;
+    --color-plaid-black: #002C37;
   }
 }
 @layer base {
@@ -496,26 +514,29 @@
   .border-blue-200 {
     border-color: var(--color-blue-200);
   }
-  .border-blue-300 {
-    border-color: var(--color-blue-300);
-  }
   .border-gray-200 {
     border-color: var(--color-gray-200);
   }
   .border-gray-300 {
     border-color: var(--color-gray-300);
   }
-  .border-green-200 {
-    border-color: var(--color-green-200);
+  .border-plaid-credit-lime-400 {
+    border-color: var(--color-plaid-credit-lime-400);
   }
-  .border-indigo-300 {
-    border-color: var(--color-indigo-300);
+  .border-plaid-gray {
+    border-color: var(--color-plaid-gray);
+  }
+  .border-plaid-mint-400 {
+    border-color: var(--color-plaid-mint-400);
+  }
+  .border-plaid-piggy-bank-400 {
+    border-color: var(--color-plaid-piggy-bank-400);
+  }
+  .border-plaid-royal-purple-400 {
+    border-color: var(--color-plaid-royal-purple-400);
   }
   .border-red-200 {
     border-color: var(--color-red-200);
-  }
-  .border-red-300 {
-    border-color: var(--color-red-300);
   }
   .border-transparent {
     border-color: transparent;
@@ -523,41 +544,41 @@
   .bg-blue-50 {
     background-color: var(--color-blue-50);
   }
-  .bg-blue-100 {
-    background-color: var(--color-blue-100);
-  }
   .bg-blue-600 {
     background-color: var(--color-blue-600);
   }
   .bg-gray-50 {
     background-color: var(--color-gray-50);
   }
-  .bg-gray-100 {
-    background-color: var(--color-gray-100);
-  }
-  .bg-gray-200 {
-    background-color: var(--color-gray-200);
-  }
-  .bg-green-50 {
-    background-color: var(--color-green-50);
-  }
   .bg-green-100 {
     background-color: var(--color-green-100);
   }
-  .bg-indigo-50 {
-    background-color: var(--color-indigo-50);
+  .bg-plaid-credit-lime-200 {
+    background-color: var(--color-plaid-credit-lime-200);
   }
-  .bg-indigo-600 {
-    background-color: var(--color-indigo-600);
+  .bg-plaid-credit-lime-400 {
+    background-color: var(--color-plaid-credit-lime-400);
   }
-  .bg-purple-100 {
-    background-color: var(--color-purple-100);
+  .bg-plaid-gray {
+    background-color: var(--color-plaid-gray);
+  }
+  .bg-plaid-light-gray {
+    background-color: var(--color-plaid-light-gray);
+  }
+  .bg-plaid-mint-200 {
+    background-color: var(--color-plaid-mint-200);
+  }
+  .bg-plaid-mint-600 {
+    background-color: var(--color-plaid-mint-600);
+  }
+  .bg-plaid-piggy-bank-200 {
+    background-color: var(--color-plaid-piggy-bank-200);
+  }
+  .bg-plaid-royal-purple-200 {
+    background-color: var(--color-plaid-royal-purple-200);
   }
   .bg-red-50 {
     background-color: var(--color-red-50);
-  }
-  .bg-red-100 {
-    background-color: var(--color-red-100);
   }
   .bg-red-900 {
     background-color: var(--color-red-900);
@@ -569,12 +590,12 @@
     --tw-gradient-position: to right in oklab;
     background-image: linear-gradient(var(--tw-gradient-stops));
   }
-  .from-blue-50 {
-    --tw-gradient-from: var(--color-blue-50);
+  .from-plaid-mint-200 {
+    --tw-gradient-from: var(--color-plaid-mint-200);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
-  .to-indigo-50 {
-    --tw-gradient-to: var(--color-indigo-50);
+  .to-plaid-blue-sky-200 {
+    --tw-gradient-to: var(--color-plaid-blue-sky-200);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
   .p-2 {
@@ -698,29 +719,50 @@
   .text-green-600 {
     color: var(--color-green-600);
   }
-  .text-green-700 {
-    color: var(--color-green-700);
-  }
   .text-green-800 {
     color: var(--color-green-800);
-  }
-  .text-indigo-700 {
-    color: var(--color-indigo-700);
   }
   .text-orange-600 {
     color: var(--color-orange-600);
   }
-  .text-purple-600 {
-    color: var(--color-purple-600);
+  .text-plaid-black {
+    color: var(--color-plaid-black);
+  }
+  .text-plaid-credit-lime-600 {
+    color: var(--color-plaid-credit-lime-600);
+  }
+  .text-plaid-credit-lime-700 {
+    color: var(--color-plaid-credit-lime-700);
+  }
+  .text-plaid-dark-gray {
+    color: var(--color-plaid-dark-gray);
+  }
+  .text-plaid-gray {
+    color: var(--color-plaid-gray);
+  }
+  .text-plaid-mint-600 {
+    color: var(--color-plaid-mint-600);
+  }
+  .text-plaid-mint-700 {
+    color: var(--color-plaid-mint-700);
+  }
+  .text-plaid-piggy-bank-600 {
+    color: var(--color-plaid-piggy-bank-600);
+  }
+  .text-plaid-piggy-bank-700 {
+    color: var(--color-plaid-piggy-bank-700);
+  }
+  .text-plaid-royal-purple-600 {
+    color: var(--color-plaid-royal-purple-600);
+  }
+  .text-plaid-royal-purple-700 {
+    color: var(--color-plaid-royal-purple-700);
   }
   .text-red-100 {
     color: var(--color-red-100);
   }
   .text-red-400 {
     color: var(--color-red-400);
-  }
-  .text-red-500 {
-    color: var(--color-red-500);
   }
   .text-red-600 {
     color: var(--color-red-600);
@@ -761,31 +803,17 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .group-hover\:text-blue-700 {
+  .group-hover\:text-plaid-mint-700 {
     &:is(:where(.group):hover *) {
       @media (hover: hover) {
-        color: var(--color-blue-700);
+        color: var(--color-plaid-mint-700);
       }
     }
   }
-  .hover\:border-blue-300 {
+  .hover\:border-plaid-mint-400 {
     &:hover {
       @media (hover: hover) {
-        border-color: var(--color-blue-300);
-      }
-    }
-  }
-  .hover\:bg-blue-50 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-blue-50);
-      }
-    }
-  }
-  .hover\:bg-blue-100 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-blue-100);
+        border-color: var(--color-plaid-mint-400);
       }
     }
   }
@@ -803,59 +831,66 @@
       }
     }
   }
-  .hover\:bg-gray-100 {
+  .hover\:bg-plaid-light-gray {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-gray-100);
+        background-color: var(--color-plaid-light-gray);
       }
     }
   }
-  .hover\:bg-indigo-100 {
+  .hover\:bg-plaid-mint-200 {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-indigo-100);
+        background-color: var(--color-plaid-mint-200);
       }
     }
   }
-  .hover\:bg-indigo-700 {
+  .hover\:bg-plaid-mint-400 {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-indigo-700);
+        background-color: var(--color-plaid-mint-400);
       }
     }
   }
-  .hover\:bg-red-100 {
+  .hover\:bg-plaid-mint-700 {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-red-100);
+        background-color: var(--color-plaid-mint-700);
       }
     }
   }
-  .hover\:text-blue-600 {
+  .hover\:bg-plaid-piggy-bank-400 {
     &:hover {
       @media (hover: hover) {
-        color: var(--color-blue-600);
+        background-color: var(--color-plaid-piggy-bank-400);
       }
     }
   }
-  .hover\:text-gray-500 {
+  .hover\:bg-plaid-royal-purple-400 {
     &:hover {
       @media (hover: hover) {
-        color: var(--color-gray-500);
+        background-color: var(--color-plaid-royal-purple-400);
       }
     }
   }
-  .hover\:text-gray-700 {
+  .hover\:text-plaid-black {
     &:hover {
       @media (hover: hover) {
-        color: var(--color-gray-700);
+        color: var(--color-plaid-black);
       }
     }
   }
-  .hover\:text-gray-900 {
+  .hover\:text-plaid-dark-gray {
     &:hover {
       @media (hover: hover) {
-        color: var(--color-gray-900);
+        color: var(--color-plaid-dark-gray);
+      }
+    }
+  }
+  .hover\:text-plaid-mint-600 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-plaid-mint-600);
       }
     }
   }
@@ -870,9 +905,9 @@
       --tw-ring-color: var(--color-blue-500);
     }
   }
-  .focus\:ring-indigo-500 {
+  .focus\:ring-plaid-mint-400 {
     &:focus {
-      --tw-ring-color: var(--color-indigo-500);
+      --tw-ring-color: var(--color-plaid-mint-400);
     }
   }
   .focus\:ring-offset-2 {
@@ -917,6 +952,64 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+}
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&family=Inconsolata:wght@400;700&display=swap');
+:root {
+  --plaid-mint-200: #D8FEF3;
+  --plaid-mint-400: #42F0CD;
+  --plaid-mint-450: #10D1B7;
+  --plaid-mint-600: #088181;
+  --plaid-mint-700: #034049;
+  --plaid-mint: #42F0CD;
+  --plaid-mint-light: #D8FEF3;
+  --plaid-blue-sky-200: #CCF8FF;
+  --plaid-blue-sky-400: #51D2FB;
+  --plaid-blue-sky-450: #0DADF2;
+  --plaid-blue-sky-600: #0B7BBC;
+  --plaid-blue-sky-700: #07578D;
+  --plaid-blue-sky: #51D2FB;
+  --plaid-royal-purple-200: #E6E6FF;
+  --plaid-royal-purple-400: #A3A3FF;
+  --plaid-royal-purple-450: #8B8BF9;
+  --plaid-royal-purple-600: #5E5ED9;
+  --plaid-royal-purple-700: #4444A7;
+  --plaid-royal-purple: #A3A3FF;
+  --plaid-piggy-bank-200: #F9DBFF;
+  --plaid-piggy-bank-400: #EE99FF;
+  --plaid-piggy-bank-450: #E574FB;
+  --plaid-piggy-bank-600: #BB33D7;
+  --plaid-piggy-bank-700: #8F29A3;
+  --plaid-piggy-bank: #EE99FF;
+  --plaid-gold-standard-200: #FFF6D8;
+  --plaid-gold-standard-400: #FBDE51;
+  --plaid-gold-standard-450: #EBCB00;
+  --plaid-gold-standard-600: #807700;
+  --plaid-gold-standard-700: #615E00;
+  --plaid-gold-standard: #FBDE51;
+  --plaid-credit-lime-200: #E8FED7;
+  --plaid-credit-lime-400: #7CF042;
+  --plaid-credit-lime-450: #46DA10;
+  --plaid-credit-lime-600: #188108;
+  --plaid-credit-lime-700: #0B5C05;
+  --plaid-credit-lime: #7CF042;
+  --plaid-white: #FFFFFF;
+  --plaid-light-gray: #F8F9FA;
+  --plaid-gray: #6C757D;
+  --plaid-dark-gray: #495057;
+  --plaid-black: #002C37;
+  --font-heading: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-code: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
+}
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+code, pre {
+  font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
 }
 @property --tw-space-y-reverse {
   syntax: "*";

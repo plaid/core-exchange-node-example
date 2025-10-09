@@ -11,17 +11,17 @@
       transition: all 0.2s ease;
     }
     .endpoint-item:hover {
-      background-color: #f3f4f6;
+      background-color: var(--plaid-light-gray);
     }
     .endpoint-item.selected {
-      background-color: #dbeafe;
-      border-color: #3b82f6;
+      background-color: var(--plaid-mint-light);
+      border-color: var(--plaid-mint);
     }
     .json-response {
-      font-family: 'Courier New', monospace;
+      font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
       white-space: pre-wrap;
-      background: #1f2937;
-      color: #f9fafb;
+      background: var(--plaid-black);
+      color: var(--plaid-white);
       border-radius: 8px;
       padding: 1rem;
       overflow-x: auto;
@@ -35,14 +35,14 @@
     .parameter-input {
       width: 100%;
       padding: 0.5rem;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--plaid-gray);
       border-radius: 4px;
       font-size: 0.875rem;
     }
     .parameter-label {
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.875rem;
-      color: #374151;
+      color: var(--plaid-dark-gray);
       margin-bottom: 0.25rem;
     }
   </style>

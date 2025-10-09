@@ -12,26 +12,7 @@
     --color-red-400: oklch(70.4% 0.191 22.216);
     --color-red-700: oklch(50.5% 0.213 27.518);
     --color-red-800: oklch(44.4% 0.177 26.899);
-    --color-green-500: oklch(72.3% 0.219 149.579);
-    --color-green-600: oklch(62.7% 0.194 149.214);
-    --color-green-700: oklch(52.7% 0.154 150.069);
-    --color-blue-50: oklch(97% 0.014 254.604);
-    --color-blue-100: oklch(93.2% 0.032 255.585);
-    --color-blue-200: oklch(88.2% 0.059 254.128);
-    --color-blue-400: oklch(70.7% 0.165 254.624);
-    --color-blue-700: oklch(48.8% 0.243 264.376);
-    --color-blue-800: oklch(42.4% 0.199 265.638);
-    --color-indigo-500: oklch(58.5% 0.233 277.117);
-    --color-indigo-600: oklch(51.1% 0.262 276.966);
-    --color-indigo-700: oklch(45.7% 0.24 277.023);
-    --color-gray-50: oklch(98.5% 0.002 247.839);
-    --color-gray-100: oklch(96.7% 0.003 264.542);
-    --color-gray-300: oklch(87.2% 0.01 258.338);
-    --color-gray-400: oklch(70.7% 0.022 261.325);
     --color-gray-500: oklch(55.1% 0.027 264.364);
-    --color-gray-600: oklch(44.6% 0.03 256.802);
-    --color-gray-700: oklch(37.3% 0.034 259.733);
-    --color-gray-900: oklch(21% 0.034 264.665);
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-md: 28rem;
@@ -42,13 +23,21 @@
     --text-2xl: 1.5rem;
     --text-2xl--line-height: calc(2 / 1.5);
     --font-weight-medium: 500;
-    --font-weight-bold: 700;
+    --font-weight-semibold: 600;
     --radius-md: 0.375rem;
     --radius-lg: 0.5rem;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
+    --color-plaid-piggy-bank-200: #F9DBFF;
+    --color-plaid-piggy-bank-400: #EE99FF;
+    --color-plaid-piggy-bank-600: #BB33D7;
+    --color-plaid-piggy-bank-700: #8F29A3;
+    --color-plaid-light-gray: #F8F9FA;
+    --color-plaid-gray: #6C757D;
+    --color-plaid-dark-gray: #495057;
+    --color-plaid-black: #002C37;
   }
 }
 @layer base {
@@ -293,35 +282,20 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .border-blue-200 {
-    border-color: var(--color-blue-200);
+  .border-plaid-gray {
+    border-color: var(--color-plaid-gray);
   }
-  .border-gray-300 {
-    border-color: var(--color-gray-300);
-  }
-  .border-red-200 {
-    border-color: var(--color-red-200);
+  .border-plaid-piggy-bank-400 {
+    border-color: var(--color-plaid-piggy-bank-400);
   }
   .border-transparent {
     border-color: transparent;
   }
-  .bg-blue-50 {
-    background-color: var(--color-blue-50);
+  .bg-plaid-light-gray {
+    background-color: var(--color-plaid-light-gray);
   }
-  .bg-blue-100 {
-    background-color: var(--color-blue-100);
-  }
-  .bg-gray-100 {
-    background-color: var(--color-gray-100);
-  }
-  .bg-green-600 {
-    background-color: var(--color-green-600);
-  }
-  .bg-indigo-600 {
-    background-color: var(--color-indigo-600);
-  }
-  .bg-red-50 {
-    background-color: var(--color-red-50);
+  .bg-plaid-piggy-bank-200 {
+    background-color: var(--color-plaid-piggy-bank-200);
   }
   .bg-white {
     background-color: var(--color-white);
@@ -365,53 +339,35 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
-  .font-bold {
-    --tw-font-weight: var(--font-weight-bold);
-    font-weight: var(--font-weight-bold);
-  }
   .font-medium {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .text-blue-400 {
-    color: var(--color-blue-400);
-  }
-  .text-blue-700 {
-    color: var(--color-blue-700);
-  }
-  .text-blue-800 {
-    color: var(--color-blue-800);
-  }
-  .text-gray-400 {
-    color: var(--color-gray-400);
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
   }
   .text-gray-500 {
     color: var(--color-gray-500);
   }
-  .text-gray-600 {
-    color: var(--color-gray-600);
+  .text-plaid-black {
+    color: var(--color-plaid-black);
   }
-  .text-gray-700 {
-    color: var(--color-gray-700);
+  .text-plaid-dark-gray {
+    color: var(--color-plaid-dark-gray);
   }
-  .text-gray-900 {
-    color: var(--color-gray-900);
+  .text-plaid-gray {
+    color: var(--color-plaid-gray);
   }
-  .text-red-400 {
-    color: var(--color-red-400);
+  .text-plaid-piggy-bank-600 {
+    color: var(--color-plaid-piggy-bank-600);
   }
-  .text-red-700 {
-    color: var(--color-red-700);
+  .text-plaid-piggy-bank-700 {
+    color: var(--color-plaid-piggy-bank-700);
   }
-  .text-red-800 {
-    color: var(--color-red-800);
-  }
-  .text-white {
-    color: var(--color-white);
-  }
-  .placeholder-gray-400 {
+  .placeholder-plaid-gray {
     &::placeholder {
-      color: var(--color-gray-400);
+      color: var(--color-plaid-gray);
     }
   }
   .shadow-lg {
@@ -427,30 +383,11 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .hover\:bg-gray-50 {
+  .hover\:bg-plaid-light-gray {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-gray-50);
+        background-color: var(--color-plaid-light-gray);
       }
-    }
-  }
-  .hover\:bg-green-700 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-green-700);
-      }
-    }
-  }
-  .hover\:bg-indigo-700 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-indigo-700);
-      }
-    }
-  }
-  .focus\:border-indigo-500 {
-    &:focus {
-      border-color: var(--color-indigo-500);
     }
   }
   .focus\:ring-2 {
@@ -459,14 +396,9 @@
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
     }
   }
-  .focus\:ring-green-500 {
+  .focus\:ring-plaid-gray {
     &:focus {
-      --tw-ring-color: var(--color-green-500);
-    }
-  }
-  .focus\:ring-indigo-500 {
-    &:focus {
-      --tw-ring-color: var(--color-indigo-500);
+      --tw-ring-color: var(--color-plaid-gray);
     }
   }
   .focus\:ring-offset-2 {
@@ -481,6 +413,64 @@
       outline-style: none;
     }
   }
+}
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&family=Inconsolata:wght@400;700&display=swap');
+:root {
+  --plaid-mint-200: #D8FEF3;
+  --plaid-mint-400: #42F0CD;
+  --plaid-mint-450: #10D1B7;
+  --plaid-mint-600: #088181;
+  --plaid-mint-700: #034049;
+  --plaid-mint: #42F0CD;
+  --plaid-mint-light: #D8FEF3;
+  --plaid-blue-sky-200: #CCF8FF;
+  --plaid-blue-sky-400: #51D2FB;
+  --plaid-blue-sky-450: #0DADF2;
+  --plaid-blue-sky-600: #0B7BBC;
+  --plaid-blue-sky-700: #07578D;
+  --plaid-blue-sky: #51D2FB;
+  --plaid-royal-purple-200: #E6E6FF;
+  --plaid-royal-purple-400: #A3A3FF;
+  --plaid-royal-purple-450: #8B8BF9;
+  --plaid-royal-purple-600: #5E5ED9;
+  --plaid-royal-purple-700: #4444A7;
+  --plaid-royal-purple: #A3A3FF;
+  --plaid-piggy-bank-200: #F9DBFF;
+  --plaid-piggy-bank-400: #EE99FF;
+  --plaid-piggy-bank-450: #E574FB;
+  --plaid-piggy-bank-600: #BB33D7;
+  --plaid-piggy-bank-700: #8F29A3;
+  --plaid-piggy-bank: #EE99FF;
+  --plaid-gold-standard-200: #FFF6D8;
+  --plaid-gold-standard-400: #FBDE51;
+  --plaid-gold-standard-450: #EBCB00;
+  --plaid-gold-standard-600: #807700;
+  --plaid-gold-standard-700: #615E00;
+  --plaid-gold-standard: #FBDE51;
+  --plaid-credit-lime-200: #E8FED7;
+  --plaid-credit-lime-400: #7CF042;
+  --plaid-credit-lime-450: #46DA10;
+  --plaid-credit-lime-600: #188108;
+  --plaid-credit-lime-700: #0B5C05;
+  --plaid-credit-lime: #7CF042;
+  --plaid-white: #FFFFFF;
+  --plaid-light-gray: #F8F9FA;
+  --plaid-gray: #6C757D;
+  --plaid-dark-gray: #495057;
+  --plaid-black: #002C37;
+  --font-heading: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-code: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
+}
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+code, pre {
+  font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
 }
 @property --tw-space-y-reverse {
   syntax: "*";
