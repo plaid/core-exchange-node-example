@@ -7,6 +7,12 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-red-50: oklch(97.1% 0.013 17.38);
+    --color-red-200: oklch(88.5% 0.062 18.334);
+    --color-red-400: oklch(70.4% 0.191 22.216);
+    --color-red-700: oklch(50.5% 0.213 27.518);
+    --color-red-800: oklch(44.4% 0.177 26.899);
+    --color-gray-500: oklch(55.1% 0.027 264.364);
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-md: 28rem;
@@ -30,6 +36,7 @@
     --color-plaid-blue-sky-200: #CCF8FF;
     --color-plaid-blue-sky-400: #51D2FB;
     --color-plaid-piggy-bank-200: #F9DBFF;
+    --color-plaid-piggy-bank-400: #EE99FF;
     --color-plaid-piggy-bank-600: #BB33D7;
     --color-plaid-piggy-bank-700: #8F29A3;
     --color-plaid-gold-standard-400: #FBDE51;
@@ -228,11 +235,17 @@
   .h-5 {
     height: calc(var(--spacing) * 5);
   }
+  .h-20 {
+    height: calc(var(--spacing) * 20);
+  }
   .min-h-screen {
     min-height: 100vh;
   }
   .w-5 {
     width: calc(var(--spacing) * 5);
+  }
+  .w-20 {
+    width: calc(var(--spacing) * 20);
   }
   .w-full {
     width: 100%;
@@ -285,11 +298,23 @@
   .border-plaid-blue-sky-200 {
     border-color: var(--color-plaid-blue-sky-200);
   }
+  .border-plaid-gray {
+    border-color: var(--color-plaid-gray);
+  }
   .border-plaid-mint-200 {
     border-color: var(--color-plaid-mint-200);
   }
+  .border-plaid-mint-400 {
+    border-color: var(--color-plaid-mint-400);
+  }
   .border-plaid-piggy-bank-200 {
     border-color: var(--color-plaid-piggy-bank-200);
+  }
+  .border-plaid-piggy-bank-400 {
+    border-color: var(--color-plaid-piggy-bank-400);
+  }
+  .border-red-200 {
+    border-color: var(--color-red-200);
   }
   .border-transparent {
     border-color: transparent;
@@ -308,6 +333,9 @@
   }
   .bg-plaid-piggy-bank-200 {
     background-color: var(--color-plaid-piggy-bank-200);
+  }
+  .bg-red-50 {
+    background-color: var(--color-red-50);
   }
   .bg-white {
     background-color: var(--color-white);
@@ -359,6 +387,9 @@
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
   }
+  .text-gray-500 {
+    color: var(--color-gray-500);
+  }
   .text-plaid-black {
     color: var(--color-plaid-black);
   }
@@ -376,6 +407,15 @@
   }
   .text-plaid-piggy-bank-700 {
     color: var(--color-plaid-piggy-bank-700);
+  }
+  .text-red-400 {
+    color: var(--color-red-400);
+  }
+  .text-red-700 {
+    color: var(--color-red-700);
+  }
+  .text-red-800 {
+    color: var(--color-red-800);
   }
   .placeholder-plaid-gray {
     &::placeholder {
