@@ -167,41 +167,47 @@ export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorit
 - That said, starting Caddy first is faster and less noisy.
 - If you switch terminals, remember to set `NODE_EXTRA_CA_CERTS` again—or just use `pnpm dev` which handles it for you.
 
-## Quick Start
+## Try It Out
 
-1. Visit **<https://id.localtest.me/.well-known/openid-configuration>** – discovery JSON should load.
-2. Go to **<https://app.localtest.me>** and click **Login**.
-3. Use demo creds on the Auth interactions page: `user@example.test` / `passw0rd!`.
-4. Review and approve the consent screen showing requested permissions:
+Once everything's running, here's the fun part:
+
+1. **Check the discovery endpoint**: Visit <https://id.localtest.me/.well-known/openid-configuration>. You should see JSON configuration data.
+
+2. **Log in**: Head to <https://app.localtest.me> and click **Login**.
+
+3. **Use the demo account**: Email is `user@example.test`, password is `passw0rd!`.
+
+4. **Grant permissions**: You'll see a consent screen asking for:
    - `openid` - Basic identity
    - `profile` - Profile information
    - `email` - Email address
-   - `offline_access` - Offline access (refresh tokens)
+   - `offline_access` - Offline access (gives you refresh tokens)
    - `accounts:read` - Account data
-5. After login, explore the client app features:
-   - **API Explorer** (`/api-explorer`) - Interactively test all FDX Core Exchange endpoints
-   - **Profile** (`/me`) - View your ID token claims and user info
-   - **Token Debug** (`/debug/tokens`) - Inspect raw and decoded tokens (access, ID, refresh)
-   - **Quick API Test** (`/accounts`) - Simple endpoint test
 
-## Features
+5. **Explore the features**: Once you're logged in, check out:
+   - **API Explorer** at `/api-explorer` - Interactive UI to test all the FDX endpoints
+   - **Profile** at `/me` - See your ID token claims and user info
+   - **Token Debug** at `/debug/tokens` - Inspect the raw and decoded tokens (access, ID, refresh)
+   - **Quick API Test** at `/accounts` - Simple endpoint test to make sure everything works
+
+## What You Get
 
 ### Authorization Server (Auth)
 
-- **Multiple client support**: Configure clients via `.env.clients.json` file (see `.env.clients.example.json` for format)
-- **Refresh token support**: Automatically issued when `offline_access` scope is requested; can be force-enabled per client via `force_refresh_token: true` in `.env.clients.json`
-- **Configurable token TTLs**:
+- **Multiple client support** - Configure as many OAuth clients as you need via `.env.clients.json` (see `.env.clients.example.json`)
+- **Refresh tokens** - Automatically issued when `offline_access` scope is requested. You can also force-enable them per client with `force_refresh_token: true`
+- **Configurable token lifetimes**:
   - Session: 1 day
   - Access Token: 1 hour
   - ID Token: 1 hour
   - Refresh Token: 14 days
   - Grant: 1 year
-- **Dynamic consent UI**: Shows all requested scopes with descriptions
-- **RP-initiated logout**: Supports standard logout flow
+- **Dynamic consent UI** - Shows all requested scopes with friendly descriptions
+- **RP-initiated logout** - Standard logout flow supported
 
 ### Resource Server (API)
 
-Implements FDX Core Exchange API v6.3 with the following endpoints:
+All the FDX Core Exchange API v6.3 endpoints you need:
 
 - **Customer**: `/api/fdx/v6/customers/current`
 - **Accounts**: `/api/fdx/v6/accounts`, `/api/fdx/v6/accounts/{accountId}`
@@ -210,31 +216,35 @@ Implements FDX Core Exchange API v6.3 with the following endpoints:
 - **Contact**: `/api/fdx/v6/accounts/{accountId}/contact`
 - **Networks**: `/api/fdx/v6/accounts/{accountId}/payment-networks`, `/api/fdx/v6/accounts/{accountId}/asset-transfer-networks`
 
-All endpoints require valid JWT access tokens with appropriate scopes.
+Every endpoint validates JWT access tokens and enforces the right scopes.
 
 ### Client Application (APP)
 
-- **API Explorer**: Interactive UI for testing all endpoints with query parameters
-- **Token management**: Stores access tokens, refresh tokens, and ID tokens in secure HTTP-only cookies
-- **Token debugging**: View raw and decoded JWT tokens at `/debug/tokens`
-- **Profile viewer**: Display ID token claims at `/me`
-- **PKCE**: Uses Proof Key for Code Exchange for enhanced security
+- **API Explorer** - Interactive UI for testing endpoints with query parameters
+- **Token management** - Stores access tokens, refresh tokens, and ID tokens in secure HTTP-only cookies
+- **Token debugging** - View raw and decoded JWT tokens at `/debug/tokens`
+- **Profile viewer** - Display ID token claims at `/me`
+- **PKCE** - Uses Proof Key for Code Exchange (because security matters)
 
 ## Troubleshooting
 
-- 502 Bad Gateway or TLS errors (e.g. `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) during discovery: Ensure Caddy is running and trusted, verify the Auth server via `https://id.localtest.me/.well-known/openid-configuration`, and confirm `NODE_EXTRA_CA_CERTS` points to Caddy's CA:
+**Getting 502 Bad Gateway or TLS errors like `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`?**
 
-  ```bash
-  export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
-  ```
+Make sure Caddy is running and trusted. Check that the Auth server is reachable at `https://id.localtest.me/.well-known/openid-configuration`. And double-check that `NODE_EXTRA_CA_CERTS` points to Caddy's CA:
 
-- If you changed ports/hosts, make sure `OP_ISSUER`, `APP_BASE_URL`, `API_BASE_URL`, and `REDIRECT_URI` match the Caddy routes you are serving.
+```bash
+export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
+```
+
+**Changed your ports or hostnames?**
+
+Update `OP_ISSUER`, `APP_BASE_URL`, `API_BASE_URL`, and `REDIRECT_URI` in your `.env` file to match the routes Caddy is serving.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and customize as needed. Key settings:
+Copy `.env.example` to `.env` and tweak as needed. Here are the important bits:
 
-### Basic Configuration
+### Basic Setup
 
 ```bash
 # Service URLs
@@ -247,38 +257,38 @@ OP_PORT=3001
 APP_PORT=3004
 API_PORT=3003
 
-# Single Client (default)
+# Single Client (default setup)
 CLIENT_ID=dev-rp
 CLIENT_SECRET=dev-secret-CHANGE-FOR-PRODUCTION
 REDIRECT_URI=https://app.localtest.me/callback
 
-# Security
+# Security (please change these for production!)
 COOKIE_SECRET=dev-cookie-secret-CHANGE-FOR-PRODUCTION
 API_AUDIENCE=api://my-api
 ```
 
 ### Refresh Token Controls
 
-- Per-client flag in `.env.clients.json` to always issue refresh tokens, even if `offline_access` was not requested:
+Want refresh tokens even without the `offline_access` scope? Add a per-client flag in `.env.clients.json`:
 
-  ```json
-  [
-    {
-      "client_id": "dev-rp",
-      "client_secret": "dev-secret",
-      "redirect_uris": ["https://app.localtest.me/callback"],
-      "post_logout_redirect_uris": ["https://app.localtest.me"],
-      "grant_types": ["authorization_code", "refresh_token"],
-      "response_types": ["code"],
-      "token_endpoint_auth_method": "client_secret_basic",
-      "force_refresh_token": true
-    }
-  ]
-  ```
+```json
+[
+  {
+    "client_id": "dev-rp",
+    "client_secret": "dev-secret",
+    "redirect_uris": ["https://app.localtest.me/callback"],
+    "post_logout_redirect_uris": ["https://app.localtest.me"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "response_types": ["code"],
+    "token_endpoint_auth_method": "client_secret_basic",
+    "force_refresh_token": true
+  }
+]
+```
 
-### Multiple Client Configuration
+### Multiple Client Setup
 
-To register multiple OAuth/OIDC clients, create a `.env.clients.json` file in the project root:
+Need to support multiple OAuth/OIDC clients? Create a `.env.clients.json` file in the project root:
 
 ```json
 [
@@ -294,27 +304,27 @@ To register multiple OAuth/OIDC clients, create a `.env.clients.json` file in th
 ]
 ```
 
-See `.env.clients.example.json` for a complete example with multiple clients.
+Check out `.env.clients.example.json` for a complete example.
 
-The authorization server loads clients in this priority order:
+**Client loading priority:**
 
 1. `OIDC_CLIENTS` environment variable (JSON string)
 2. `.env.clients.json` file
-3. Fall back to single client from `CLIENT_ID`/`CLIENT_SECRET`
+3. Falls back to single client from `CLIENT_ID`/`CLIENT_SECRET`
 
-If you change `OP_ISSUER` or ports, also update the client registration (redirect URI) and restart.
+If you change `OP_ISSUER` or ports, remember to update the client registration (especially redirect URIs) and restart everything.
 
 ## JWT Access Tokens with Resource Indicators (RFC 8707)
 
-This implementation uses **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This is critical for APIs that need to validate tokens locally using JWT verification.
+We use **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This matters if your API needs to validate tokens locally without calling back to the auth server.
 
 ### Why Resource Indicators?
 
-In `oidc-provider` v7+, the `formats.AccessToken: "jwt"` configuration was **deprecated**. To issue JWT access tokens, you **must** use the Resource Indicators feature (`resourceIndicators`).
+In `oidc-provider` v7+, the old `formats.AccessToken: "jwt"` config was deprecated. Now, if you want JWT access tokens, you need to use Resource Indicators (`resourceIndicators`). It's a bit more work, but it's the right way to do it.
 
 ### How It Works
 
-The access token format is determined by the `accessTokenFormat` property returned from `getResourceServerInfo()`:
+The `accessTokenFormat` property in `getResourceServerInfo()` determines what kind of token you get:
 
 ```typescript
 resourceIndicators: {
@@ -323,16 +333,16 @@ resourceIndicators: {
     return {
       scope: "openid profile email accounts:read",
       audience: "api://my-api",
-      accessTokenFormat: "jwt",  // CRITICAL: This makes tokens JWT instead of opaque
+      accessTokenFormat: "jwt",  // This is the magic line—JWT instead of opaque
       accessTokenTTL: 3600
     };
   }
 }
 ```
 
-### Critical Implementation Details
+### The Gotcha: Three Places to Add `resource`
 
-**The `resource` parameter MUST be sent in THREE places:**
+Here's the tricky part—you need to include the `resource` parameter in **three different places**:
 
 1. **Authorization Request** (`/login` route):
 
@@ -340,7 +350,7 @@ resourceIndicators: {
    const url = client.buildAuthorizationUrl(config, {
      redirect_uri: REDIRECT_URI,
      scope: "openid email profile offline_access accounts:read",
-     resource: "api://my-api"  // <-- Stores resource in authorization code
+     resource: "api://my-api"  // Stores resource in the authorization code
    });
    ```
 
@@ -351,7 +361,7 @@ resourceIndicators: {
      config,
      currentUrl,
      { pkceCodeVerifier, expectedState },
-     { resource: "api://my-api" }  // <-- Triggers JWT token issuance
+     { resource: "api://my-api" }  // Triggers JWT token issuance
    );
    ```
 
@@ -361,105 +371,91 @@ resourceIndicators: {
    const tokenSet = await client.refreshTokenGrant(
      config,
      refreshToken,
-     { resource: "api://my-api" }  // <-- Ensures refreshed token is also JWT
+     { resource: "api://my-api" }  // Ensures refreshed token is also JWT
    );
    ```
 
-### Why All Three Are Required
+### Why You Need All Three
 
-**Without `resource` in token exchange**, `oidc-provider` has special behavior:
+If you forget to include `resource` in the token exchange (step 2), `oidc-provider` does something unexpected:
 
-- If `openid` scope is present AND no `resource` parameter is in the token request
-- oidc-provider issues an **opaque token** for the UserInfo endpoint
-- This happens **even if** you configured `getResourceServerInfo` to return JWT format
+- When `openid` scope is present and there's no `resource` parameter in the token request
+- It issues an **opaque token** for the UserInfo endpoint instead
+- This happens even if you configured `getResourceServerInfo` to return JWT format
 
-From `oidc-provider` source code (`lib/helpers/resolve_resource.js`):
+It's a quirk in how `oidc-provider` resolves resources (see `lib/helpers/resolve_resource.js` if you're curious). The fix is simple—just include `resource` in all three places.
 
-```javascript
-// If openid scope exists and no resource parameter in token request,
-// oidc-provider defaults to opaque token for UserInfo endpoint
-case !ctx.oidc.params.resource && (!config.userinfo.enabled || !scopes.has('openid')):
-  resource = model.resource;
-  break;
-```
+### How to Check If It's Working
 
-### Verifying JWT Tokens
-
-You can verify the token format in debug logs:
+Turn on debug logging to see what kind of tokens you're getting:
 
 ```bash
 LOG_LEVEL=debug pnpm dev
 ```
 
-Look for the token response log:
+Look for the token response log. JWT tokens look like this:
 
 ```json
 {
-  "accessTokenLength": 719,        // JWT: ~700-900 chars
+  "accessTokenLength": 719,        // JWT: ~700-900 characters
   "accessTokenParts": 3,           // JWT: 3 parts (header.payload.signature)
   "accessTokenPrefix": "eyJhbGci"  // JWT: Base64 "eyJ" prefix
 }
 ```
 
-**Opaque tokens** (incorrect):
+If you see opaque tokens (wrong!), they'll be:
 
 - Length: 43 characters
 - Parts: 1 (single random string)
 - No Base64 prefix
 
-### Resource Indicator Format
+### Resource Indicator Format Rules
 
-Resource indicators must be:
-
-- Absolute URIs (e.g., `https://api.example.com` or `api://my-api`)
-- **Without** fragment components (`#`)
-- Can include path components
-
-Examples:
+Resource indicators need to be absolute URIs. Here's what works and what doesn't:
 
 ```typescript
-// ✅ Valid
+// ✅ Good
 "api://my-api"
 "https://api.example.com"
 "https://api.example.com/v1"
 
-// ❌ Invalid
-"my-api"                           // Not absolute URI
-"https://api.example.com#section"  // Contains fragment
+// ❌ Bad
+"my-api"                           // Not an absolute URI
+"https://api.example.com#section"  // Can't have fragments (#)
 ```
 
-### Configuration Reference
+### Quick Reference
 
-**Auth Server** (`apps/auth/src/index.ts`):
+**In the Auth Server** ([apps/auth/src/index.ts](apps/auth/src/index.ts)):
 
-- `resourceIndicators.enabled`: Must be `true`
-- `resourceIndicators.defaultResource()`: Default resource when client doesn't specify
-- `resourceIndicators.getResourceServerInfo()`: **Critical** - returns `accessTokenFormat: "jwt"`
-- `resourceIndicators.useGrantedResource()`: Allows reusing resource from auth request
+- `resourceIndicators.enabled`: Set to `true`
+- `resourceIndicators.defaultResource()`: Fallback resource when client doesn't specify one
+- `resourceIndicators.getResourceServerInfo()`: Returns `accessTokenFormat: "jwt"` (this is the important one)
+- `resourceIndicators.useGrantedResource()`: Allows reusing resource from the auth request
 
-**Client** (`apps/app/src/index.ts`):
+**In the Client** ([apps/app/src/index.ts](apps/app/src/index.ts)):
 
-- Authorization URL: Include `resource` parameter
-- Token exchange: Include `resource` in 4th parameter
-- Refresh token: Include `resource` in 3rd parameter
+- Authorization URL: Add `resource` parameter
+- Token exchange: Add `resource` in the 4th parameter
+- Refresh token: Add `resource` in the 3rd parameter
 
 ## Debugging OAuth Flows
 
-To enable detailed debug logging of the OAuth/OIDC flow, add this to your `.env` file:
+Want to see what's happening under the hood? Add this to your `.env`:
 
 ```bash
 LOG_LEVEL=debug
 ```
 
-With debug logging enabled, you'll see detailed information about:
+You'll get detailed logs about:
 
-- **Authorization requests**: client_id, redirect_uri, scopes, response_type, state, resource
-- **Login attempts**: email provided, authentication success/failure
-- **Consent flow**: grants created/reused, scopes granted, claims requested, resource indicators
-- **Token issuance**: refresh token decisions, resource server info, token format (JWT vs opaque)
-- **Account lookups**: subject lookups and claim retrieval
+- **Authorization requests** - client_id, redirect_uri, scopes, response_type, state, resource
+- **Login attempts** - email provided, success/failure
+- **Consent flow** - grants created/reused, scopes granted, claims requested, resource indicators
+- **Token issuance** - refresh token decisions, resource server info, token format (JWT vs opaque)
+- **Account lookups** - subject lookups and claim retrieval
 
-Debug logs are output in JSON format via Pino. Example log entry:
+We use Pino for structured JSON logging. Here's what a log entry looks like:
 
 ```json
 {
@@ -473,24 +469,22 @@ Debug logs are output in JSON format via Pino. Example log entry:
 }
 ```
 
-To watch logs in real-time during development:
+**Helpful log filters:**
 
 ```bash
+# Watch for debug and error messages
 pnpm dev | grep -i "debug\|error"
-```
 
-Or filter by specific OAuth events:
-
-```bash
+# Filter by specific OAuth events
 pnpm dev | grep "interaction\|login\|consent\|issueRefreshToken\|getResourceServerInfo"
 ```
 
-## Roadmap
+## What's Next
 
-This implementation uses in-memory storage for demonstration purposes. Production deployments should consider:
+This is a demo implementation with in-memory storage. If you're taking this to production, you'll want to add:
 
-- **Persistent storage**: Implement PostgreSQL adapter for `oidc-provider` to persist authorization codes, sessions, and grants across restarts
-- **User authentication**: Replace in-memory user store with database-backed authentication using bcrypt or Argon2 password hashing
-- **End-to-end testing**: Add automated E2E tests using Playwright or Cypress to verify complete authentication flows
-- **Production hardening**: Add rate limiting, audit logging, and monitoring instrumentation
-- **Client registration API**: Dynamic client registration endpoint for self-service OAuth client onboarding
+- **Persistent storage** - Swap in a PostgreSQL adapter for `oidc-provider` so authorization codes, sessions, and grants survive restarts
+- **Real user authentication** - Replace the in-memory user store with a proper database and password hashing (bcrypt or Argon2)
+- **End-to-end tests** - Add Playwright or Cypress tests to verify the complete authentication flow
+- **Production hardening** - Rate limiting, audit logging, and monitoring instrumentation
+- **Dynamic client registration** - Let clients register themselves via an API endpoint instead of manual config files
