@@ -858,6 +858,9 @@
   .text-white {
     color: var(--color-white);
   }
+  .underline {
+    text-decoration-line: underline;
+  }
   .opacity-25 {
     opacity: 25%;
   }
@@ -1064,6 +1067,20 @@
     &:hover {
       @media (hover: hover) {
         color: var(--color-plaid-mint-600);
+      }
+    }
+  }
+  .hover\:text-plaid-mint-700 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-plaid-mint-700);
+      }
+    }
+  }
+  .hover\:no-underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: none;
       }
     }
   }
