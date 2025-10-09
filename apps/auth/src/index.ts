@@ -462,6 +462,40 @@ async function main() {
 		}
 	);
 
+	app.post(
+		"/interaction/:uid/cancel",
+		express.urlencoded( { extended: false } ),
+		async ( req: Request, res: Response ) => {
+			const { uid } = req.params;
+			logger.debug( { uid }, "POST /interaction/:uid/cancel - Consent cancelled" );
+
+			const details = await provider.interactionDetails( req, res );
+			const redirectUri = details.params.redirect_uri as string;
+			const state = details.params.state as string | undefined;
+
+			logger.debug( {
+				uid,
+				redirectUri,
+				state,
+				clientId: details.params.client_id
+			}, "POST /interaction/:uid/cancel - Redirecting with access_denied error" );
+
+			// Build the error redirect URL
+			const url = new URL( redirectUri );
+			url.searchParams.append( "error", "access_denied" );
+			if ( state ) {
+				url.searchParams.append( "state", state );
+			}
+
+			logger.debug( {
+				uid,
+				redirectTo: url.toString()
+			}, "POST /interaction/:uid/cancel - Redirecting to client with error" );
+
+			return res.redirect( 303, url.toString() );
+		}
+	);
+
 	// Log all OIDC provider requests for debugging
 	app.use( ( req: Request, res: Response, next ) => {
 		// Log token endpoint requests (POST /token)
