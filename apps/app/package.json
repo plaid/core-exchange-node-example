@@ -18,18 +18,18 @@
     "express": "^5.1.0",
     "jose": "^6.1.0",
     "openid-client": "^6.8.1",
-    "pino": "^9.12.0",
-    "pino-pretty": "^13.1.1",
+    "pino": "^9.13.1",
+    "pino-pretty": "^13.1.2",
     "undici": "^7.16.0"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.13",
+    "@tailwindcss/cli": "^4.1.14",
     "@types/cookie-parser": "^1.4.9",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.6.1",
+    "@types/node": "^24.7.1",
     "concurrently": "^9.2.1",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.1.14",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
