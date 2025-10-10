@@ -18,7 +18,7 @@
           <img src="/public/plaidypus-200.png" alt="Plaidypus Logo" class="h-16 w-16">
           <div>
             <h1 class="text-3xl font-bold text-plaid-black">Core Exchange API Playground</h1>
-            <p class="text-plaid-dark-gray mt-2">Time to kick the tires on Core Exchange!</p>
+            <p class="text-plaid-dark-gray mt-2">Time to check out Core Exchange in action!</p>
           </div>
         </div>
       </div>
@@ -28,22 +28,25 @@
         <h2 class="text-lg font-semibold text-plaid-black mb-4">What's Under the Hood</h2>
         <div class="prose prose-sm max-w-none text-plaid-dark-gray">
           <p class="mb-3">
-            A full-stack reference implementation of <a href="https://plaid.com/core-exchange/docs/reference/6.3" target="_blank" rel="noopener noreferrer" class="text-plaid-mint-600 hover:text-plaid-mint-700 underline hover:no-underline">Core
+            A full-stack reference implementation of <a href="https://plaid.com/core-exchange/docs/reference/6.3"
+              target="_blank" rel="noopener noreferrer"
+              class="text-plaid-mint-600 hover:text-plaid-mint-700 underline hover:no-underline">Core
               Exchange API v6.3</a> with
-            proper OAuth 2.0 + OpenID Connect flows. Everything you need to build a secure integration with Plaid.
+            proper OAuth 2.0 + OpenID Connect (OIDC) flows. A sample of everything you need to build a secure
+            integration with Plaid.
           </p>
           <p class="mb-3">
             The three-service architecture:
           </p>
           <ul class="list-disc list-inside space-y-2 mb-3">
-            <li><strong>Authorization Server</strong> - OIDC Provider juggling auth flows and minting tokens</li>
-            <li><strong>Resource Server (API)</strong> - JWT-protected API serving up financial data like it's 2025</li>
-            <li><strong>Client App (RP)</strong> - This guy right here, doing the PKCE dance and making authenticated
-              requests</li>
+            <li><strong>Authorization Server</strong> - OIDC Provider for authentication flows and minting tokens</li>
+            <li><strong>Resource Server (API)</strong> - JWT-protected API serving up FDX-compliant data</li>
+            <li><strong>Client App</strong> - This app, which allows you to interact with the API</li>
           </ul>
           <p>
-            Once you're authenticated, explore the API Explorer to test every endpoint and see sample data
-            flowing through a production-ready architecture. You've got this.
+            Once you're authenticated, check out the <a href="/api-explorer"
+              class="text-plaid-mint-600 hover:text-plaid-mint-700 underline hover:no-underline">API Explorer</a> to
+            test every endpoint and see sample data flowing through a production-ready architecture.
           </p>
         </div>
       </div>
@@ -154,7 +157,7 @@
                   </svg>
                 </div>
                 <h3 class="text-sm font-semibold text-plaid-black mb-2">Spec-Compliant APIs</h3>
-                <p class="text-sm text-plaid-dark-gray">100% Core Exchange v6.3</p>
+                <p class="text-sm text-plaid-dark-gray">100% FDX v6.3 compliant</p>
               </div>
 
               <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
@@ -167,8 +170,8 @@
                   </svg>
                 </div>
                 <h3 class="text-sm font-semibold text-plaid-black mb-2">Long-Lived Sessions</h3>
-                <p class="text-sm text-plaid-dark-gray">Refresh tokens for when you need that sweet, sweet
-                  <code>offline_access</code>
+                <p class="text-sm text-plaid-dark-gray">Refresh tokens enable Core Exchange to continue pulling the
+                  latest data on behalf of your customers
                 </p>
               </div>
             </div>
