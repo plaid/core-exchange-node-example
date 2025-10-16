@@ -131,3 +131,87 @@ h1, h2, h3, h4, h5, h6 {
 code, pre {
   font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
 }
+
+/* Code Block Styles */
+.code-block {
+  font-family: 'Inconsolata', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.code-block.compact {
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.token-raw {
+  color: #ce9178;
+}
+
+/* JSON Syntax Highlighting */
+.json-key {
+  color: #9cdcfe;
+}
+
+.json-string {
+  color: #ce9178;
+}
+
+.json-number {
+  color: #b5cea8;
+}
+
+.json-boolean {
+  color: #569cd6;
+}
+
+.json-null {
+  color: #569cd6;
+}
+
+.json-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.json-brace {
+  color: #d4d4d4;
+}
+
+.json-bracket {
+  color: #d4d4d4;
+}
+
+/* Copy Button - Using Plaid Brand Colors */
+.copy-button {
+  position: relative;
+  float: right;
+  background: var(--plaid-dark-gray);
+  color: var(--plaid-white);
+  border: 1px solid var(--plaid-gray);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  font-family: 'Figtree', sans-serif;
+}
+
+.copy-button:hover {
+  background: var(--plaid-black);
+  border-color: var(--plaid-dark-gray);
+}
+
+.copy-button.copied {
+  background: var(--plaid-credit-lime-600);
+  color: var(--plaid-white);
+  border-color: var(--plaid-credit-lime-600);
+}
