@@ -256,11 +256,13 @@ APP_PORT=3004
 API_PORT=3003
 
 # Single Client (default setup)
-CLIENT_ID=dev-rp
+# Use the scripts/secrets.js CLI app to generate new secrets
+CLIENT_ID=dev-rp-CHANGE-FOR-PRODUCTION
 CLIENT_SECRET=dev-secret-CHANGE-FOR-PRODUCTION
 REDIRECT_URI=https://app.localtest.me/callback
 
 # Security (please change these for production!)
+# Use the scripts/secrets.js CLI app to generate new secrets
 COOKIE_SECRET=dev-cookie-secret-CHANGE-FOR-PRODUCTION
 API_AUDIENCE=api://my-api
 ```
