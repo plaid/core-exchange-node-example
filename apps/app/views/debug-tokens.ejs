@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Debug - Plaidypus Client</title>
+  <link rel="icon" type="image/png" href="/public/plaidypus-200.png">
+  <link href="/public/styles.css" rel="stylesheet">
+</head>
+
+<body class="bg-plaid-light-gray min-h-screen">
+  <%- include('partials/navigation', { tokens, currentPage: 'debug' }) %>
+  <%- include('partials/code-block-utils') %>
+
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-plaid-black">Token Debug</h1>
+      <p class="text-plaid-dark-gray mt-2">View raw and decoded tokens for debugging</p>
+    </div>
+
+    <!-- Access Token -->
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-plaid-black">Access Token (Raw)</h2>
+        <button onclick="copyToClipboard('access-token-raw', this)" class="copy-button" style="float: none;">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div class="code-block token-raw" id="access-token-raw"><%= tokens.access_token %></div>
+    </div>
+
+    <% if (accessTokenPayload) { %>
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-plaid-black">Access Token (Decoded Payload)</h2>
+        <button onclick="copyToClipboard('access-token-decoded', this)" class="copy-button" style="float: none;">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div class="code-block" id="access-token-decoded"></div>
+      <script>
+        (function() {
+          const data = <%- JSON.stringify(accessTokenPayload) %>;
+          document.getElementById('access-token-decoded').innerHTML = syntaxHighlightJSON(data);
+        })();
+      </script>
+    </div>
+    <% } %>
+
+    <% if (tokens.id_token) { %>
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-plaid-black">ID Token (Raw)</h2>
+        <button onclick="copyToClipboard('id-token-raw', this)" class="copy-button" style="float: none;">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div class="code-block token-raw" id="id-token-raw"><%= tokens.id_token %></div>
+    </div>
+    <% } %>
+
+    <% if (idTokenPayload) { %>
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-plaid-black">ID Token (Decoded Payload)</h2>
+        <button onclick="copyToClipboard('id-token-decoded', this)" class="copy-button" style="float: none;">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div class="code-block" id="id-token-decoded"></div>
+      <script>
+        (function() {
+          const data = <%- JSON.stringify(idTokenPayload) %>;
+          document.getElementById('id-token-decoded').innerHTML = syntaxHighlightJSON(data);
+        })();
+      </script>
+    </div>
+    <% } %>
+
+    <% if (tokens.refresh_token) { %>
+    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-plaid-black">Refresh Token</h2>
+        <button onclick="copyToClipboard('refresh-token', this)" class="copy-button" style="float: none;">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div class="code-block token-raw" id="refresh-token"><%= tokens.refresh_token %></div>
+      <p class="text-sm text-plaid-gray mt-3">
+        Refresh tokens are opaque and cannot be decoded. They are used to obtain new access tokens.
+      </p>
+    </div>
+    <% } %>
+  </div>
+</body>
+
+</html>
