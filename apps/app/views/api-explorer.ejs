@@ -7,6 +7,7 @@
   <title>API Explorer - Plaidypus Client</title>
   <link rel="icon" type="image/png" href="/public/plaidypus-200.png">
   <link href="/public/styles.css" rel="stylesheet">
+  <%- include('partials/code-block-styles') %>
   <style>
     .endpoint-item {
       cursor: pointer;
@@ -25,18 +26,6 @@
     .endpoint-item.selected .method-badge {
       background-color: var(--plaid-credit-lime-600);
       color: var(--plaid-white);
-    }
-
-    .json-response {
-      font-family: 'Inconsolata', Monaco, Menlo, 'Courier New', monospace;
-      white-space: pre-wrap;
-      background: var(--plaid-black);
-      color: var(--plaid-white);
-      border-radius: 8px;
-      padding: 1rem;
-      overflow-x: auto;
-      max-height: 400px;
-      overflow-y: auto;
     }
 
     .loading {
@@ -249,7 +238,7 @@
           <div id="response-section" style="display: none;">
             <h3 class="text-md font-medium text-plaid-dark-gray mb-3">Response</h3>
             <div id="response-status" class="mb-3"></div>
-            <div id="response-content" class="json-response"></div>
+            <div id="response-content" class="code-block compact"></div>
           </div>
 
           <!-- Instructions -->
@@ -471,10 +460,12 @@
         </span>
       `;
 
-        // Content
-        responseContent.textContent = JSON.stringify(result.data, null, 2);
+        // Content - Use syntax highlighting
+        responseContent.innerHTML = syntaxHighlightJSON(result.data);
       }
     </script>
+
+    <%- include('partials/code-block-utils') %>
 </body>
 
 </html>

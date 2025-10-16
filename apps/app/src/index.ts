@@ -357,7 +357,7 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 	}
 } );
 
-app.get( "/me", async ( req: Request, res: Response ) => {
+app.get( "/token", async ( req: Request, res: Response ) => {
 	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
 	const tokens: TokenSet | null = tokensCookie
 		? JSON.parse( tokensCookie )
@@ -464,8 +464,8 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 			annotatedPayload[key] = { value: decodedPayload[key], comment };
 		} );
 
-		// Render profile view with decoded token data
-		return res.render( "profile", {
+		// Render token inspector view with decoded token data
+		return res.render( "token", {
 			tokens,
 			rawToken: tokens.id_token,
 			header: annotatedHeader,

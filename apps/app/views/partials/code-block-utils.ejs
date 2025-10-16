@@ -1,0 +1,101 @@
+<script>
+  /**
+   * Syntax highlight a JSON object with VS Code-style colors
+   * @param {any} obj - The object to highlight
+   * @param {number} indent - Current indentation level
+   * @returns {string} HTML string with syntax highlighting
+   */
+  function syntaxHighlightJSON(obj, indent = 0) {
+    const indentStr = '  '.repeat(indent);
+
+    if (obj === null) {
+      return '<span class="json-null">null</span>';
+    }
+
+    if (typeof obj === 'string') {
+      return `<span class="json-string">"${escapeHtml(obj)}"</span>`;
+    }
+
+    if (typeof obj === 'number') {
+      return `<span class="json-number">${obj}</span>`;
+    }
+
+    if (typeof obj === 'boolean') {
+      return `<span class="json-boolean">${obj}</span>`;
+    }
+
+    if (Array.isArray(obj)) {
+      if (obj.length === 0) {
+        return '<span class="json-bracket">[]</span>';
+      }
+
+      let result = '<span class="json-bracket">[</span>\n';
+      obj.forEach((item, index) => {
+        result += indentStr + '  ';
+        result += syntaxHighlightJSON(item, indent + 1);
+        if (index < obj.length - 1) {
+          result += ',';
+        }
+        result += '\n';
+      });
+      result += indentStr + '<span class="json-bracket">]</span>';
+      return result;
+    }
+
+    if (typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      if (keys.length === 0) {
+        return '<span class="json-brace">{}</span>';
+      }
+
+      let result = '<span class="json-brace">{</span>\n';
+      keys.forEach((key, index) => {
+        result += indentStr + '  ';
+        result += `<span class="json-key">"${escapeHtml(key)}"</span>: `;
+        result += syntaxHighlightJSON(obj[key], indent + 1);
+        if (index < keys.length - 1) {
+          result += ',';
+        }
+        result += '\n';
+      });
+      result += indentStr + '<span class="json-brace">}</span>';
+      return result;
+    }
+
+    return String(obj);
+  }
+
+  /**
+   * Escape HTML special characters
+   * @param {string} str - String to escape
+   * @returns {string} Escaped string
+   */
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /**
+   * Copy text to clipboard and show visual feedback
+   * @param {string} elementId - ID of element containing text to copy
+   * @param {HTMLElement} button - Button element to update
+   */
+  function copyToClipboard(elementId, button) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = button.innerHTML;
+      button.classList.add('copied');
+      button.innerHTML = '<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+
+      setTimeout(() => {
+        button.classList.remove('copied');
+        button.innerHTML = originalText;
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }
+</script>

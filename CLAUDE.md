@@ -155,7 +155,7 @@ Key components:
 Features:
 
 - **API Explorer**: Interactive UI for testing all FDX Core Exchange endpoints with parameter inputs
-- **Profile page**: View decoded ID token claims and user information at `/me`
+- **Token Inspector**: View decoded ID token claims and user information at `/token`
 - **Token debug endpoint**: View raw and decoded tokens at `/debug/tokens`
 - **Offline access**: Requests `offline_access` scope to receive refresh tokens
 - **Comprehensive scopes**: Requests `openid`, `email`, `profile`, `offline_access`, and `accounts:read` scopes
@@ -219,7 +219,7 @@ Default token lifetimes (configured in `apps/auth/src/index.ts`):
 4. Approve consent (you'll see all requested scopes: openid, email, profile, offline_access, accounts:read)
 5. After redirect, explore the features:
    - **API Explorer** (`/api-explorer`): Test all FDX Core Exchange endpoints interactively
-   - **Profile** (`/me`): View your ID token claims and user information
+   - **Token Inspector** (`/token`): View your ID token claims and user information
    - **Token Debug** (`/debug/tokens`): Inspect raw and decoded access/ID/refresh tokens
 
 ## Next Steps

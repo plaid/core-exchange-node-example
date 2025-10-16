@@ -186,7 +186,7 @@ Once everything's running, here's the fun part:
 
 5. **Explore the features**: Once you're logged in, check out:
    - **API Explorer** at `/api-explorer` - Interactive UI to test all the FDX endpoints
-   - **Profile** at `/me` - See your ID token claims and user info
+   - **Token Inspector** at `/token` - See your ID token claims and user info
    - **Token Debug** at `/debug/tokens` - Inspect the raw and decoded tokens (access, ID, refresh)
 
 ## What You Get
@@ -221,7 +221,7 @@ Every endpoint validates JWT access tokens and enforces the right scopes.
 - **API Explorer** - Interactive UI for testing endpoints with query parameters
 - **Token management** - Stores access tokens, refresh tokens, and ID tokens in secure HTTP-only cookies
 - **Token debugging** - View raw and decoded JWT tokens at `/debug/tokens`
-- **Profile viewer** - Display ID token claims at `/me`
+- **Token inspector** - Display ID token claims at `/token`
 - **PKCE** - Uses Proof Key for Code Exchange (because security matters)
 
 ## Troubleshooting

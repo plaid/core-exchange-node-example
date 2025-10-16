@@ -4,74 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile - Plaidypus Client</title>
+  <title>Token Inspector - Plaidypus Client</title>
   <link rel="icon" type="image/png" href="/public/plaidypus-200.png">
   <link href="/public/styles.css" rel="stylesheet">
+  <%- include('partials/code-block-styles') %>
   <style>
-    .token-block {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      border-radius: 8px;
-      padding: 1.5rem;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    .token-raw {
-      color: #ce9178;
-    }
-
-    .json-key {
-      color: #9cdcfe;
-    }
-
-    .json-string {
-      color: #ce9178;
-    }
-
-    .json-number {
-      color: #b5cea8;
-    }
-
-    .json-boolean {
-      color: #569cd6;
-    }
-
-    .json-comment {
-      color: #6a9955;
-      font-style: italic;
-    }
-
-    .json-brace {
-      color: #d4d4d4;
-    }
-
-    .copy-button {
-      position: relative;
-      float: right;
-      background: #3c3c3c;
-      color: #d4d4d4;
-      border: 1px solid #555;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.2s;
-    }
-
-    .copy-button:hover {
-      background: #505050;
-    }
-
-    .copy-button.copied {
-      background: #4ec9b0;
-      color: #1e1e1e;
-    }
-
     /* Success message animations */
     #success-message {
       transition: all 0.3s ease-in-out;
@@ -89,7 +26,7 @@
 </head>
 
 <body class="bg-plaid-light-gray min-h-screen">
-  <%- include('partials/navigation', { tokens, currentPage: 'profile' }) %>
+  <%- include('partials/navigation', { tokens, currentPage: 'token' }) %>
 
     <div class="max-w-6xl mx-auto px-4 py-8">
       <!-- Success Message (shown after token refresh) -->
@@ -133,7 +70,7 @@
             Copy
           </button>
         </div>
-        <div class="token-block token-raw" id="raw-token"><%= rawToken %></div>
+        <div class="code-block token-raw" id="raw-token"><%= rawToken %></div>
         <p class="text-sm text-plaid-gray mt-3">
           This JWT has three parts separated by dots: <code
             class="bg-plaid-light-gray px-2 py-1 rounded">header.payload.signature</code>
@@ -153,7 +90,7 @@
             Copy
           </button>
         </div>
-        <div class="token-block" id="header-json"><span class="json-brace">{</span>
+        <div class="code-block" id="header-json"><span class="json-brace">{</span>
 <% Object.keys(header).forEach((key, index, array) => { %>  <span class="json-key">"<%= key %>"</span>: <span class="json-string">"<%= header[key].value %>"</span><% if (index < array.length - 1) { %>,<% } %> <span class="json-comment">// <%= header[key].comment %></span>
 <% }); %><span class="json-brace">}</span></div>
         <p class="text-sm text-plaid-gray mt-3">
@@ -174,7 +111,7 @@
             Copy
           </button>
         </div>
-        <div class="token-block" id="payload-json"><span class="json-brace">{</span>
+        <div class="code-block" id="payload-json"><span class="json-brace">{</span>
 <% Object.keys(payload).forEach((key, index, array) => {
   const item = payload[key];
   let valueFormatted;
@@ -275,6 +212,7 @@
       <div id="refresh-result" class="mt-8 hidden"></div>
     </div>
 
+    <%- include('partials/code-block-utils') %>
     <script>
       // Check if we just refreshed tokens and show success message
       window.addEventListener('DOMContentLoaded', () => {
@@ -308,23 +246,7 @@
         }, 300); // Match the CSS transition duration
       }
 
-      function copyToClipboard(elementId, button) {
-        const element = document.getElementById(elementId);
-        const text = element.textContent;
-
-        navigator.clipboard.writeText(text).then(() => {
-          const originalText = button.innerHTML;
-          button.classList.add('copied');
-          button.innerHTML = '<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
-
-          setTimeout(() => {
-            button.classList.remove('copied');
-            button.innerHTML = originalText;
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy:', err);
-        });
-      }
+      // copyToClipboard is now provided by code-block-utils partial
 
       async function refreshTokens() {
         const resultDiv = document.getElementById('refresh-result');
@@ -353,7 +275,7 @@
 
           if (response.ok) {
             // Automatically reload the page with a success parameter
-            window.location.href = '/me?refreshed=true';
+            window.location.href = '/token?refreshed=true';
           } else {
             throw new Error(data.error || 'Token refresh failed');
           }
