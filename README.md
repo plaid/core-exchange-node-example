@@ -265,6 +265,40 @@ COOKIE_SECRET=dev-cookie-secret-CHANGE-FOR-PRODUCTION
 API_AUDIENCE=api://my-api
 ```
 
+### Generating Secure Secrets
+
+For production deployments, you should generate cryptographically secure secrets instead of using the default development values. We provide a CLI tool that makes this easy:
+
+```bash
+# Generate OAuth client credentials (CLIENT_ID and CLIENT_SECRET)
+node scripts/secrets.js client
+
+# Generate client credentials with a custom prefix
+node scripts/secrets.js client --prefix myapp
+
+# Generate application secrets (COOKIE_SECRET, etc.)
+node scripts/secrets.js secrets
+
+# Generate everything at once
+node scripts/secrets.js all
+
+# Show help
+node scripts/secrets.js --help
+```
+
+The tool generates:
+
+- **CLIENT_ID**: URL-safe random string (32 characters, or 24 + prefix)
+- **CLIENT_SECRET**: Cryptographically secure hex string (64 characters)
+- **COOKIE_SECRET**: Secure hex string (64 characters)
+
+**Security best practices:**
+
+- Never commit generated secrets to version control
+- Use different secrets for each environment (dev, staging, production)
+- Store production secrets in secure environment variables or secret managers
+- Rotate secrets regularly in production
+
 ### Refresh Token Controls
 
 Want refresh tokens even without the `offline_access` scope? Add a per-client flag in `.env.clients.json`:
