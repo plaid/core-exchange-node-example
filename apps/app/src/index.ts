@@ -377,18 +377,100 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 			audience: CLIENT_ID
 		} );
 
-		// Render profile view with user info
-		const userInfo = {
-			sub: payload.sub,
-			email: payload.email,
-			name: payload.name,
-			iat: payload.iat,
-			exp: payload.exp,
-			iss: payload.iss,
-			aud: payload.aud
+		// Decode JWT header and payload for display
+		const parts = tokens.id_token.split( "." );
+		const header = JSON.parse( Buffer.from( parts[0], "base64url" ).toString() );
+		const decodedPayload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString() );
+
+		// Add annotations to header
+		const annotatedHeader = {
+			"alg": { value: header.alg, comment: "Algorithm - Cryptographic algorithm used to sign the token" },
+			"typ": { value: header.typ, comment: "Type - Token type, always 'JWT' for JSON Web Tokens" },
+			"kid": { value: header.kid, comment: "Key ID - Identifier for the key used to sign this token" }
 		};
 
-		return res.render( "profile", { tokens, userInfo } );
+		// Add annotations to payload
+		const annotatedPayload: Record<string, { value: unknown; comment: string }> = {};
+		Object.keys( decodedPayload ).forEach( ( key ) => {
+			let comment = "";
+			const value = decodedPayload[key];
+
+			switch ( key ) {
+			case "sub":
+				comment = "Subject - Unique identifier for the user";
+				break;
+			case "iss":
+				comment = "Issuer - Who issued this token (Authorization Server URL)";
+				break;
+			case "aud":
+				comment = "Audience - Who this token is intended for (Client ID)";
+				break;
+			case "exp":
+				if ( typeof value === "number" ) {
+					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+						dateStyle: "medium",
+						timeStyle: "long"
+					} );
+					comment = `Expiration Time - Unix timestamp (seconds since Jan 1, 1970) when token expires (${ date })`;
+				} else {
+					comment = "Expiration Time - Unix timestamp when the token expires";
+				}
+				break;
+			case "iat":
+				if ( typeof value === "number" ) {
+					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+						dateStyle: "medium",
+						timeStyle: "long"
+					} );
+					comment = `Issued At - Unix timestamp (seconds since Jan 1, 1970) when token was issued (${ date })`;
+				} else {
+					comment = "Issued At - Unix timestamp when the token was issued";
+				}
+				break;
+			case "auth_time":
+				if ( typeof value === "number" ) {
+					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+						dateStyle: "medium",
+						timeStyle: "long"
+					} );
+					comment = `Authentication Time - Unix timestamp (seconds since Jan 1, 1970) when user authenticated (${ date })`;
+				} else {
+					comment = "Authentication Time - Unix timestamp when the user authenticated";
+				}
+				break;
+			case "nbf":
+				if ( typeof value === "number" ) {
+					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+						dateStyle: "medium",
+						timeStyle: "long"
+					} );
+					comment = `Not Before - Unix timestamp (seconds since Jan 1, 1970), token not valid before (${ date })`;
+				} else {
+					comment = "Not Before - Unix timestamp before which the token is not valid";
+				}
+				break;
+			case "email":
+				comment = "Email - User's email address (from 'email' scope)";
+				break;
+			case "name":
+				comment = "Name - User's display name (from 'profile' scope)";
+				break;
+			case "email_verified":
+				comment = "Email Verified - Whether the user's email has been verified";
+				break;
+			default:
+				comment = `Custom claim: ${ key }`;
+			}
+			annotatedPayload[key] = { value: decodedPayload[key], comment };
+		} );
+
+		// Render profile view with decoded token data
+		return res.render( "profile", {
+			tokens,
+			rawToken: tokens.id_token,
+			header: annotatedHeader,
+			payload: annotatedPayload
+		} );
 	} catch ( error ) {
 		logError( logger, error, { context: "ID token verification" } );
 		// Clear invalid/expired tokens and redirect to login

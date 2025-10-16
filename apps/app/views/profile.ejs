@@ -1,162 +1,335 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile - Plaidypus Client</title>
   <link rel="icon" type="image/png" href="/public/plaidypus-200.png">
   <link href="/public/styles.css" rel="stylesheet">
+  <style>
+    .token-block {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .token-raw {
+      color: #ce9178;
+    }
+
+    .json-key {
+      color: #9cdcfe;
+    }
+
+    .json-string {
+      color: #ce9178;
+    }
+
+    .json-number {
+      color: #b5cea8;
+    }
+
+    .json-boolean {
+      color: #569cd6;
+    }
+
+    .json-comment {
+      color: #6a9955;
+      font-style: italic;
+    }
+
+    .json-brace {
+      color: #d4d4d4;
+    }
+
+    .copy-button {
+      position: relative;
+      float: right;
+      background: #3c3c3c;
+      color: #d4d4d4;
+      border: 1px solid #555;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .copy-button:hover {
+      background: #505050;
+    }
+
+    .copy-button.copied {
+      background: #4ec9b0;
+      color: #1e1e1e;
+    }
+
+    /* Success message animations */
+    #success-message {
+      transition: all 0.3s ease-in-out;
+      max-height: 200px;
+      opacity: 1;
+    }
+
+    #success-message.hiding {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+      overflow: hidden;
+    }
+  </style>
 </head>
+
 <body class="bg-plaid-light-gray min-h-screen">
   <%- include('partials/navigation', { tokens, currentPage: 'profile' }) %>
 
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-plaid-black">Token Inspector</h1>
-      <p class="text-plaid-dark-gray mt-2">Decode your ID token and peek at those sweet JWT claims</p>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
-      <h2 class="text-lg font-semibold text-plaid-black mb-4">User Information</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Basic Info -->
-        <div class="space-y-4">
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Subject (User ID)</label>
-            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded"><%= userInfo.sub %></p>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Email</label>
-            <p class="mt-1 text-sm text-plaid-black"><%= userInfo.email || 'Not provided' %></p>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Name</label>
-            <p class="mt-1 text-sm text-plaid-black"><%= userInfo.name || 'Not provided' %></p>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <!-- Success Message (shown after token refresh) -->
+      <div id="success-message" class="hidden mb-6">
+        <div class="bg-plaid-credit-lime-200 border border-plaid-credit-lime-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-plaid-credit-lime-600 mr-3" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span class="text-plaid-credit-lime-700 font-medium">Tokens refreshed successfully! The page has been
+                updated with new token values.</span>
+            </div>
+            <button onclick="dismissSuccessMessage()"
+              class="text-plaid-credit-lime-600 hover:text-plaid-credit-lime-700">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
         </div>
+      </div>
 
-        <!-- Token Info -->
-        <div class="space-y-4">
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Issuer</label>
-            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded break-all"><%= userInfo.iss %></p>
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-plaid-black">ID Token Inspector</h1>
+        <p class="text-plaid-dark-gray mt-2">Decode your ID token and explore the JWT structure</p>
+      </div>
+
+      <!-- Raw ID Token -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-plaid-black">Raw ID Token (JWT)</h2>
+          <button onclick="copyToClipboard('raw-token', this)" class="copy-button">
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+              </path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="token-block token-raw" id="raw-token"><%= rawToken %></div>
+        <p class="text-sm text-plaid-gray mt-3">
+          This JWT has three parts separated by dots: <code
+            class="bg-plaid-light-gray px-2 py-1 rounded">header.payload.signature</code>
+        </p>
+      </div>
+
+      <!-- Decoded Header -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-plaid-black">Decoded Header</h2>
+          <button onclick="copyToClipboard('header-json', this)" class="copy-button">
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+              </path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="token-block" id="header-json"><span class="json-brace">{</span>
+<% Object.keys(header).forEach((key, index, array) => { %>  <span class="json-key">"<%= key %>"</span>: <span class="json-string">"<%= header[key].value %>"</span><% if (index < array.length - 1) { %>,<% } %> <span class="json-comment">// <%= header[key].comment %></span>
+<% }); %><span class="json-brace">}</span></div>
+        <p class="text-sm text-plaid-gray mt-3">
+          The header describes how the token is signed and which key was used
+        </p>
+      </div>
+
+      <!-- Decoded Payload -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-plaid-black">Decoded Payload (Claims)</h2>
+          <button onclick="copyToClipboard('payload-json', this)" class="copy-button">
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+              </path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="token-block" id="payload-json"><span class="json-brace">{</span>
+<% Object.keys(payload).forEach((key, index, array) => {
+  const item = payload[key];
+  let valueFormatted;
+  if (typeof item.value === 'string') {
+    valueFormatted = `<span class="json-string">"${item.value}"</span>`;
+  } else if (typeof item.value === 'number') {
+    valueFormatted = `<span class="json-number">${item.value}</span>`;
+  } else if (typeof item.value === 'boolean') {
+    valueFormatted = `<span class="json-boolean">${item.value}</span>`;
+  } else if (Array.isArray(item.value)) {
+    valueFormatted = `<span class="json-string">${JSON.stringify(item.value)}</span>`;
+  } else {
+    valueFormatted = `<span class="json-string">${JSON.stringify(item.value)}</span>`;
+  }
+%>  <span class="json-key">"<%= key %>"</span>: <%- valueFormatted %><% if (index < array.length - 1) { %>,<% } %> <span class="json-comment">// <%= item.comment %></span>
+<% }); %><span class="json-brace">}</span></div>
+        <p class="text-sm text-plaid-gray mt-3">
+          The payload contains claims about the user and the token itself
+        </p>
+      </div>
+
+      <!-- Token Status -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-plaid-black mb-4">Authentication Status</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
+            <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
+              <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <h3 class="text-sm font-medium text-plaid-credit-lime-700">ID Token</h3>
+            <p class="text-xs text-plaid-credit-lime-600 mt-1">Valid & Verified</p>
           </div>
 
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Audience</label>
-            <p class="mt-1 text-sm text-plaid-black font-mono bg-plaid-light-gray p-2 rounded break-all"><%= userInfo.aud %></p>
+          <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
+            <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
+              <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-sm font-medium text-plaid-credit-lime-700">Access Token</h3>
+            <p class="text-xs text-plaid-credit-lime-600 mt-1">Available for API calls</p>
           </div>
 
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Issued At</label>
-            <p class="mt-1 text-sm text-plaid-black">
-              <%= new Date(userInfo.iat * 1000).toLocaleString() %>
-              <span class="text-plaid-gray">(<%= userInfo.iat %>)</span>
+          <div
+            class="text-center p-4 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-200' : 'bg-plaid-light-gray' %> rounded-lg">
+            <div
+              class="flex items-center justify-center w-12 h-12 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-400' : 'bg-plaid-gray' %> rounded-full mx-auto mb-3">
+              <svg class="w-6 h-6 <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+              </svg>
+            </div>
+            <h3
+              class="text-sm font-medium <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>">
+              Refresh Token</h3>
+            <p class="text-xs <%= tokens.refresh_token ? 'text-plaid-credit-lime-600' : 'text-plaid-gray' %> mt-1">
+              <%= tokens.refresh_token ? 'Available' : 'Not Available' %>
             </p>
           </div>
-
-          <div>
-            <label class="text-sm font-medium text-plaid-gray">Expires At</label>
-            <p class="mt-1 text-sm text-plaid-black">
-              <%= new Date(userInfo.exp * 1000).toLocaleString() %>
-              <span class="text-plaid-gray">(<%= userInfo.exp %>)</span>
-            </p>
-          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Token Status -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
-      <h2 class="text-lg font-semibold text-plaid-black mb-4">Authentication Status</h2>
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
+        <h2 class="text-lg font-semibold text-plaid-black mb-4">Quick Actions</h2>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        <div class="flex flex-wrap gap-4">
+          <a href="/debug/tokens"
+            class="inline-flex items-center px-4 py-2 border border-plaid-blue-sky-200 rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
             </svg>
-          </div>
-          <h3 class="text-sm font-medium text-plaid-credit-lime-700">ID Token</h3>
-          <p class="text-xs text-plaid-credit-lime-600 mt-1">Valid & Verified</p>
-        </div>
+            View All Tokens
+          </a>
 
-        <div class="text-center p-4 bg-plaid-credit-lime-200 rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 bg-plaid-credit-lime-400 rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 text-plaid-credit-lime-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+          <button onclick="refreshTokens()"
+            class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-200 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
+            <%=!tokens || !tokens.refresh_token ? 'disabled' : '' %>>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
             </svg>
-          </div>
-          <h3 class="text-sm font-medium text-plaid-credit-lime-700">Access Token</h3>
-          <p class="text-xs text-plaid-credit-lime-600 mt-1">Available for API calls</p>
-        </div>
-
-        <div class="text-center p-4 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-200' : 'bg-plaid-light-gray' %> rounded-lg">
-          <div class="flex items-center justify-center w-12 h-12 <%= tokens.refresh_token ? 'bg-plaid-credit-lime-400' : 'bg-plaid-gray' %> rounded-full mx-auto mb-3">
-            <svg class="w-6 h-6 <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-          </div>
-          <h3 class="text-sm font-medium <%= tokens.refresh_token ? 'text-plaid-credit-lime-700' : 'text-plaid-dark-gray' %>">Refresh Token</h3>
-          <p class="text-xs <%= tokens.refresh_token ? 'text-plaid-credit-lime-600' : 'text-plaid-gray' %> mt-1">
-            <%= tokens.refresh_token ? 'Available' : 'Not Available' %>
-          </p>
+            Refresh Tokens
+          </button>
         </div>
       </div>
+
+      <!-- Refresh Token Result -->
+      <div id="refresh-result" class="mt-8 hidden"></div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="mt-8 bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
-      <h2 class="text-lg font-semibold text-plaid-black mb-4">Quick Actions</h2>
+    <script>
+      // Check if we just refreshed tokens and show success message
+      window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('refreshed') === 'true') {
+          const successMessage = document.getElementById('success-message');
+          successMessage.classList.remove('hidden');
 
-      <div class="flex flex-wrap gap-4">
-        <a href="/api-explorer"
-           class="inline-flex items-center px-4 py-2 bg-plaid-mint-600 border border-transparent rounded-md font-medium text-white hover:bg-plaid-mint-700 transition-colors">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-          </svg>
-          Test API Endpoints
-        </a>
+          // Auto-dismiss after 5 seconds
+          setTimeout(() => {
+            dismissSuccessMessage();
+          }, 5000);
 
-        <a href="/accounts"
-           class="inline-flex items-center px-4 py-2 border border-plaid-blue-sky-200 rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-          </svg>
-          Quick API Test
-        </a>
+          // Clean up URL without reloading
+          const url = new URL(window.location);
+          url.searchParams.delete('refreshed');
+          window.history.replaceState({}, '', url);
+        }
+      });
 
-        <button onclick="refreshTokens()"
-                class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-200 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
-                <%= !tokens || !tokens.refresh_token ? 'disabled' : '' %>>
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          Refresh Tokens
-        </button>
+      function dismissSuccessMessage() {
+        const successMessage = document.getElementById('success-message');
 
-        <a href="/logout"
-           class="inline-flex items-center px-4 py-2 border border-plaid-piggy-bank-200 rounded-md font-medium text-plaid-piggy-bank-700 bg-plaid-piggy-bank-200 hover:bg-plaid-piggy-bank-400 transition-colors">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-          </svg>
-          Sign Out
-        </a>
-      </div>
-    </div>
+        // Add hiding class to trigger animation
+        successMessage.classList.add('hiding');
 
-    <!-- Refresh Token Result -->
-    <div id="refresh-result" class="mt-8 hidden"></div>
-  </div>
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+          successMessage.classList.add('hidden');
+          successMessage.classList.remove('hiding');
+        }, 300); // Match the CSS transition duration
+      }
 
-  <script>
-    async function refreshTokens() {
-      const resultDiv = document.getElementById('refresh-result');
-      resultDiv.classList.remove('hidden');
-      resultDiv.innerHTML = `
+      function copyToClipboard(elementId, button) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+
+        navigator.clipboard.writeText(text).then(() => {
+          const originalText = button.innerHTML;
+          button.classList.add('copied');
+          button.innerHTML = '<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+
+          setTimeout(() => {
+            button.classList.remove('copied');
+            button.innerHTML = originalText;
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy:', err);
+        });
+      }
+
+      async function refreshTokens() {
+        const resultDiv = document.getElementById('refresh-result');
+        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = `
         <div class="bg-plaid-mint-200 border border-plaid-mint-200 rounded-lg p-4">
           <div class="flex items-center">
             <svg class="animate-spin h-5 w-5 text-plaid-mint-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -168,37 +341,24 @@
         </div>
       `;
 
-      try {
-        const response = await fetch('/api/refresh', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
+        try {
+          const response = await fetch('/refresh', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Automatically reload the page with a success parameter
+            window.location.href = '/me?refreshed=true';
+          } else {
+            throw new Error(data.error || 'Token refresh failed');
           }
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
+        } catch (error) {
           resultDiv.innerHTML = `
-            <div class="bg-plaid-credit-lime-200 border border-plaid-credit-lime-200 rounded-lg p-6">
-              <div class="flex items-center mb-4">
-                <svg class="h-6 w-6 text-plaid-credit-lime-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h3 class="text-lg font-semibold text-plaid-credit-lime-700">Tokens Refreshed Successfully!</h3>
-              </div>
-              <div class="space-y-2 text-sm">
-                <p class="text-plaid-credit-lime-700"><strong>New Access Token:</strong> <code class="bg-plaid-credit-lime-400 px-2 py-1 rounded">${data.access_token?.substring(0, 50)}...</code></p>
-                ${data.refresh_token ? '<p class="text-plaid-credit-lime-700"><strong>New Refresh Token:</strong> Received</p>' : ''}
-                ${data.id_token ? '<p class="text-plaid-credit-lime-700"><strong>New ID Token:</strong> Received</p>' : ''}
-              </div>
-            </div>
-          `;
-        } else {
-          throw new Error(data.error || 'Token refresh failed');
-        }
-      } catch (error) {
-        resultDiv.innerHTML = `
           <div class="bg-plaid-piggy-bank-200 border border-plaid-piggy-bank-200 rounded-lg p-4">
             <div class="flex items-center">
               <svg class="h-5 w-5 text-plaid-piggy-bank-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,8 +368,9 @@
             </div>
           </div>
         `;
+        }
       }
-    }
-  </script>
+    </script>
 </body>
+
 </html>
