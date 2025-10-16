@@ -372,7 +372,7 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 		}
 
 		// Verify the ID token signature and validate claims
-		const { payload } = await jwtVerify( tokens.id_token, jwks, {
+		await jwtVerify( tokens.id_token, jwks, {
 			issuer: ISSUER_URL,
 			audience: CLIENT_ID
 		} );
@@ -381,6 +381,7 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 		const parts = tokens.id_token.split( "." );
 		const header = JSON.parse( Buffer.from( parts[0], "base64url" ).toString() );
 		const decodedPayload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString() );
+		const signature = parts[2]; // The base64url-encoded signature
 
 		// Add annotations to header
 		const annotatedHeader = {
@@ -396,70 +397,70 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 			const value = decodedPayload[key];
 
 			switch ( key ) {
-			case "sub":
-				comment = "Subject - Unique identifier for the user";
-				break;
-			case "iss":
-				comment = "Issuer - Who issued this token (Authorization Server URL)";
-				break;
-			case "aud":
-				comment = "Audience - Who this token is intended for (Client ID)";
-				break;
-			case "exp":
-				if ( typeof value === "number" ) {
-					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
-						dateStyle: "medium",
-						timeStyle: "long"
-					} );
-					comment = `Expiration Time - Unix timestamp (seconds since Jan 1, 1970) when token expires (${ date })`;
-				} else {
-					comment = "Expiration Time - Unix timestamp when the token expires";
-				}
-				break;
-			case "iat":
-				if ( typeof value === "number" ) {
-					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
-						dateStyle: "medium",
-						timeStyle: "long"
-					} );
-					comment = `Issued At - Unix timestamp (seconds since Jan 1, 1970) when token was issued (${ date })`;
-				} else {
-					comment = "Issued At - Unix timestamp when the token was issued";
-				}
-				break;
-			case "auth_time":
-				if ( typeof value === "number" ) {
-					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
-						dateStyle: "medium",
-						timeStyle: "long"
-					} );
-					comment = `Authentication Time - Unix timestamp (seconds since Jan 1, 1970) when user authenticated (${ date })`;
-				} else {
-					comment = "Authentication Time - Unix timestamp when the user authenticated";
-				}
-				break;
-			case "nbf":
-				if ( typeof value === "number" ) {
-					const date = new Date( value * 1000 ).toLocaleString( "en-US", {
-						dateStyle: "medium",
-						timeStyle: "long"
-					} );
-					comment = `Not Before - Unix timestamp (seconds since Jan 1, 1970), token not valid before (${ date })`;
-				} else {
-					comment = "Not Before - Unix timestamp before which the token is not valid";
-				}
-				break;
-			case "email":
-				comment = "Email - User's email address (from 'email' scope)";
-				break;
-			case "name":
-				comment = "Name - User's display name (from 'profile' scope)";
-				break;
-			case "email_verified":
-				comment = "Email Verified - Whether the user's email has been verified";
-				break;
-			default:
-				comment = `Custom claim: ${ key }`;
+				case "sub":
+					comment = "Subject - Unique identifier for the user";
+					break;
+				case "iss":
+					comment = "Issuer - Who issued this token (Authorization Server URL)";
+					break;
+				case "aud":
+					comment = "Audience - Who this token is intended for (Client ID)";
+					break;
+				case "exp":
+					if ( typeof value === "number" ) {
+						const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+							dateStyle: "medium",
+							timeStyle: "long"
+						} );
+						comment = `Expiration Time - Unix timestamp (seconds since Jan 1, 1970) when token expires (${ date })`;
+					} else {
+						comment = "Expiration Time - Unix timestamp when the token expires";
+					}
+					break;
+				case "iat":
+					if ( typeof value === "number" ) {
+						const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+							dateStyle: "medium",
+							timeStyle: "long"
+						} );
+						comment = `Issued At - Unix timestamp (seconds since Jan 1, 1970) when token was issued (${ date })`;
+					} else {
+						comment = "Issued At - Unix timestamp when the token was issued";
+					}
+					break;
+				case "auth_time":
+					if ( typeof value === "number" ) {
+						const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+							dateStyle: "medium",
+							timeStyle: "long"
+						} );
+						comment = `Authentication Time - Unix timestamp (seconds since Jan 1, 1970) when user authenticated (${ date })`;
+					} else {
+						comment = "Authentication Time - Unix timestamp when the user authenticated";
+					}
+					break;
+				case "nbf":
+					if ( typeof value === "number" ) {
+						const date = new Date( value * 1000 ).toLocaleString( "en-US", {
+							dateStyle: "medium",
+							timeStyle: "long"
+						} );
+						comment = `Not Before - Unix timestamp (seconds since Jan 1, 1970), token not valid before (${ date })`;
+					} else {
+						comment = "Not Before - Unix timestamp before which the token is not valid";
+					}
+					break;
+				case "email":
+					comment = "Email - User's email address (from 'email' scope)";
+					break;
+				case "name":
+					comment = "Name - User's display name (from 'profile' scope)";
+					break;
+				case "email_verified":
+					comment = "Email Verified - Whether the user's email has been verified";
+					break;
+				default:
+					comment = `Custom claim: ${ key }`;
 			}
 			annotatedPayload[key] = { value: decodedPayload[key], comment };
 		} );
@@ -469,7 +470,8 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 			tokens,
 			rawToken: tokens.id_token,
 			header: annotatedHeader,
-			payload: annotatedPayload
+			payload: annotatedPayload,
+			signature
 		} );
 	} catch ( error ) {
 		logError( logger, error, { context: "ID token verification" } );

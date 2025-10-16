@@ -274,6 +274,12 @@
   .mb-8 {
     margin-bottom: calc(var(--spacing) * 8);
   }
+  .ml-2 {
+    margin-left: calc(var(--spacing) * 2);
+  }
+  .ml-3 {
+    margin-left: calc(var(--spacing) * 3);
+  }
   .ml-4 {
     margin-left: calc(var(--spacing) * 4);
   }
@@ -485,6 +491,10 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
+  .border-l-4 {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 4px;
+  }
   .border-plaid-blue-sky-200 {
     border-color: var(--color-plaid-blue-sky-200);
   }
@@ -493,6 +503,9 @@
   }
   .border-plaid-mint-200 {
     border-color: var(--color-plaid-mint-200);
+  }
+  .border-plaid-mint-600 {
+    border-color: var(--color-plaid-mint-600);
   }
   .border-plaid-piggy-bank-200 {
     border-color: var(--color-plaid-piggy-bank-200);

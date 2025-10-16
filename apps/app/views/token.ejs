@@ -157,6 +157,57 @@
         </p>
       </div>
 
+      <!-- Signature -->
+      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-plaid-black">Signature</h2>
+          <button onclick="copyToClipboard('signature-text', this)" class="copy-button">
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+              </path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="code-block token-raw" id="signature-text"><%= signature %></div>
+        <div class="bg-plaid-mint-200 border-l-4 border-plaid-mint-600 p-4 mt-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-plaid-mint-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                </path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-plaid-mint-700">What is the signature?</h3>
+              <div class="mt-2 text-sm text-plaid-mint-600">
+                <p class="mb-2">
+                  The signature is cryptographic proof that this token was issued by the Authorization Server and hasn't been tampered with.
+                </p>
+                <p class="mb-2">
+                  <strong>How it works:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                  <li>The Authorization Server uses its <strong>private key</strong> (from JWKS) to sign the token</li>
+                  <li>The signature is created from the header and payload using the RS256 algorithm</li>
+                  <li>Anyone can verify the signature using the <strong>public key</strong> from
+                    <a href="<%= process.env.OP_ISSUER %>/.well-known/jwks.json" target="_blank" class="underline hover:text-plaid-mint-700">
+                      /.well-known/jwks.json
+                    </a>
+                  </li>
+                  <li>If the header or payload is modified, the signature verification will fail</li>
+                </ul>
+                <p class="mt-2">
+                  <strong>Note:</strong> The signature ensures <em>integrity</em> (detects tampering) and <em>authenticity</em> (proves who issued it), but not <em>confidentiality</em> - anyone can decode the header and payload.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Token Status -->
       <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
         <h2 class="text-lg font-semibold text-plaid-black mb-4">Authentication Status</h2>

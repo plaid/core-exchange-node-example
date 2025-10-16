@@ -93,7 +93,7 @@ function generateJWKS() {
 	console.log();
 
 	// Generate RSA key pair for RS256 signing
-	const { publicKey, privateKey } = generateKeyPairSync( "rsa", {
+	const { privateKey } = generateKeyPairSync( "rsa", {
 		modulusLength: 2048,
 		publicKeyEncoding: {
 			type: "spki",
@@ -236,34 +236,34 @@ const prefix = prefixIndex !== -1 && args[prefixIndex + 1]
 
 // Route to appropriate command
 switch ( command ) {
-case "client":
-	generateClientCredentials( prefix );
-	showSecurityWarning();
-	break;
+	case "client":
+		generateClientCredentials( prefix );
+		showSecurityWarning();
+		break;
 
-case "secrets":
-	generateSecrets();
-	showSecurityWarning();
-	break;
+	case "secrets":
+		generateSecrets();
+		showSecurityWarning();
+		break;
 
-case "jwks":
-	generateJWKS();
-	showSecurityWarning();
-	break;
+	case "jwks":
+		generateJWKS();
+		showSecurityWarning();
+		break;
 
-case "all":
-	generateAll( prefix );
-	showSecurityWarning();
-	break;
+	case "all":
+		generateAll( prefix );
+		showSecurityWarning();
+		break;
 
-case "--help":
-case "-h":
-case "help":
-	showHelp();
-	break;
+	case "--help":
+	case "-h":
+	case "help":
+		showHelp();
+		break;
 
-default:
-	console.error( `Error: Unknown command "${ command || "(none)" }"\n` );
-	showHelp();
-	process.exit( 1 );
+	default:
+		console.error( `Error: Unknown command "${ command || "(none)" }"\n` );
+		showHelp();
+		process.exit( 1 );
 }
