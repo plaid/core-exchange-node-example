@@ -65,6 +65,29 @@ function loadOIDCClients() {
 const OIDC_CLIENTS = loadOIDCClients();
 logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
+// Load JWKS (JSON Web Key Set) for token signing
+// If not provided, oidc-provider will generate ephemeral keys with kid "keystore-CHANGE-ME"
+function loadJWKS() {
+	const jwksEnv = process.env.JWKS;
+	if ( !jwksEnv ) {
+		logger.warn( "JWKS not configured - using oidc-provider default ephemeral keys" );
+		logger.warn( "For production, set JWKS environment variable with your signing keys" );
+		logger.warn( "Generate keys with: node scripts/secrets.js jwks" );
+		return undefined;
+	}
+
+	try {
+		const jwks = JSON.parse( jwksEnv );
+		logger.info( `Loaded JWKS with ${ jwks.keys?.length || 0 } key(s)` );
+		return jwks;
+	} catch ( error ) {
+		logger.error( { error }, "Failed to parse JWKS environment variable" );
+		throw new Error( "Invalid JWKS configuration" );
+	}
+}
+
+const JWKS = loadJWKS();
+
 // Define client type with optional force_refresh_token flag
 interface OIDCClientConfig {
 	client_id: string;
@@ -137,6 +160,8 @@ const USERS = new Map<
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const configuration: any = {
 	clients: SANITIZED_CLIENTS,
+	// Use custom JWKS if provided, otherwise oidc-provider generates ephemeral keys
+	...( JWKS ? { jwks: JWKS } : {} ),
 	claims: {
 		openid: [ "sub" ],
 		profile: [ "name" ],

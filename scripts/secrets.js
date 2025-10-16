@@ -9,11 +9,12 @@
  * Usage:
  *   node scripts/secrets.js client [--prefix PREFIX]
  *   node scripts/secrets.js secrets
+ *   node scripts/secrets.js jwks
  *   node scripts/secrets.js all [--prefix PREFIX]
  *   node scripts/secrets.js --help
  */
 
-import { randomBytes } from "crypto";
+import { randomBytes, generateKeyPairSync } from "crypto";
 
 /**
  * Generate a URL-safe random string (for client IDs)
@@ -80,6 +81,64 @@ function generateSecrets() {
 }
 
 /**
+ * Generate JWKS (JSON Web Key Set) for token signing
+ * Creates an RS256 key pair and formats it as a JWKS
+ */
+function generateJWKS() {
+	console.log( "═══════════════════════════════════════════════════════════════" );
+	console.log( "JWKS (JSON Web Key Set) for Token Signing" );
+	console.log( "═══════════════════════════════════════════════════════════════" );
+	console.log();
+	console.log( "Generating RSA key pair (RS256, 2048 bits)..." );
+	console.log();
+
+	// Generate RSA key pair for RS256 signing
+	const { publicKey, privateKey } = generateKeyPairSync( "rsa", {
+		modulusLength: 2048,
+		publicKeyEncoding: {
+			type: "spki",
+			format: "jwk"
+		},
+		privateKeyEncoding: {
+			type: "pkcs8",
+			format: "jwk"
+		}
+	} );
+
+	// Create a unique key ID (kid)
+	const kid = `key-${ generateUrlSafeToken( 16 ) }`;
+
+	// Build the JWK with both public and private components
+	const jwk = {
+		...privateKey,
+		kid,
+		alg: "RS256",
+		use: "sig"
+	};
+
+	// Create JWKS structure
+	const jwks = {
+		keys: [ jwk ]
+	};
+
+	// Format as single-line JSON for environment variable
+	const jwksString = JSON.stringify( jwks );
+
+	console.log( "# JWKS for Authorization Server (OP)" );
+	console.log( "# Add this to your .env file:" );
+	console.log( `JWKS='${ jwksString }'` );
+	console.log();
+	console.log( "IMPORTANT:" );
+	console.log( "• This JWKS contains PRIVATE KEY material - keep it secret!" );
+	console.log( "• Never commit this to version control" );
+	console.log( "• Store in secure environment variables or secret manager" );
+	console.log( "• Key ID (kid): " + kid );
+	console.log();
+
+	return { jwks, jwksString };
+}
+
+/**
  * Generate all credentials and secrets
  * @param {string|null} prefix - Optional prefix for client ID
  */
@@ -87,6 +146,8 @@ function generateAll( prefix = null ) {
 	const client = generateClientCredentials( prefix );
 	console.log();
 	const secrets = generateSecrets();
+	console.log();
+	const jwks = generateJWKS();
 
 	console.log( "═══════════════════════════════════════════════════════════════" );
 	console.log( "Complete .env Configuration" );
@@ -95,6 +156,7 @@ function generateAll( prefix = null ) {
 	console.log( `CLIENT_ID=${ client.clientId }` );
 	console.log( `CLIENT_SECRET=${ client.clientSecret }` );
 	console.log( `COOKIE_SECRET=${ secrets.cookieSecret }` );
+	console.log( `JWKS='${ jwks.jwksString }'` );
 	console.log();
 }
 
@@ -113,7 +175,8 @@ USAGE:
 COMMANDS:
   client [--prefix PREFIX]    Generate OAuth client credentials (CLIENT_ID, CLIENT_SECRET)
   secrets                     Generate application secrets (COOKIE_SECRET, etc.)
-  all [--prefix PREFIX]       Generate both client credentials and secrets
+  jwks                        Generate JWKS (JSON Web Key Set) for token signing
+  all [--prefix PREFIX]       Generate client credentials, secrets, and JWKS
   --help, -h                  Show this help message
 
 OPTIONS:
@@ -128,6 +191,9 @@ EXAMPLES:
 
   # Generate only application secrets
   node scripts/secrets.js secrets
+
+  # Generate only JWKS for token signing
+  node scripts/secrets.js jwks
 
   # Generate everything at once
   node scripts/secrets.js all
@@ -177,6 +243,11 @@ case "client":
 
 case "secrets":
 	generateSecrets();
+	showSecurityWarning();
+	break;
+
+case "jwks":
+	generateJWKS();
 	showSecurityWarning();
 	break;
 

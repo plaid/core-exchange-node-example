@@ -51,9 +51,34 @@
         </div>
       </div>
 
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-plaid-black">ID Token Inspector</h1>
-        <p class="text-plaid-dark-gray mt-2">Decode your ID token and explore the JWT structure</p>
+      <div class="mb-8 flex items-start justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-plaid-black">ID Token Inspector</h1>
+          <p class="text-plaid-dark-gray mt-2">Decode your ID token and explore the JWT structure</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap gap-3">
+          <a href="/debug/tokens"
+            class="inline-flex items-center px-4 py-2 border border-plaid-blue-sky-200 rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+            </svg>
+            View All Tokens
+          </a>
+
+          <button onclick="refreshTokens()"
+            class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-200 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
+            <%=!tokens || !tokens.refresh_token ? 'disabled' : '' %>>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
+            </svg>
+            Refresh Tokens
+          </button>
+        </div>
       </div>
 
       <!-- Raw ID Token -->
@@ -177,33 +202,6 @@
               <%= tokens.refresh_token ? 'Available' : 'Not Available' %>
             </p>
           </div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6">
-        <h2 class="text-lg font-semibold text-plaid-black mb-4">Quick Actions</h2>
-
-        <div class="flex flex-wrap gap-4">
-          <a href="/debug/tokens"
-            class="inline-flex items-center px-4 py-2 border border-plaid-blue-sky-200 rounded-md font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray transition-colors">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-            </svg>
-            View All Tokens
-          </a>
-
-          <button onclick="refreshTokens()"
-            class="inline-flex items-center px-4 py-2 border border-plaid-royal-purple-200 rounded-md font-medium text-plaid-royal-purple-700 bg-plaid-royal-purple-200 hover:bg-plaid-royal-purple-400 transition-colors <%= !tokens || !tokens.refresh_token ? 'opacity-50 cursor-not-allowed' : '' %>"
-            <%=!tokens || !tokens.refresh_token ? 'disabled' : '' %>>
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-              </path>
-            </svg>
-            Refresh Tokens
-          </button>
         </div>
       </div>
 

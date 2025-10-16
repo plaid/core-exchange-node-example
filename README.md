@@ -281,7 +281,10 @@ node scripts/secrets.js client --prefix myapp
 # Generate application secrets (COOKIE_SECRET, etc.)
 node scripts/secrets.js secrets
 
-# Generate everything at once
+# Generate JWKS (JSON Web Key Set) for token signing
+node scripts/secrets.js jwks
+
+# Generate everything at once (client, secrets, and JWKS)
 node scripts/secrets.js all
 
 # Show help
@@ -293,13 +296,72 @@ The tool generates:
 - **CLIENT_ID**: URL-safe random string (32 characters, or 24 + prefix)
 - **CLIENT_SECRET**: Cryptographically secure hex string (64 characters)
 - **COOKIE_SECRET**: Secure hex string (64 characters)
+- **JWKS**: RSA key pair (RS256, 2048 bits) formatted as a JSON Web Key Set
 
 **Security best practices:**
 
 - Never commit generated secrets to version control
 - Use different secrets for each environment (dev, staging, production)
-- Store production secrets in secure environment variables or secret managers
+- Store production secrets in secure environment variables or secret managers (AWS Secrets Manager, HashiCorp Vault, etc.)
 - Rotate secrets regularly in production
+
+### Token Signing Keys (JWKS)
+
+#### Development vs Production
+
+**Development (default):**
+
+- If you don't set the `JWKS` environment variable, `oidc-provider` will automatically generate ephemeral (temporary) signing keys on startup
+- These keys use the default key ID (`kid`) of `"keystore-CHANGE-ME"`
+- Keys are regenerated every time the auth server restarts, invalidating all existing tokens
+- This is perfectly fine for local development since tokens have short lifetimes (1 hour)
+
+**Production (required):**
+
+- You **MUST** provide your own JWKS to prevent token invalidation on server restarts
+- Generate persistent signing keys with `node scripts/secrets.js jwks`
+- Store the JWKS in a secure environment variable or secret manager
+- The generated JWKS contains **PRIVATE KEY material** - treat it like any other secret!
+
+#### Why This Matters
+
+When the Authorization Server signs JWT tokens (ID tokens and access tokens), it uses a private key and includes the key ID (`kid`) in the JWT header. The Resource Server (API) uses the public key from the JWKS endpoint to verify token signatures.
+
+**Problems with ephemeral keys in production:**
+
+1. **Service restarts invalidate all tokens** - Users and applications must re-authenticate
+2. **Load balancing issues** - Different servers may have different keys
+3. **No key rotation strategy** - Can't implement proper cryptographic key rotation
+4. **Debugging difficulties** - The generic `kid` value doesn't help identify which key was used
+
+**Benefits of persistent keys:**
+
+1. **Tokens survive restarts** - Access/ID tokens remain valid across deployments
+2. **Proper key rotation** - You can add new keys while keeping old ones for validation
+3. **Better security** - Control your cryptographic material instead of relying on auto-generated keys
+4. **Meaningful key IDs** - Generated keys have unique identifiers like `key-abc123def456`
+
+#### Setting Up JWKS for Production
+
+```bash
+# Generate JWKS
+node scripts/secrets.js jwks
+
+# Add the output to your .env file or secret manager
+JWKS='{"keys":[{"kty":"RSA","n":"...","e":"AQAB","d":"...","kid":"key-abc123","alg":"RS256","use":"sig"}]}'
+```
+
+The generated JWKS includes:
+
+- **Public components** (`kty`, `n`, `e`, `kid`, `alg`, `use`) - Exposed at `/.well-known/jwks.json`
+- **Private components** (`d`, `p`, `q`, `dp`, `dq`, `qi`) - Used for signing, never exposed
+
+**Important notes:**
+
+- The JWKS is a JSON string, so wrap it in single quotes in your `.env` file
+- Never commit this to version control - it contains private key material
+- For production, store in AWS Secrets Manager, HashiCorp Vault, or similar
+- You can have multiple keys in the `keys` array for key rotation
 
 ### Refresh Token Controls
 

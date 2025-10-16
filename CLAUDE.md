@@ -99,6 +99,10 @@ Key features:
 - **Dynamic scope display**: Consent screen shows requested scopes with human-readable descriptions
 - **Forced interactions**: Authorization flow uses `prompt: "login consent"` to always show login and consent screens
 - **RP-initiated logout**: Supports logout with automatic form submission
+- **Token signing (JWKS)**:
+  - Development: Uses ephemeral keys (auto-generated on startup with `kid="keystore-CHANGE-ME"`)
+  - Production: Configure persistent JWKS via `JWKS` environment variable to prevent token invalidation on restarts
+  - Generate keys with: `node scripts/secrets.js jwks`
 
 ### 2. Resource Server (API)
 
@@ -210,6 +214,33 @@ Default token lifetimes (configured in `apps/auth/src/index.ts`):
 - Access Token: 1 hour (3600 seconds)
 - ID Token: 1 hour (3600 seconds)
 - Refresh Token: 14 days (1209600 seconds)
+
+### Token Signing Keys (JWKS)
+
+The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
+
+**Development (default):**
+- No `JWKS` environment variable needed
+- `oidc-provider` auto-generates ephemeral keys on startup
+- Keys have `kid="keystore-CHANGE-ME"` in JWT headers
+- Keys regenerate on each restart (invalidates all tokens)
+- Perfectly acceptable for local development
+
+**Production (required):**
+- Set `JWKS` environment variable with persistent signing keys
+- Prevents token invalidation on server restarts
+- Enables proper key rotation strategy
+- Generate with: `node scripts/secrets.js jwks`
+- Store securely (AWS Secrets Manager, HashiCorp Vault, etc.)
+- Contains private key material - never commit to version control
+
+**Why persistent keys matter:**
+- Tokens survive service restarts and deployments
+- Multiple server instances can share the same keys
+- Proper cryptographic key rotation
+- Unique key IDs for debugging (e.g., `key-abc123def456`)
+
+**Configuration location:** `apps/auth/src/index.ts` (lines 68-89) loads JWKS from environment and logs warnings if not set
 
 ## Testing the Flow
 
