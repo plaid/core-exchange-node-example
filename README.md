@@ -188,7 +188,6 @@ Once everything's running, here's the fun part:
    - **API Explorer** at `/api-explorer` - Interactive UI to test all the FDX endpoints
    - **Profile** at `/me` - See your ID token claims and user info
    - **Token Debug** at `/debug/tokens` - Inspect the raw and decoded tokens (access, ID, refresh)
-   - **Quick API Test** at `/accounts` - Simple endpoint test to make sure everything works
 
 ## What You Get
 
@@ -203,7 +202,6 @@ Once everything's running, here's the fun part:
   - Refresh Token: 14 days
   - Grant: 1 year
 - **Dynamic consent UI** - Shows all requested scopes with friendly descriptions
-- **RP-initiated logout** - Standard logout flow supported
 
 ### Resource Server (API)
 

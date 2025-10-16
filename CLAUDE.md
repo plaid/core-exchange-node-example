@@ -157,7 +157,6 @@ Features:
 - **API Explorer**: Interactive UI for testing all FDX Core Exchange endpoints with parameter inputs
 - **Profile page**: View decoded ID token claims and user information at `/me`
 - **Token debug endpoint**: View raw and decoded tokens at `/debug/tokens`
-- **Quick API test**: Simple accounts endpoint test at `/accounts`
 - **Offline access**: Requests `offline_access` scope to receive refresh tokens
 - **Comprehensive scopes**: Requests `openid`, `email`, `profile`, `offline_access`, and `accounts:read` scopes
 
@@ -222,7 +221,6 @@ Default token lifetimes (configured in `apps/auth/src/index.ts`):
    - **API Explorer** (`/api-explorer`): Test all FDX Core Exchange endpoints interactively
    - **Profile** (`/me`): View your ID token claims and user information
    - **Token Debug** (`/debug/tokens`): Inspect raw and decoded access/ID/refresh tokens
-   - **Quick API Test** (`/accounts`): Simple test of the accounts endpoint
 
 ## Next Steps
 

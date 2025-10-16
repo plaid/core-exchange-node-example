@@ -391,33 +391,10 @@ app.get( "/me", async ( req: Request, res: Response ) => {
 		return res.render( "profile", { tokens, userInfo } );
 	} catch ( error ) {
 		logError( logger, error, { context: "ID token verification" } );
-		// Clear invalid tokens and redirect to login
+		// Clear invalid/expired tokens and redirect to login
 		res.clearCookie( "tokens", { path: "/" } );
-		const sanitized = sanitizeError( error, "ID token verification failed" );
-		return res.status( 401 ).json( sanitized );
-	}
-} );
-
-app.get( "/accounts", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
-	if ( !tokens?.access_token ) return res.redirect( "/login" );
-	await ensureConfig();
-
-	try {
-		// Expect API-scoped JWT access token from authorization flow
-		const accessToken = tokens.access_token as string;
-		const resApi = await fetch( `${ API_BASE_URL }/api/fdx/v6/accounts?limit=3`, {
-			headers: { Authorization: `Bearer ${ accessToken }` }
-		} );
-		const data = await resApi.json();
-		res.render( "accounts", { tokens, apiResponse: data } );
-	} catch ( error ) {
-		logError( logger, error, { context: "Quick API test" } );
-		const sanitized = sanitizeError( error, "Failed to call API" );
-		res.render( "accounts", { tokens, apiResponse: null, error: sanitized } );
+		res.clearCookie( "oidc", { path: "/" } );
+		return res.redirect( "/login" );
 	}
 } );
 
