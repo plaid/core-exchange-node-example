@@ -1,0 +1,146 @@
+NOTICE
+
+core-exchange-node-example
+Copyright (c) 2025 Plaid
+
+This software is licensed under the MIT License. See LICENSE file for details.
+
+================================================================================
+
+This project includes third-party software components that are licensed under
+various open source licenses. The following is a list of these components and
+their respective licenses:
+
+================================================================================
+MIT LICENSE COMPONENTS
+================================================================================
+
+The following components are licensed under the MIT License:
+
+@eslint/js (v9.38.0)
+  License: MIT
+
+@stylistic/eslint-plugin (v5.5.0)
+  Copyright: Anthony Fu <anthonyfu117@hotmail.com>
+  License: MIT
+
+@tailwindcss/cli (v4.1.15)
+  License: MIT
+
+@types/cookie-parser (v1.4.9)
+  License: MIT
+
+@types/ejs (v3.1.5)
+  License: MIT
+
+@types/express (v5.0.3)
+  License: MIT
+
+@types/node (v24.9.0)
+  License: MIT
+
+@typescript-eslint/eslint-plugin (v8.46.2)
+  License: MIT
+
+@typescript-eslint/parser (v8.46.2)
+  License: MIT
+
+concurrently (v9.2.1)
+  Copyright: Kimmo Brunfeldt
+  License: MIT
+
+cookie-parser (v1.4.7)
+  Copyright: TJ Holowaychuk <tj@vision-media.ca> (<http://tjholowaychuk.com>)
+  License: MIT
+
+eslint (v9.38.0)
+  Copyright: Nicholas C. Zakas <nicholas+npm@nczconsulting.com>
+  License: MIT
+
+express (v5.1.0)
+  Copyright: TJ Holowaychuk <tj@vision-media.ca>
+  License: MIT
+
+globals (v16.4.0)
+  Copyright: Sindre Sorhus <sindresorhus@gmail.com> (<https://sindresorhus.com>)
+  License: MIT
+
+helmet (v8.1.0)
+  Copyright: Adam Baldwin <adam@npmjs.com> (<https://evilpacket.net>)
+  License: MIT
+
+jose (v6.1.0)
+  Copyright: Filip Skokan <panva.ip@gmail.com>
+  License: MIT
+
+oidc-provider (v9.5.1)
+  Copyright: Filip Skokan <panva.ip@gmail.com>
+  License: MIT
+
+openid-client (v6.8.1)
+  Copyright: Filip Skokan <panva.ip@gmail.com>
+  License: MIT
+
+pino (v9.14.0)
+  Copyright: Matteo Collina <hello@matteocollina.com>
+  License: MIT
+
+pino-pretty (v13.1.2)
+  Copyright: James Sumners <james.sumners@gmail.com>
+  License: MIT
+
+tailwindcss (v4.1.15)
+  License: MIT
+
+tsx (v4.20.6)
+  Copyright: Hiroki Osame <hiroki.osame@gmail.com>
+  License: MIT
+
+undici (v7.16.0)
+  License: MIT
+
+================================================================================
+APACHE 2.0 LICENSE COMPONENTS
+================================================================================
+
+The following components are licensed under the Apache License, Version 2.0:
+
+ejs (v3.1.10)
+  Copyright: Matthew Eernisse <mde@fleegix.org> (<http://fleegix.org>)
+  License: Apache-2.0
+
+typescript (v5.9.3)
+  Copyright: Microsoft Corp.
+  License: Apache-2.0
+
+================================================================================
+BSD-2-CLAUSE LICENSE COMPONENTS
+================================================================================
+
+The following components are licensed under the BSD 2-Clause License:
+
+dotenv (v17.2.3)
+  License: BSD-2-Clause
+
+================================================================================
+
+For the full text of the MIT License, see:
+<https://opensource.org/licenses/MIT>
+
+For the full text of the Apache License 2.0, see:
+<https://www.apache.org/licenses/LICENSE-2.0>
+
+For the full text of the BSD 2-Clause License, see:
+<https://opensource.org/licenses/BSD-2-Clause>
+
+================================================================================
+
+This NOTICE file covers dependencies across all sub-projects:
+
+- apps/api: Resource Server (API)
+- apps/app: Client Application (Relying Party)
+- apps/auth: Authorization Server (OpenID Provider)
+- apps/shared: Shared security utilities
+
+All dependencies are production and development dependencies required for
+building, testing, and running the core-exchange-node-example project.
