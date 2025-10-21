@@ -54,6 +54,7 @@ pnpm --filter @apps/app start   # Start APP in production
 ### Caddy Configuration
 
 The current `caddyfile` configuration routes traffic as follows:
+
 - `id.localtest.me` → `localhost:3001` (OP)
 - `app.localtest.me` → `localhost:3004` (Client App)
 - `api.localtest.me` → `localhost:3003` (Resource Server)
@@ -113,7 +114,7 @@ Key features:
 - Includes customer and account data repositories
 - Uses Pino for structured logging
 - Runs on port 3003
-- Implements FDX Core Exchange API specification (v6.3.1)
+- Implements FDX with Plaid's Core Exchange API specification (v6.3.1)
 
 Key components:
 
@@ -124,7 +125,7 @@ Key components:
 - Request validation utilities
 - Public health endpoint
 
-Available endpoints (FDX Core Exchange compliant):
+Available endpoints (FDX compliant):
 
 - `/api/fdx/v6/customers/current` - Get current customer information
 - `/api/fdx/v6/accounts` - List customer accounts
@@ -189,6 +190,7 @@ The authorization server supports multiple client configurations:
 3. **Environment variable**: Set `OIDC_CLIENTS` as a JSON string
 
 Each client configuration must include:
+
 - `client_id`: Unique client identifier
 - `client_secret`: Client secret for authentication
 - `redirect_uris`: Array of allowed redirect URIs
@@ -200,6 +202,7 @@ Each client configuration must include:
 ### Scopes
 
 Supported scopes:
+
 - `openid` - Basic identity (required)
 - `profile` - Profile information (name)
 - `email` - Email address
@@ -209,6 +212,7 @@ Supported scopes:
 ### Token TTLs
 
 Default token lifetimes (configured in `apps/auth/src/index.ts`):
+
 - Session: 1 day (86400 seconds)
 - Grant: 1 year (31536000 seconds)
 - Access Token: 1 hour (3600 seconds)
@@ -220,6 +224,7 @@ Default token lifetimes (configured in `apps/auth/src/index.ts`):
 The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 
 **Development (default):**
+
 - No `JWKS` environment variable needed
 - `oidc-provider` auto-generates ephemeral keys on startup
 - Keys have `kid="keystore-CHANGE-ME"` in JWT headers
@@ -227,6 +232,7 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 - Perfectly acceptable for local development
 
 **Production (required):**
+
 - Set `JWKS` environment variable with persistent signing keys
 - Prevents token invalidation on server restarts
 - Enables proper key rotation strategy
@@ -235,6 +241,7 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 - Contains private key material - never commit to version control
 
 **Why persistent keys matter:**
+
 - Tokens survive service restarts and deployments
 - Multiple server instances can share the same keys
 - Proper cryptographic key rotation
@@ -249,7 +256,7 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 3. Use demo credentials: `user@example.test` / `passw0rd!`
 4. Approve consent (you'll see all requested scopes: openid, email, profile, offline_access, accounts:read)
 5. After redirect, explore the features:
-   - **API Explorer** (`/api-explorer`): Test all FDX Core Exchange endpoints interactively
+   - **API Explorer** (`/api-explorer`): Test all FDX endpoints interactively
    - **Token Inspector** (`/token`): View your ID token claims and user information
    - **Token Debug** (`/debug/tokens`): Inspect raw and decoded access/ID/refresh tokens
 

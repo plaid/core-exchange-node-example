@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 
 /**
- * Core Exchange Secrets Manager
+ * Secrets CLI
  *
  * A unified CLI tool for generating secure secrets and OAuth client credentials
  *
@@ -165,7 +165,7 @@ function generateAll( prefix = null ) {
  */
 function showHelp() {
 	console.log( `
-Core Exchange Secrets Manager
+Secrets CLI
 
 A unified CLI tool for generating secure secrets and OAuth client credentials.
 

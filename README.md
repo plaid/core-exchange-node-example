@@ -1,10 +1,12 @@
-# Core Exchange Sample Implementation
+# Build FDX APIs using Plaid
+
+## Core Exchange Sample Implementation with Node.js
 
 <p align="center">
   <img src="apps/app/public/plaidypus-200.png" alt="Plaidypus Logo" width="200">
 </p>
 
-A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/) with OpenID Connect and FDX Core Exchange API v6.3. We built this with TypeScript, Express, and battle-tested OAuth libraries so you can see how all the pieces fit together.
+A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/) with OpenID Connect and FDX API v6.3. We built this with TypeScript, Express, and battle-tested OAuth libraries so you can see how all the pieces fit together.
 
 ## What's Inside
 
@@ -50,7 +52,7 @@ The OpenID Provider. This is where users log in and grant permissions. We're usi
 
 ### Resource Server (`apps/api`)
 
-The protected API implementing FDX Core Exchange API v6.3. Every request gets validated—we check JWT access tokens using `jose` against the Auth server's JWKS endpoint and enforce scope-based authorization. Customer and account data live here, accessed via a repository pattern.
+The protected API implementing FDX v6.3 using Plaid's Core Exchange. Every request gets validated—we check JWT access tokens using `jose` against the Auth server's JWKS endpoint and enforce scope-based authorization. Customer and account data live here, accessed via a repository pattern.
 
 **Endpoints you get:** Customer info, account details, statements, transactions, contact info, payment and asset transfer network data
 
@@ -205,7 +207,7 @@ Once everything's running, here's the fun part:
 
 ### Resource Server (API)
 
-All the FDX Core Exchange API v6.3 endpoints you need:
+All the FDX v6.3 endpoints you need for Plaid Core Exchange:
 
 - **Customer**: `/api/fdx/v6/customers/current`
 - **Accounts**: `/api/fdx/v6/accounts`, `/api/fdx/v6/accounts/{accountId}`
