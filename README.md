@@ -8,6 +8,8 @@
 
 A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/) with OpenID Connect and FDX API v6.3. We built this with TypeScript, Express, and battle-tested OAuth libraries so you can see how all the pieces fit together.
 
+> View the online demo of this app at [app.plaidypus.dev](https://app.plaidypus.dev/)!
+
 ## What's Inside
 
 **The Core Stuff:**
