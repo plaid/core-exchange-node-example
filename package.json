@@ -2,7 +2,7 @@
   "name": "core-exchange-node-example",
   "private": true,
   "version": "0.1.0",
-  "packageManager": "pnpm@10.21.0+sha512.da3337267e400fdd3d479a6c68079ac6db01d8ca4f67572083e722775a796788a7a9956613749e000fac20d424b594f7a791a5f4e2e13581c5ef947f26968a40",
+  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
   "type": "module",
   "author": "David Neal <dneal@plaid.com> (https://reverentgeek.com)",
   "contributors": [],
@@ -10,6 +10,10 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "predev": "pnpm --filter @apps/shared build",
+    "predev:auth": "pnpm --filter @apps/shared build",
+    "predev:api": "pnpm --filter @apps/shared build",
+    "predev:app": "pnpm --filter @apps/shared build",
     "dev:auth": "pnpm --filter @apps/auth dev",
     "dev:api": "pnpm --filter @apps/api dev",
     "dev:app": "pnpm --filter @apps/app dev",
@@ -21,9 +25,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@stylistic/eslint-plugin": "^5.5.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.4",
-    "@typescript-eslint/parser": "^8.46.4",
+    "@stylistic/eslint-plugin": "^5.6.1",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",

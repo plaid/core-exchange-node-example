@@ -39,10 +39,10 @@ function loadOIDCClients() {
 		return JSON.parse( process.env.OIDC_CLIENTS );
 	}
 
-	// 2. Try .env.clients.json file (for easier multi-client config)
-	const clientsFilePath = resolve( process.cwd(), ".env.clients.json" );
+	// 2. Try .env.clients.json file in app directory (for easier multi-client config)
+	const clientsFilePath = resolve( new URL( "../", import.meta.url ).pathname, ".env.clients.json" );
 	if ( existsSync( clientsFilePath ) ) {
-		logger.info( "Loading OIDC clients from .env.clients.json" );
+		logger.info( "Loading OIDC clients from apps/auth/.env.clients.json" );
 		const fileContent = readFileSync( clientsFilePath, "utf-8" );
 		return JSON.parse( fileContent );
 	}

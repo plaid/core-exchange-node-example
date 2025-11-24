@@ -45,23 +45,23 @@ A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/
 
 ## How It's Organized
 
-This monorepo has three main apps and some shared utilities:
+This monorepo contains three apps and some shared utilities:
 
 ### Authorization Server (`apps/auth`)
 
-The OpenID Provider. This is where users log in and grant permissions. We're using `oidc-provider` (embedded in Express) to handle the OAuth dance—authentication, authorization, and token issuance. It supports multiple clients, refresh tokens with configurable lifetimes, and resource indicators (RFC 8707) for JWT access tokens. Right now it uses in-memory storage, but we have our eye on a PostgreSQL adapter.
+This OpenID Provider lets users log in and grant permissions. `oidc-provider` (via Express) handles authentication, authorization, and tokens. Supports multiple clients, refresh tokens, and JWT access tokens. Uses in-memory storage, with plans for PostgreSQL.
 
 **What it does:** Login and consent UI (with EJS + Tailwind), configurable scopes and claims, forced interaction flows, RP-initiated logout
 
 ### Resource Server (`apps/api`)
 
-The protected API implementing FDX v6.3 using Plaid's Core Exchange. Every request gets validated—we check JWT access tokens using `jose` against the Auth server's JWKS endpoint and enforce scope-based authorization. Customer and account data live here, accessed via a repository pattern.
+Implements FDX v6.3 via Plaid Core Exchange. Validates JWT access tokens issued by the Auth server and checks their scopes. Customer and account data use a repository pattern.
 
 **Endpoints you get:** Customer info, account details, statements, transactions, contact info, payment and asset transfer network data
 
 ### Client Application (`apps/app`)
 
-The Relying Party—basically, the app that needs to access protected data. Built with `openid-client` (a certified library), it shows you how to do Authorization Code flow with PKCE properly. We built an interactive API explorer so you can poke around, plus tools for debugging tokens and viewing profile data. Tokens are stored in HTTP-only cookies for security.
+The Relying Party app securely accesses protected data using openid-client and PKCE. Includes an API explorer, token debugging tools, and stores tokens in HTTP-only cookies.
 
 **The fun stuff:** API Explorer UI, token inspection, refresh token handling, automatic OIDC discovery that retries until it connects
 
@@ -70,6 +70,14 @@ The Relying Party—basically, the app that needs to access protected data. Buil
 Common utilities and TypeScript configs that all three apps use. Managed with pnpm workspaces.
 
 ## Getting Started
+
+Follow these steps to get the project running locally:
+
+1. Install prerequisites (Node.js, pnpm, Caddy)
+2. Install dependencies
+3. Configure environment variables
+4. Set up HTTPS with Caddy
+5. Start the services
 
 ### What You Need (macOS)
 
@@ -91,7 +99,43 @@ pnpm install
 
 This installs dependencies for all workspace packages. We're using pnpm workspaces with an `apps/*` pattern—it's a nice way to manage a monorepo.
 
+### Configure Environment
+
+Each app requires its own `.env` file. Copy the example files for each service as shown:
+
+```bash
+# Copy environment files for each app
+cp apps/auth/.env.example apps/auth/.env
+cp apps/api/.env.example apps/api/.env
+cp apps/app/.env.example apps/app/.env
+```
+
+Defaults in `.env.example` work out of the box for local dev using localtest.me for URLs; modify as needed.
+
+- **Service URLs**: Uses `*.localtest.me` subdomains (no `/etc/hosts` needed!)
+  - Auth: `https://id.localtest.me` (port 3001)
+  - API: `https://api.localtest.me` (port 3003)
+  - App: `https://app.localtest.me` (port 3004)
+- **OAuth Client**: Pre-configured with development credentials (`dev-rp` / `dev-secret`)
+- **Secrets**: Development-safe defaults (change for production!)
+
+**For production**, you'll need to generate secure secrets for `apps/auth/.env` and `apps/app/.env`:
+
+```bash
+# Generate all production secrets at once
+node scripts/secrets.js all
+
+# Or generate them individually:
+node scripts/secrets.js client   # OAuth client credentials
+node scripts/secrets.js secrets  # Cookie secrets
+node scripts/secrets.js jwks     # Token signing keys
+```
+
+See the [Configuration](#configuration) section for detailed information about all available options.
+
 ## Commands You'll Use
+
+**Note**: Before running these commands, make sure you've completed the setup steps above (environment configuration and Caddy setup).
 
 ### Development Mode
 
@@ -121,7 +165,7 @@ pnpm caddy            # Start the reverse proxy (needs sudo)
 
 ### Setting Up HTTPS with Caddy
 
-Caddy generates its own internal CA and handles TLS certificates automatically. Pretty neat.
+**This step is required before running the apps.** Caddy generates its own internal CA and handles TLS certificates automatically.
 
 #### Option A: Bind to port 443 (recommended)
 
@@ -156,7 +200,7 @@ Then update your `.env` to use `https://localhost:8443` for the issuer and redir
 
 ### Running the Apps
 
-Node.js doesn't use the macOS system trust store for TLS, so we need to point it to Caddy's CA manually.
+Node.js doesn't use macOS's system trust store for TLS, so we need to manually point it to Caddy's CA.
 
 ```bash
 # The easy way—this sets NODE_EXTRA_CA_CERTS for you
@@ -198,7 +242,7 @@ Once everything's running, here's the fun part:
 
 ### Authorization Server (Auth)
 
-- **Multiple client support** - Configure as many OAuth clients as you need via `.env.clients.json` (see `.env.clients.example.json`)
+- **Multiple client support** - Configure as many OAuth clients as you need via `apps/auth/.env.clients.json` (see `apps/auth/.env.clients.example.json`)
 - **Refresh tokens** - Automatically issued when `offline_access` scope is requested. You can also force-enable them per client with `force_refresh_token: true`
 - **Configurable token lifetimes**:
   - Session: 1 day
@@ -241,11 +285,23 @@ export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorit
 
 **Changed your ports or hostnames?**
 
-Update `OP_ISSUER`, `APP_BASE_URL`, `API_BASE_URL`, and `REDIRECT_URI` in your `.env` file to match the routes Caddy is serving.
+Update the relevant variables in each app's `.env` file:
+
+- `apps/auth/.env`: Update `OP_ISSUER`, `OP_PORT`, `REDIRECT_URI`
+- `apps/api/.env`: Update `API_HOST`, `API_PORT`, `OP_ISSUER`
+- `apps/app/.env`: Update `APP_HOST`, `APP_PORT`, `OP_ISSUER`, `REDIRECT_URI`, `API_BASE_URL`
+
+Then update your `caddyfile` to match the new routes.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and tweak as needed. Here are the important bits:
+If you haven't already, create `.env` files for each app (see [Configure Environment](#configure-environment) in Getting Started). Here's a detailed breakdown of all configuration options:
+
+**Configuration files:**
+
+- `apps/auth/.env` - Authorization Server (OpenID Provider)
+- `apps/api/.env` - Resource Server (API)
+- `apps/app/.env` - Client Application (Relying Party)
 
 ### Basic Setup
 
@@ -370,7 +426,7 @@ The generated JWKS includes:
 
 ### Refresh Token Controls
 
-Want refresh tokens even without the `offline_access` scope? Add a per-client flag in `.env.clients.json`:
+Want refresh tokens even without the `offline_access` scope? Add a per-client flag in `apps/auth/.env.clients.json`:
 
 ```json
 [
@@ -389,7 +445,7 @@ Want refresh tokens even without the `offline_access` scope? Add a per-client fl
 
 ### Multiple Client Setup
 
-Need to support multiple OAuth/OIDC clients? Create a `.env.clients.json` file in the project root:
+Need to support multiple OAuth/OIDC clients? Create a `.env.clients.json` file in the auth app directory:
 
 ```json
 [
@@ -405,19 +461,19 @@ Need to support multiple OAuth/OIDC clients? Create a `.env.clients.json` file i
 ]
 ```
 
-Check out `.env.clients.example.json` for a complete example.
+Check out `apps/auth/.env.clients.example.json` for a complete example, then copy it to `apps/auth/.env.clients.json` and customize as needed.
 
 **Client loading priority:**
 
 1. `OIDC_CLIENTS` environment variable (JSON string)
-2. `.env.clients.json` file
-3. Falls back to single client from `CLIENT_ID`/`CLIENT_SECRET`
+2. `apps/auth/.env.clients.json` file
+3. Falls back to single client from `CLIENT_ID`/`CLIENT_SECRET` in `apps/auth/.env`
 
 If you change `OP_ISSUER` or ports, remember to update the client registration (especially redirect URIs) and restart everything.
 
 ## JWT Access Tokens with Resource Indicators (RFC 8707)
 
-We use **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This matters if your API needs to validate tokens locally without calling back to the auth server.
+We use **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This matters if your API needs to validate tokens locally without a callback to the auth server.
 
 ### Why Resource Indicators?
 
@@ -532,7 +588,7 @@ Resource indicators need to be absolute URIs. Here's what works and what doesn't
 - `resourceIndicators.enabled`: Set to `true`
 - `resourceIndicators.defaultResource()`: Fallback resource when client doesn't specify one
 - `resourceIndicators.getResourceServerInfo()`: Returns `accessTokenFormat: "jwt"` (this is the important one)
-- `resourceIndicators.useGrantedResource()`: Allows reusing resource from the auth request
+- `resourceIndicators.useGrantedResource()`: Allows reusing the resource from the auth request
 
 **In the Client** ([apps/app/src/index.ts](apps/app/src/index.ts)):
 
