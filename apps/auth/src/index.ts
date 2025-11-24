@@ -30,6 +30,7 @@ logger.info( { logLevel: logger.level, envLogLevel: process.env.LOG_LEVEL }, "Lo
 
 const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
 const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
+const API_AUDIENCE = getRequiredEnv( "API_AUDIENCE", "api://my-api" );
 
 // Load clients from environment variable, file, or defaults
 function loadOIDCClients() {
@@ -235,7 +236,7 @@ const configuration: any = {
 			// defaultResource: Called during authorization when client doesn't provide resource parameter
 			// Returns the default resource indicator (audience) for the access token
 			// Must be an absolute URI without fragment (e.g., "https://api.example.com" or "api://my-api")
-			defaultResource: () => "api://my-api",
+			defaultResource: () => API_AUDIENCE,
 
 			// getResourceServerInfo: CRITICAL - This determines the access token format
 			// Called whenever a resource indicator needs to be validated/configured
@@ -260,7 +261,7 @@ const configuration: any = {
 
 				const config = {
 					scope: "openid profile email offline_access accounts:read",
-					audience: "api://my-api",
+					audience: API_AUDIENCE,
 					accessTokenFormat: "jwt" as const,  // CRITICAL: Must be "jwt" to issue JWT tokens
 					accessTokenTTL: 60 * 60  // 1 hour
 				};
