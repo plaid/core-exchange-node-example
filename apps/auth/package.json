@@ -4,10 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run css:watch\" \"tsx watch src/index.ts\"",
-    "css:build": "npx @tailwindcss/cli -i ./src/css/input.css -o ./public/styles.css",
-    "css:watch": "npx @tailwindcss/cli -i ./src/css/input.css -o ./public/styles.css --watch",
-    "build": "npm run css:build && tsc -p tsconfig.json",
+    "dev": "concurrently \"pnpm css:watch\" \"tsx watch src/index.ts\"",
+    "css:build": "pnpm exec tailwindcss -i ./src/css/input.css -o ./public/styles.css",
+    "css:watch": "pnpm exec tailwindcss -i ./src/css/input.css -o ./public/styles.css --watch",
+    "build": "pnpm css:build && tsc -p tsconfig.json",
     "start": "node dist/index.js"
   },
   "dependencies": {
