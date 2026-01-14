@@ -12,6 +12,17 @@ import {
 	setupBasicExpress,
 	setupEJSTemplates
 } from "@apps/shared";
+import {
+	loginSchema,
+	interactionUidSchema,
+	oidcClientsSchema,
+	jwksSchema,
+	safeJsonParse,
+	sanitizeForLogging,
+	formatZodError,
+	type OIDCClientConfig as BaseOIDCClientConfig
+} from "@apps/shared/validation";
+import { timingSafeEqual } from "crypto";
 
 // Create logger for OP service
 // Debug logging can be enabled by setting LOG_LEVEL=debug in your .env file
@@ -32,25 +43,47 @@ const ISSUER = getRequiredEnv( "OP_ISSUER", "https://id.localtest.me" );
 const PORT = getRequiredEnvNumber( "OP_PORT", 3001 );
 const API_AUDIENCE = getRequiredEnv( "API_AUDIENCE", "api://my-api" );
 
-// Load clients from environment variable, file, or defaults
+// Load clients from environment variable, file, or defaults with schema validation
 function loadOIDCClients() {
+	let source: string;
+
 	// 1. Try OIDC_CLIENTS env var (JSON string)
 	if ( process.env.OIDC_CLIENTS ) {
-		logger.info( "Loading OIDC clients from OIDC_CLIENTS environment variable" );
-		return JSON.parse( process.env.OIDC_CLIENTS );
+		source = "OIDC_CLIENTS environment variable";
+		logger.info( `Loading OIDC clients from ${ source }` );
+		const parseResult = safeJsonParse( process.env.OIDC_CLIENTS, oidcClientsSchema );
+		if ( !parseResult.success ) {
+			logger.error( { error: parseResult.error }, `Invalid OIDC clients configuration from ${ source }` );
+			throw new Error( `Invalid OIDC clients configuration: ${ parseResult.error }` );
+		}
+		return parseResult.data;
 	}
 
 	// 2. Try .env.clients.json file in app directory (for easier multi-client config)
 	const clientsFilePath = resolve( new URL( "../", import.meta.url ).pathname, ".env.clients.json" );
 	if ( existsSync( clientsFilePath ) ) {
-		logger.info( "Loading OIDC clients from apps/auth/.env.clients.json" );
-		const fileContent = readFileSync( clientsFilePath, "utf-8" );
-		return JSON.parse( fileContent );
+		source = "apps/auth/.env.clients.json";
+		logger.info( `Loading OIDC clients from ${ source }` );
+		try {
+			const fileContent = readFileSync( clientsFilePath, "utf-8" );
+			const parseResult = safeJsonParse( fileContent, oidcClientsSchema );
+			if ( !parseResult.success ) {
+				logger.error( { error: parseResult.error }, `Invalid OIDC clients configuration from ${ source }` );
+				throw new Error( `Invalid OIDC clients configuration: ${ parseResult.error }` );
+			}
+			return parseResult.data;
+		} catch ( error ) {
+			if ( error instanceof Error && error.message.includes( "Invalid OIDC clients" ) ) {
+				throw error;
+			}
+			logger.error( { error }, `Failed to read OIDC clients file from ${ source }` );
+			throw new Error( `Failed to read OIDC clients file: ${ error }` );
+		}
 	}
 
-	// 3. Fall back to single client from env vars
+	// 3. Fall back to single client from env vars (no validation needed - simple defaults)
 	logger.info( "Loading single OIDC client from CLIENT_ID/CLIENT_SECRET env vars" );
-	return [
+	const rawClients = [
 		{
 			client_id: getRequiredEnv( "CLIENT_ID", "dev-rp" ),
 			client_secret: getRequiredEnv( "CLIENT_SECRET", "dev-secret" ),
@@ -61,12 +94,20 @@ function loadOIDCClients() {
 			token_endpoint_auth_method: "client_secret_basic"
 		}
 	];
+
+	// Validate even the default configuration
+	const parseResult = oidcClientsSchema.safeParse( rawClients );
+	if ( !parseResult.success ) {
+		logger.error( { error: formatZodError( parseResult.error ) }, "Invalid default OIDC client configuration" );
+		throw new Error( `Invalid default OIDC client configuration: ${ formatZodError( parseResult.error ) }` );
+	}
+	return parseResult.data;
 }
 
 const OIDC_CLIENTS = loadOIDCClients();
 logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
-// Load JWKS (JSON Web Key Set) for token signing
+// Load JWKS (JSON Web Key Set) for token signing with schema validation
 // If not provided, oidc-provider will generate ephemeral keys with kid "keystore-CHANGE-ME"
 function loadJWKS() {
 	const jwksEnv = process.env.JWKS;
@@ -77,27 +118,20 @@ function loadJWKS() {
 		return undefined;
 	}
 
-	try {
-		const jwks = JSON.parse( jwksEnv );
-		logger.info( `Loaded JWKS with ${ jwks.keys?.length || 0 } key(s)` );
-		return jwks;
-	} catch ( error ) {
-		logger.error( { error }, "Failed to parse JWKS environment variable" );
-		throw new Error( "Invalid JWKS configuration" );
+	const parseResult = safeJsonParse( jwksEnv, jwksSchema );
+	if ( !parseResult.success ) {
+		logger.error( { error: parseResult.error }, "Invalid JWKS configuration" );
+		throw new Error( `Invalid JWKS configuration: ${ parseResult.error }` );
 	}
+
+	logger.info( `Loaded JWKS with ${ parseResult.data.keys.length } key(s)` );
+	return parseResult.data;
 }
 
 const JWKS = loadJWKS();
 
-// Define client type with optional force_refresh_token flag
-interface OIDCClientConfig {
-	client_id: string;
-	client_secret: string;
-	redirect_uris: string[];
-	post_logout_redirect_uris: string[];
-	grant_types: string[];
-	response_types: string[];
-	token_endpoint_auth_method: string;
+// Extend the validated client config type with optional force_refresh_token flag
+interface OIDCClientConfig extends BaseOIDCClientConfig {
 	force_refresh_token?: boolean;
 }
 
@@ -157,6 +191,37 @@ const USERS = new Map<
 		}
 	]
 ] );
+
+/**
+ * Timing-safe password comparison to prevent timing attacks.
+ * Always compares full strings even if they differ in length.
+ */
+function secureComparePasswords( provided: string, stored: string ): boolean {
+	// Pad to same length to prevent length-based timing leaks
+	const maxLength = Math.max( provided.length, stored.length );
+	const paddedProvided = provided.padEnd( maxLength, "\0" );
+	const paddedStored = stored.padEnd( maxLength, "\0" );
+
+	try {
+		return timingSafeEqual(
+			Buffer.from( paddedProvided, "utf8" ),
+			Buffer.from( paddedStored, "utf8" )
+		) && provided.length === stored.length;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Validate interaction UID path parameter.
+ */
+function validateInteractionUid( uid: string ): { success: true; data: string } | { success: false; error: string } {
+	const result = interactionUidSchema.safeParse( uid );
+	if ( !result.success ) {
+		return { success: false, error: formatZodError( result.error ) };
+	}
+	return { success: true, data: result.data };
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const configuration: any = {
@@ -377,7 +442,13 @@ async function main() {
 	// Interactions (login + consent) in-process for simplicity
 	app.get( "/interaction/:uid", async ( req: Request, res: Response ) => {
 		try {
-			const { uid } = req.params;
+			// Validate interaction UID path parameter
+			const uidResult = validateInteractionUid( req.params.uid );
+			if ( !uidResult.success ) {
+				logger.warn( { rawUid: sanitizeForLogging( req.params.uid ), error: uidResult.error }, "GET /interaction/:uid - Invalid UID format" );
+				return res.status( 400 ).send( "Invalid interaction identifier" );
+			}
+			const uid = uidResult.data;
 			logger.debug( { uid, query: req.query, cookies: req.cookies }, "GET /interaction/:uid - Request received" );
 
 			const details = await provider.interactionDetails( req, res );
@@ -430,19 +501,47 @@ async function main() {
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
 			try {
-				const { uid } = req.params;
-				const email = String( req.body?.email || "" );
-				const password = String( req.body?.password || "" );
+				// Validate interaction UID path parameter
+				const uidResult = validateInteractionUid( req.params.uid );
+				if ( !uidResult.success ) {
+					logger.warn( { rawUid: sanitizeForLogging( req.params.uid ), error: uidResult.error }, "POST /interaction/:uid/login - Invalid UID format" );
+					return res.status( 400 ).send( "Invalid interaction identifier" );
+				}
+				const uid = uidResult.data;
+
+				// Validate login input using schema with length and format checks
+				const loginResult = loginSchema.safeParse( req.body );
+				if ( !loginResult.success ) {
+					logger.debug( { uid, error: formatZodError( loginResult.error ) }, "POST /interaction/:uid/login - Input validation failed" );
+
+					// Get interaction details to extract scopes for re-rendering
+					const details = await provider.interactionDetails( req, res );
+					const requestedScopes = String( details.params.scope || "" )
+						.split( " " )
+						.filter( Boolean );
+
+					// Re-render login form with validation error
+					return res.render( "interaction", {
+						uid,
+						prompt: "login",
+						scopes: requestedScopes,
+						error: "Invalid email or password format.",
+						email: String( req.body?.email || "" ).slice( 0, 254 )  // Preserve truncated email
+					} );
+				}
+
+				const { email, password } = loginResult.data;
 
 				logger.debug( {
 					uid,
-					email,
+					email: sanitizeForLogging( email ),
 					passwordProvided: !!password
 				}, "POST /interaction/:uid/login - Login attempt" );
 
 				const user = USERS.get( email );
-				if ( !user || user.password != password ) {
-					logger.debug( { uid, email, userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
+				// Use timing-safe comparison to prevent timing attacks
+				if ( !user || !secureComparePasswords( password, user.password ) ) {
+					logger.debug( { uid, email: sanitizeForLogging( email ), userFound: !!user }, "POST /interaction/:uid/login - Authentication failed" );
 
 					// Get interaction details to extract scopes for re-rendering
 					const details = await provider.interactionDetails( req, res );
@@ -534,7 +633,13 @@ async function main() {
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
 			try {
-				const { uid } = req.params;
+				// Validate interaction UID path parameter
+				const uidResult = validateInteractionUid( req.params.uid );
+				if ( !uidResult.success ) {
+					logger.warn( { rawUid: sanitizeForLogging( req.params.uid ), error: uidResult.error }, "POST /interaction/:uid/confirm - Invalid UID format" );
+					return res.status( 400 ).send( "Invalid interaction identifier" );
+				}
+				const uid = uidResult.data;
 				logger.debug( { uid }, "POST /interaction/:uid/confirm - Consent confirmation received" );
 
 				const details = await provider.interactionDetails( req, res );
@@ -644,7 +749,13 @@ async function main() {
 		"/interaction/:uid/cancel",
 		express.urlencoded( { extended: false } ),
 		async ( req: Request, res: Response ) => {
-			const { uid } = req.params;
+			// Validate interaction UID path parameter
+			const uidResult = validateInteractionUid( req.params.uid );
+			if ( !uidResult.success ) {
+				logger.warn( { rawUid: sanitizeForLogging( req.params.uid ), error: uidResult.error }, "POST /interaction/:uid/cancel - Invalid UID format" );
+				return res.status( 400 ).send( "Invalid interaction identifier" );
+			}
+			const uid = uidResult.data;
 			logger.debug( { uid }, "POST /interaction/:uid/cancel - Consent cancelled" );
 
 			const details = await provider.interactionDetails( req, res );

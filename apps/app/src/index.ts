@@ -14,6 +14,14 @@ import {
 	setupBasicExpress,
 	setupEJSTemplates
 } from "@apps/shared";
+import {
+	apiCallSchema,
+	tokenSetSchema,
+	safeJsonParse,
+	escapeHtml,
+	sanitizeForLogging,
+	formatZodError
+} from "@apps/shared/validation";
 
 // Polyfill for crypto global in Node.js
 if ( !globalThis.crypto ) {
@@ -73,6 +81,44 @@ let config: client.Configuration | undefined;
 let configInitPromise: Promise<client.Configuration> | null = null;
 let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
 
+/**
+ * Safely parse and validate the tokens cookie.
+ * Returns null if parsing fails or validation fails.
+ */
+function parseTokensCookie( cookieValue: string | undefined ): TokenSet | null {
+	if ( !cookieValue ) return null;
+
+	const result = safeJsonParse( cookieValue, tokenSetSchema );
+	if ( !result.success ) {
+		logger.warn( { error: result.error }, "Invalid tokens cookie format" );
+		return null;
+	}
+	return result.data as TokenSet;
+}
+
+/**
+ * Safely parse the OIDC state cookie.
+ * Returns empty object if parsing fails.
+ */
+function parseOidcCookie( cookieValue: string | undefined ): OidcState {
+	if ( !cookieValue ) return {} as OidcState;
+
+	try {
+		const parsed = JSON.parse( cookieValue );
+		// Basic validation for expected fields
+		if ( typeof parsed !== "object" || parsed === null ) {
+			return {} as OidcState;
+		}
+		return {
+			state: typeof parsed.state === "string" ? parsed.state : "",
+			code_verifier: typeof parsed.code_verifier === "string" ? parsed.code_verifier : ""
+		};
+	} catch {
+		logger.warn( "Invalid OIDC state cookie format" );
+		return {} as OidcState;
+	}
+}
+
 async function delay( ms: number ) {
 	await new Promise( ( resolve ) => setTimeout( resolve, ms ) );
 }
@@ -121,10 +167,7 @@ async function ensureConfig(): Promise<client.Configuration> {
 // Discovery is performed lazily on demand by routes via ensureConfig()
 
 app.get( "/", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 	res.render( "index", { tokens } );
 } );
 
@@ -165,10 +208,8 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		// Force HTTPS protocol since we're behind a proxy
 		const currentUrl = new URL( req.originalUrl, `https://${ req.get( "host" ) }` );
 
-		const oidcCookie = ( req as CookieRequest ).cookies["oidc"];
-		const cookieVal: OidcState = oidcCookie
-			? JSON.parse( oidcCookie )
-			: {} as OidcState;
+		// Safely parse OIDC state cookie
+		const cookieVal = parseOidcCookie( ( req as CookieRequest ).cookies["oidc"] );
 
 		logger.debug( { currentUrl: currentUrl.href }, "Callback - Current URL" );
 		logger.debug( { redirectUri: REDIRECT_URI }, "Callback - Expected Redirect URI" );
@@ -179,8 +220,10 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		// Check for OAuth errors (e.g., user canceled consent)
 		const error = currentUrl.searchParams.get( "error" );
 		if ( error ) {
-			const errorDescription = currentUrl.searchParams.get( "error_description" ) || "The authorization request was not completed.";
-			logger.info( { error, errorDescription }, "Callback - OAuth error received" );
+			// Escape error description to prevent XSS attacks
+			const rawErrorDescription = currentUrl.searchParams.get( "error_description" ) || "The authorization request was not completed.";
+			const errorDescription = escapeHtml( rawErrorDescription.slice( 0, 500 ) ); // Limit length and escape HTML
+			logger.info( { error: sanitizeForLogging( error ), errorDescription: sanitizeForLogging( rawErrorDescription ) }, "Callback - OAuth error received" );
 
 			// Clear the OIDC state cookie
 			res.clearCookie( "oidc" );
@@ -295,8 +338,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 
 // Refresh token endpoint - manually trigger a token refresh
 app.post( "/refresh", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie ? JSON.parse( tokensCookie ) : null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 
 	logger.debug( {
 		hasTokens: !!tokens,
@@ -358,10 +400,7 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/token", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 	if ( !tokens?.access_token || !tokens?.id_token ) return res.redirect( "/login" );
 
 	try {
@@ -483,30 +522,38 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/api-explorer", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 	if ( !tokens?.access_token ) return res.redirect( "/login" );
 
 	res.render( "api-explorer", { tokens } );
 } );
 
 app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 	if ( !tokens?.access_token ) return res.status( 401 ).json( { error: "No access token" } );
 
-	const { endpoint, method = "GET" } = req.body;
-	if ( !endpoint ) {
-		return res.status( 400 ).json( { error: "Endpoint is required" } );
+	// Validate API call request against allow-list of endpoints and methods
+	const validationResult = apiCallSchema.safeParse( req.body );
+	if ( !validationResult.success ) {
+		logger.warn( {
+			error: formatZodError( validationResult.error ),
+			rawEndpoint: sanitizeForLogging( String( req.body?.endpoint || "" ) ),
+			rawMethod: sanitizeForLogging( String( req.body?.method || "" ) )
+		}, "POST /api-call - Validation failed" );
+		return res.status( 400 ).json( {
+			error: "Validation failed",
+			details: formatZodError( validationResult.error )
+		} );
 	}
+
+	const { endpoint, method } = validationResult.data;
 
 	try {
 		const accessToken = tokens.access_token as string;
-		const apiResponse = await fetch( `${ API_BASE_URL }${ endpoint }`, {
+		// Clean the endpoint by removing any query strings (handled by validation schema)
+		const cleanEndpoint = endpoint.split( "?" )[0].split( "#" )[0];
+
+		const apiResponse = await fetch( `${ API_BASE_URL }${ cleanEndpoint }`, {
 			method,
 			headers: {
 				Authorization: `Bearer ${ accessToken }`,
@@ -540,10 +587,7 @@ app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => 
 } );
 
 app.get( "/debug/tokens", async ( req: Request, res: Response ) => {
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 
 	if ( !tokens?.access_token ) {
 		return res.redirect( "/login" );
@@ -574,10 +618,7 @@ app.get( "/debug/tokens", async ( req: Request, res: Response ) => {
 app.get( "/logout", async ( req: Request, res: Response ) => {
 	logger.info( "Logout route called" );
 	const config = await ensureConfig();
-	const tokensCookie = ( req as CookieRequest ).cookies["tokens"];
-	const tokens: TokenSet | null = tokensCookie
-		? JSON.parse( tokensCookie )
-		: null;
+	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
 
 	logger.debug( { tokensPresent: !!tokens }, "Logout - tokens present" );
 	logger.debug( { idTokenPresent: !!tokens?.id_token }, "Logout - id_token present" );
