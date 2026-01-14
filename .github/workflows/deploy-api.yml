@@ -52,7 +52,7 @@ jobs:
           remote_key: ${{ secrets.VM_SSH_KEY }}
 
       - name: Restart service
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.VM_HOST }}
           username: deploy
