@@ -11,6 +11,7 @@ export * from "./security.js";
 export * from "./environment.js";
 export * from "./logging.js";
 export * from "./middleware.js";
+export * from "./validation.js";
 
 // Version and metadata
 export const version = "0.1.0";

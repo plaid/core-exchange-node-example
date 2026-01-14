@@ -6,15 +6,37 @@ node_modules/
 dist/
 coverage/
 
-# env
+# env - NEVER commit actual environment files
 .env
+.env.local
 .env.prod
+.env.production
+.env.staging
+.env.development
+.env.*.local
 .env.clients.json
 apps/**/.env
+apps/**/.env.local
 apps/**/.env.prod
+apps/**/.env.production
+apps/**/.env.staging
 packages/**/.env
+packages/**/.env.local
 packages/**/.env.prod
 .config
+
+# secrets and keys - NEVER commit these
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets.json
+credentials.json
+service-account*.json
+*-credentials.json
+*-secrets.json
 
 # editor
 .vscode/
@@ -32,6 +54,10 @@ certs/*
 
 # claude
 .claude/
+
+# docker - exclude production compose (contains env-specific config)
+docker-compose.prod.yml
+caddyfile.prod
 
 # misc
 apps/**/corex.yaml

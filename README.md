@@ -471,6 +471,84 @@ Check out `apps/auth/.env.clients.example.json` for a complete example, then cop
 
 If you change `OP_ISSUER` or ports, remember to update the client registration (especially redirect URIs) and restart everything.
 
+## Security
+
+This reference implementation includes security best practices that you should carry forward into your own implementations. See [SECURITY.md](SECURITY.md) for our security policy and vulnerability reporting guidelines.
+
+### Security Features
+
+| Feature | Implementation |
+| ------- | -------------- |
+| **Input Validation** | Zod schemas validate all external inputs with allow-list approach |
+| **Security Headers** | Helmet.js sets secure HTTP headers (CSP, HSTS, X-Frame-Options, etc.) |
+| **HTTPS Required** | All services communicate over TLS via Caddy |
+| **Secure Cookies** | Tokens stored in HTTP-only, secure, same-site cookies |
+| **Password Security** | Timing-safe comparison prevents timing attacks |
+| **JWT Validation** | Access tokens validated against JWKS with proper audience/issuer checks |
+
+### Dependency Security
+
+We use automated tools to keep dependencies secure:
+
+- **Dependabot**: Weekly automated PRs for dependency updates
+- **npm audit**: Security vulnerability scanning in CI
+- **CodeQL**: Static analysis for security issues
+- **Trivy**: Container image vulnerability scanning
+
+### What You Should Add for Production
+
+This demo intentionally omits some production requirements:
+
+- **Rate limiting** - Prevent brute force and DoS attacks
+- **Audit logging** - Track authentication events and API access
+- **Account lockout** - Lock accounts after repeated failed login attempts
+- **Password hashing** - Replace demo passwords with bcrypt/Argon2 hashed passwords
+- **Persistent storage** - Replace in-memory stores with a database
+
+## Docker and CI/CD
+
+This project includes containerization and CI/CD support for secure, repeatable deployments.
+
+### Docker
+
+Each service has a production-ready Dockerfile with multi-stage builds:
+
+```bash
+# Build and run all services
+docker compose up --build
+
+# Or build individual images
+docker build -f apps/auth/Dockerfile -t core-exchange-auth .
+docker build -f apps/api/Dockerfile -t core-exchange-api .
+docker build -f apps/app/Dockerfile -t core-exchange-app .
+```
+
+**Dockerfile features:**
+
+- Multi-stage builds for minimal image size
+- Non-root user for security
+- Health checks for orchestration
+- Production dependencies only
+
+See `docker-compose.yml` for local development and `docker-compose.prod.example.yml` as a production template.
+
+### GitHub Actions
+
+| Workflow | Purpose |
+| -------- | ------- |
+| `ci.yml` | Lint, build, and security audit on PRs |
+| `security.yml` | Weekly CodeQL and container scanning |
+| `deploy-*.yml` | Deploy services to infrastructure |
+
+### Recommended Branch Protection
+
+Configure these settings on your main branch:
+
+- Require pull request reviews before merging
+- Require status checks to pass (CI workflow)
+- Require branches to be up to date
+- Enable Dependabot security alerts
+
 ## JWT Access Tokens with Resource Indicators (RFC 8707)
 
 We use **Resource Indicators for OAuth 2.0 (RFC 8707)** to issue **JWT access tokens** instead of opaque tokens. This matters if your API needs to validate tokens locally without a callback to the auth server.

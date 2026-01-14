@@ -2,7 +2,7 @@
   "name": "core-exchange-node-example",
   "private": true,
   "version": "0.1.1",
-  "packageManager": "pnpm@10.26.0+sha512.3b3f6c725ebe712506c0ab1ad4133cf86b1f4b687effce62a9b38b4d72e3954242e643190fc51fa1642949c735f403debd44f5cb0edd657abe63a8b6a7e1e402",
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48",
   "type": "module",
   "author": "David Neal <dneal@plaid.com> (https://reverentgeek.com)",
   "contributors": [],
@@ -25,12 +25,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@stylistic/eslint-plugin": "^5.6.1",
-    "@typescript-eslint/eslint-plugin": "^8.50.0",
-    "@typescript-eslint/parser": "^8.50.0",
+    "@stylistic/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
-    "globals": "^16.5.0",
+    "globals": "^17.0.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

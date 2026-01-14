@@ -61,7 +61,7 @@ The current `caddyfile` configuration routes traffic as follows:
 
 If you prefer not to use sudo, you can modify the `caddyfile` to use high ports:
 
-```
+```bash
 :8443 {
   tls internal
   reverse_proxy localhost:3001
@@ -248,6 +248,206 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 - Unique key IDs for debugging (e.g., `key-abc123def456`)
 
 **Configuration location:** `apps/auth/src/index.ts` (lines 68-89) loads JWKS from environment and logs warnings if not set
+
+## Sensitive Data Handling
+
+This project implements security best practices for handling sensitive configuration and credentials.
+
+### Environment Variables
+
+All sensitive configuration is managed through environment variables:
+
+| Variable | Purpose | Security Level |
+| -------- | ------- | -------------- |
+| `CLIENT_SECRET` | OAuth client authentication | High - Never commit |
+| `COOKIE_SECRET` | Session cookie signing | High - Never commit |
+| `JWKS` | Token signing keys (contains private key) | Critical - Never commit |
+| `OIDC_CLIENTS` | Multiple client configurations | High - Never commit |
+
+### Template Configuration Files
+
+The project provides `.env.example` templates at multiple levels:
+
+- **Root level**: `.env.example` - Complete configuration template
+- **Auth server**: `apps/auth/.env.example` - Authorization server configuration
+- **API server**: `apps/api/.env.example` - Resource server configuration
+- **Client app**: `apps/app/.env.example` - Relying party configuration
+- **Multiple clients**: `apps/auth/.env.clients.example.json` - Multi-client template
+
+To set up a new environment:
+
+```bash
+# Copy the root template
+cp .env.example .env
+
+# Or copy individual app templates
+cp apps/auth/.env.example apps/auth/.env
+cp apps/api/.env.example apps/api/.env
+cp apps/app/.env.example apps/app/.env
+```
+
+### Generating Production Secrets
+
+Use the built-in secrets CLI to generate cryptographically secure values:
+
+```bash
+# Generate all secrets at once
+node scripts/secrets.js all
+
+# Or generate individual components
+node scripts/secrets.js client   # OAuth client credentials
+node scripts/secrets.js secrets  # Application secrets (COOKIE_SECRET)
+node scripts/secrets.js jwks     # Token signing keys
+```
+
+### Gitignore Protection
+
+The `.gitignore` is configured to prevent accidental commits of sensitive files:
+
+- `.env`, `.env.local`, `.env.prod`, `.env.production`, `.env.staging`
+- `.env.clients.json` (actual client configurations)
+- `*.pem`, `*.key`, `*.p12`, `*.pfx` (certificate/key files)
+- `secrets.json`, `credentials.json`, `*-secrets.json`
+- `service-account*.json` (cloud provider credentials)
+
+### Security Checklist
+
+Before deploying to production:
+
+1. **Generate new secrets**: Run `node scripts/secrets.js all` and use the output
+2. **Never use dev values**: Replace all `*-CHANGE-FOR-PRODUCTION` placeholders
+3. **Use a secret manager**: Store secrets in AWS Secrets Manager, HashiCorp Vault, or similar
+4. **Rotate regularly**: Establish a secret rotation schedule
+5. **Audit access**: Limit who can access production secrets
+6. **Monitor for leaks**: Use tools like git-secrets or truffleHog to scan for exposed credentials
+
+### Demo Credentials
+
+The following credentials are intentionally hardcoded for **development/demo purposes only**:
+
+- Test user: `user@example.test` / `passw0rd!`
+- Blocked user: `blocked@example.test` / `passw0rd!`
+
+These are stored in-memory in `apps/auth/src/index.ts` and should be replaced with a proper user database and password hashing (bcrypt/argon2) for production use.
+
+## CI/CD and Build Processes
+
+This project includes automated CI/CD pipelines and containerization support for secure, repeatable deployments.
+
+### GitHub Actions Workflows
+
+| Workflow | Trigger | Purpose |
+| -------- | ------- | ------- |
+| `ci.yml` | PRs, push to main | Lint, build, security audit |
+| `security.yml` | Weekly, dependency changes | CodeQL analysis, Docker image scanning |
+| `deploy-*.yml` | Push to paths | Deploy individual services to VM |
+
+#### CI Workflow (`ci.yml`)
+
+Runs on every pull request and push to main:
+
+```bash
+# Jobs run in parallel:
+- Lint        # ESLint validation
+- Build       # TypeScript compilation + CSS build
+- Security    # npm audit for vulnerabilities
+```
+
+#### Security Workflow (`security.yml`)
+
+Comprehensive security scanning:
+
+- **Dependency Audit**: Weekly npm audit for known vulnerabilities
+- **CodeQL Analysis**: Static analysis for security issues
+- **Docker Image Scan**: Trivy scanner for container vulnerabilities
+
+### Dependabot
+
+Automated dependency updates via `.github/dependabot.yml`:
+
+- **npm packages**: Weekly updates, grouped by type (production vs dev)
+- **GitHub Actions**: Weekly updates for workflow actions
+
+### Docker Support
+
+Each service has a production-ready Dockerfile with multi-stage builds:
+
+```bash
+# Build individual images
+docker build -f apps/auth/Dockerfile -t core-exchange-auth .
+docker build -f apps/api/Dockerfile -t core-exchange-api .
+docker build -f apps/app/Dockerfile -t core-exchange-app .
+
+# Or use docker-compose
+docker compose up --build
+```
+
+**Dockerfile features**:
+
+- Multi-stage builds for minimal image size
+- Non-root user for security
+- Health checks for container orchestration
+- Production-only dependencies
+
+### Docker Compose
+
+Two compose configurations are provided:
+
+| File | Purpose |
+| ---- | ------- |
+| `docker-compose.yml` | Local development with Docker |
+| `docker-compose.prod.example.yml` | Production template (copy and customize) |
+
+```bash
+# Development
+docker compose up --build
+
+# Production (after customizing)
+cp docker-compose.prod.example.yml docker-compose.prod.yml
+# Edit docker-compose.prod.yml with production values
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Build Commands
+
+```bash
+# Install dependencies (frozen lockfile for reproducibility)
+pnpm install --frozen-lockfile
+
+# Build all services
+pnpm build
+
+# Build individual services
+pnpm --filter @apps/shared build
+pnpm --filter @apps/auth build
+pnpm --filter @apps/api build
+pnpm --filter @apps/app build
+
+# Run linting
+pnpm lint
+pnpm lint:fix
+```
+
+### Deployment Security Checklist
+
+Before deploying to production:
+
+1. **Use frozen lockfile**: Always `pnpm install --frozen-lockfile`
+2. **Pin Node.js version**: Use exact version (22.x) in CI and Dockerfiles
+3. **Run security audit**: `pnpm audit --audit-level=high`
+4. **Build verification**: Ensure `pnpm build` succeeds before deployment
+5. **Use secrets management**: Never commit secrets; use environment variables or secret managers
+6. **Enable branch protection**: Require PR reviews and passing CI checks
+7. **Scan Docker images**: Use Trivy or similar before pushing to registry
+
+### Branch Protection (Recommended)
+
+Configure these settings on your main branch:
+
+- Require pull request reviews before merging
+- Require status checks to pass (CI workflow)
+- Require branches to be up to date before merging
+- Do not allow bypassing the above settings
 
 ## Testing the Flow
 
