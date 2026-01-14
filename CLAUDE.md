@@ -249,6 +249,87 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 
 **Configuration location:** `apps/auth/src/index.ts` (lines 68-89) loads JWKS from environment and logs warnings if not set
 
+## Sensitive Data Handling
+
+This project implements security best practices for handling sensitive configuration and credentials.
+
+### Environment Variables
+
+All sensitive configuration is managed through environment variables:
+
+| Variable | Purpose | Security Level |
+|----------|---------|----------------|
+| `CLIENT_SECRET` | OAuth client authentication | High - Never commit |
+| `COOKIE_SECRET` | Session cookie signing | High - Never commit |
+| `JWKS` | Token signing keys (contains private key) | Critical - Never commit |
+| `OIDC_CLIENTS` | Multiple client configurations | High - Never commit |
+
+### Template Configuration Files
+
+The project provides `.env.example` templates at multiple levels:
+
+- **Root level**: `.env.example` - Complete configuration template
+- **Auth server**: `apps/auth/.env.example` - Authorization server configuration
+- **API server**: `apps/api/.env.example` - Resource server configuration
+- **Client app**: `apps/app/.env.example` - Relying party configuration
+- **Multiple clients**: `apps/auth/.env.clients.example.json` - Multi-client template
+
+To set up a new environment:
+
+```bash
+# Copy the root template
+cp .env.example .env
+
+# Or copy individual app templates
+cp apps/auth/.env.example apps/auth/.env
+cp apps/api/.env.example apps/api/.env
+cp apps/app/.env.example apps/app/.env
+```
+
+### Generating Production Secrets
+
+Use the built-in secrets CLI to generate cryptographically secure values:
+
+```bash
+# Generate all secrets at once
+node scripts/secrets.js all
+
+# Or generate individual components
+node scripts/secrets.js client   # OAuth client credentials
+node scripts/secrets.js secrets  # Application secrets (COOKIE_SECRET)
+node scripts/secrets.js jwks     # Token signing keys
+```
+
+### Gitignore Protection
+
+The `.gitignore` is configured to prevent accidental commits of sensitive files:
+
+- `.env`, `.env.local`, `.env.prod`, `.env.production`, `.env.staging`
+- `.env.clients.json` (actual client configurations)
+- `*.pem`, `*.key`, `*.p12`, `*.pfx` (certificate/key files)
+- `secrets.json`, `credentials.json`, `*-secrets.json`
+- `service-account*.json` (cloud provider credentials)
+
+### Security Checklist
+
+Before deploying to production:
+
+1. **Generate new secrets**: Run `node scripts/secrets.js all` and use the output
+2. **Never use dev values**: Replace all `*-CHANGE-FOR-PRODUCTION` placeholders
+3. **Use a secret manager**: Store secrets in AWS Secrets Manager, HashiCorp Vault, or similar
+4. **Rotate regularly**: Establish a secret rotation schedule
+5. **Audit access**: Limit who can access production secrets
+6. **Monitor for leaks**: Use tools like git-secrets or truffleHog to scan for exposed credentials
+
+### Demo Credentials
+
+The following credentials are intentionally hardcoded for **development/demo purposes only**:
+
+- Test user: `user@example.test` / `passw0rd!`
+- Blocked user: `blocked@example.test` / `passw0rd!`
+
+These are stored in-memory in `apps/auth/src/index.ts` and should be replaced with a proper user database and password hashing (bcrypt/argon2) for production use.
+
 ## Testing the Flow
 
 1. Visit `https://id.localtest.me/.well-known/openid-configuration` to verify the Auth server is running
