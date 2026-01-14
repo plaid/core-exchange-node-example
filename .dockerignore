@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output (we rebuild in Docker)
+dist/
+coverage/
+
+# Environment files - NEVER include in images
+.env
+.env.*
+!.env.example
+.env.clients.json
+
+# Secrets and keys
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+*-secrets.json
+*-credentials.json
+
+# Editor and IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in production image)
+*.md
+!README.md
+docs/
+
+# Development files
+.claude/
+CLAUDE.md
+GEMINI.md
+
+# Logs
+*.log
+logs/
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+__tests__/
+test/
+tests/
+
+# CI/CD configuration (not needed in image)
+.github/
+
+# Docker files (prevent recursive copying)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Certificates (should be mounted, not baked in)
+certs/
+
+# Local development
+caddyfile
+out/

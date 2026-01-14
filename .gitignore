@@ -55,5 +55,9 @@ certs/*
 # claude
 .claude/
 
+# docker - exclude production compose (contains env-specific config)
+docker-compose.prod.yml
+caddyfile.prod
+
 # misc
 apps/**/corex.yaml

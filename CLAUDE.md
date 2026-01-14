@@ -61,7 +61,7 @@ The current `caddyfile` configuration routes traffic as follows:
 
 If you prefer not to use sudo, you can modify the `caddyfile` to use high ports:
 
-```
+```bash
 :8443 {
   tls internal
   reverse_proxy localhost:3001
@@ -258,7 +258,7 @@ This project implements security best practices for handling sensitive configura
 All sensitive configuration is managed through environment variables:
 
 | Variable | Purpose | Security Level |
-|----------|---------|----------------|
+| -------- | ------- | -------------- |
 | `CLIENT_SECRET` | OAuth client authentication | High - Never commit |
 | `COOKIE_SECRET` | Session cookie signing | High - Never commit |
 | `JWKS` | Token signing keys (contains private key) | Critical - Never commit |
@@ -329,6 +329,125 @@ The following credentials are intentionally hardcoded for **development/demo pur
 - Blocked user: `blocked@example.test` / `passw0rd!`
 
 These are stored in-memory in `apps/auth/src/index.ts` and should be replaced with a proper user database and password hashing (bcrypt/argon2) for production use.
+
+## CI/CD and Build Processes
+
+This project includes automated CI/CD pipelines and containerization support for secure, repeatable deployments.
+
+### GitHub Actions Workflows
+
+| Workflow | Trigger | Purpose |
+| -------- | ------- | ------- |
+| `ci.yml` | PRs, push to main | Lint, build, security audit |
+| `security.yml` | Weekly, dependency changes | CodeQL analysis, Docker image scanning |
+| `deploy-*.yml` | Push to paths | Deploy individual services to VM |
+
+#### CI Workflow (`ci.yml`)
+
+Runs on every pull request and push to main:
+
+```bash
+# Jobs run in parallel:
+- Lint        # ESLint validation
+- Build       # TypeScript compilation + CSS build
+- Security    # npm audit for vulnerabilities
+```
+
+#### Security Workflow (`security.yml`)
+
+Comprehensive security scanning:
+
+- **Dependency Audit**: Weekly npm audit for known vulnerabilities
+- **CodeQL Analysis**: Static analysis for security issues
+- **Docker Image Scan**: Trivy scanner for container vulnerabilities
+
+### Dependabot
+
+Automated dependency updates via `.github/dependabot.yml`:
+
+- **npm packages**: Weekly updates, grouped by type (production vs dev)
+- **GitHub Actions**: Weekly updates for workflow actions
+
+### Docker Support
+
+Each service has a production-ready Dockerfile with multi-stage builds:
+
+```bash
+# Build individual images
+docker build -f apps/auth/Dockerfile -t core-exchange-auth .
+docker build -f apps/api/Dockerfile -t core-exchange-api .
+docker build -f apps/app/Dockerfile -t core-exchange-app .
+
+# Or use docker-compose
+docker compose up --build
+```
+
+**Dockerfile features**:
+
+- Multi-stage builds for minimal image size
+- Non-root user for security
+- Health checks for container orchestration
+- Production-only dependencies
+
+### Docker Compose
+
+Two compose configurations are provided:
+
+| File | Purpose |
+| ---- | ------- |
+| `docker-compose.yml` | Local development with Docker |
+| `docker-compose.prod.example.yml` | Production template (copy and customize) |
+
+```bash
+# Development
+docker compose up --build
+
+# Production (after customizing)
+cp docker-compose.prod.example.yml docker-compose.prod.yml
+# Edit docker-compose.prod.yml with production values
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Build Commands
+
+```bash
+# Install dependencies (frozen lockfile for reproducibility)
+pnpm install --frozen-lockfile
+
+# Build all services
+pnpm build
+
+# Build individual services
+pnpm --filter @apps/shared build
+pnpm --filter @apps/auth build
+pnpm --filter @apps/api build
+pnpm --filter @apps/app build
+
+# Run linting
+pnpm lint
+pnpm lint:fix
+```
+
+### Deployment Security Checklist
+
+Before deploying to production:
+
+1. **Use frozen lockfile**: Always `pnpm install --frozen-lockfile`
+2. **Pin Node.js version**: Use exact version (22.x) in CI and Dockerfiles
+3. **Run security audit**: `pnpm audit --audit-level=high`
+4. **Build verification**: Ensure `pnpm build` succeeds before deployment
+5. **Use secrets management**: Never commit secrets; use environment variables or secret managers
+6. **Enable branch protection**: Require PR reviews and passing CI checks
+7. **Scan Docker images**: Use Trivy or similar before pushing to registry
+
+### Branch Protection (Recommended)
+
+Configure these settings on your main branch:
+
+- Require pull request reviews before merging
+- Require status checks to pass (CI workflow)
+- Require branches to be up to date before merging
+- Do not allow bypassing the above settings
 
 ## Testing the Flow
 

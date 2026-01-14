@@ -1,0 +1,118 @@
+# Docker Compose for Local Development
+# =============================================================================
+# This configuration builds and runs all services locally using Docker.
+#
+# Usage:
+#   docker compose up --build        # Build and start all services
+#   docker compose up -d             # Start in detached mode
+#   docker compose logs -f           # Follow logs
+#   docker compose down              # Stop and remove containers
+#
+# Note: For local HTTPS, you'll still need Caddy running on the host.
+# This compose file exposes services on their default ports.
+# =============================================================================
+
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+    container_name: core-exchange-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER:-https://id.localtest.me}
+      - OP_PORT=3001
+      - CLIENT_ID=${CLIENT_ID:-dev-rp}
+      - CLIENT_SECRET=${CLIENT_SECRET:-dev-secret-CHANGE-FOR-PRODUCTION}
+      - REDIRECT_URI=${REDIRECT_URI:-https://app.localtest.me/callback}
+      - API_AUDIENCE=${API_AUDIENCE:-api://my-api}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/.well-known/openid-configuration"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: core-exchange-api
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER:-https://id.localtest.me}
+      - API_HOST=${API_HOST:-https://api.localtest.me}
+      - API_PORT=3003
+      - API_AUDIENCE=${API_AUDIENCE:-api://my-api}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: apps/app/Dockerfile
+    container_name: core-exchange-app
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER:-https://id.localtest.me}
+      - APP_HOST=${APP_HOST:-https://app.localtest.me}
+      - APP_PORT=3004
+      - CLIENT_ID=${CLIENT_ID:-dev-rp}
+      - CLIENT_SECRET=${CLIENT_SECRET:-dev-secret-CHANGE-FOR-PRODUCTION}
+      - REDIRECT_URI=${REDIRECT_URI:-https://app.localtest.me/callback}
+      - API_BASE_URL=${API_BASE_URL:-https://api.localtest.me}
+      - API_AUDIENCE=${API_AUDIENCE:-api://my-api}
+      - COOKIE_SECRET=${COOKIE_SECRET:-dev-cookie-secret-CHANGE-FOR-PRODUCTION}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+# Optional: Add a Caddy service for HTTPS termination
+# Uncomment the following to include Caddy in the compose stack
+#
+#   caddy:
+#     image: caddy:2-alpine
+#     container_name: core-exchange-caddy
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./caddyfile:/etc/caddy/Caddyfile:ro
+#       - caddy_data:/data
+#       - caddy_config:/config
+#     depends_on:
+#       - auth
+#       - api
+#       - app
+#     restart: unless-stopped
+#
+# volumes:
+#   caddy_data:
+#   caddy_config:

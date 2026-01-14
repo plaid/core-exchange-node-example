@@ -1,0 +1,181 @@
+# Docker Compose Production Example
+# =============================================================================
+# This is an EXAMPLE configuration for production deployments.
+# Copy this file and modify it according to your infrastructure requirements.
+#
+# IMPORTANT: This file is provided as a reference only. You should:
+# 1. Use proper secret management (not environment variables in compose files)
+# 2. Configure proper networking for your infrastructure
+# 3. Set up proper logging and monitoring
+# 4. Use a container registry for your images
+# 5. Consider using Kubernetes or similar for production orchestration
+#
+# Usage:
+#   cp docker-compose.prod.example.yml docker-compose.prod.yml
+#   # Edit docker-compose.prod.yml with your production values
+#   docker compose -f docker-compose.prod.yml up -d
+# =============================================================================
+
+services:
+  auth:
+    image: ${REGISTRY:-ghcr.io/your-org}/core-exchange-auth:${VERSION:-latest}
+    # Or build from source:
+    # build:
+    #   context: .
+    #   dockerfile: apps/auth/Dockerfile
+    container_name: core-exchange-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER}
+      - OP_PORT=3001
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - API_AUDIENCE=${API_AUDIENCE}
+      - JWKS=${JWKS}
+      - LOG_LEVEL=info
+    # For production, consider using Docker secrets or external secret management
+    # secrets:
+    #   - client_secret
+    #   - jwks
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/.well-known/openid-configuration"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    image: ${REGISTRY:-ghcr.io/your-org}/core-exchange-api:${VERSION:-latest}
+    container_name: core-exchange-api
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER}
+      - API_HOST=${API_HOST}
+      - API_PORT=3003
+      - API_AUDIENCE=${API_AUDIENCE}
+      - LOG_LEVEL=info
+    depends_on:
+      auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    image: ${REGISTRY:-ghcr.io/your-org}/core-exchange-app:${VERSION:-latest}
+    container_name: core-exchange-app
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - OP_ISSUER=${OP_ISSUER}
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=3004
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - API_BASE_URL=${API_BASE_URL}
+      - API_AUDIENCE=${API_AUDIENCE}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - LOG_LEVEL=info
+    depends_on:
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Reverse proxy for HTTPS termination
+  caddy:
+    image: caddy:2-alpine
+    container_name: core-exchange-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - auth
+      - api
+      - app
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+# Example Docker secrets configuration (uncomment if using secrets)
+# secrets:
+#   client_secret:
+#     external: true
+#   cookie_secret:
+#     external: true
+#   jwks:
+#     external: true
