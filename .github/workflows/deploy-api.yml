@@ -42,7 +42,7 @@ jobs:
         run: pnpm deploy --prod --legacy --filter "{apps/api}" out/api
 
       - name: Rsync to VM
-        uses: burnett01/rsync-deployments@7.0.1
+        uses: burnett01/rsync-deployments@8.0.3
         with:
           switches: -az --delete --exclude='.env'
           path: out/api/
