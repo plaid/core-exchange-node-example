@@ -750,7 +750,8 @@ export const accountTransactions = {
 };
 
 // Mock data for account payment networks
-export const accountPaymentNetworks = {
+// All deposit accounts need at least one payment network per FDX spec (minItems: 1)
+export const accountPaymentNetworks: Record<string, Array<{ bankId: string; identifier: string; type: string; transferIn: boolean; transferOut: boolean }>> = {
 	"account-123": [
 		{
 			bankId: "010088889",
@@ -759,14 +760,148 @@ export const accountPaymentNetworks = {
 			transferIn: true,
 			transferOut: true
 		}
+	],
+	"account-456": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335456",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
+	],
+	"account-789": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335789",
+			type: "US_ACH",
+			transferIn: false,
+			transferOut: false
+		}
+	],
+	"account-101": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335101",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
+	],
+	"account-202": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335202",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
+	],
+	"account-303": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335303",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
+	],
+	"account-404": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335404",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
+	],
+	"account-505": [
+		{
+			bankId: "010088889",
+			identifier: "1111222233335505",
+			type: "US_ACH",
+			transferIn: true,
+			transferOut: true
+		}
 	]
 };
 
 // Mock data for account asset transfer networks (different schema from payment networks)
-export const accountAssetTransferNetworks = {
+// Only investment accounts typically have asset transfer networks
+export const accountAssetTransferNetworks: Record<string, Array<{ identifier: string; identifierType: string; institutionId: string; institutionName: string; jointAccount: boolean; type: string }>> = {
 	"account-123": [
 		{
 			identifier: "1111222233335820",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-456": [
+		{
+			identifier: "1111222233335456",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-789": [
+		{
+			identifier: "1111222233335789",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-101": [
+		{
+			identifier: "1111222233335101",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-202": [
+		{
+			identifier: "1111222233335202",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-303": [
+		{
+			identifier: "1111222233335303",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-404": [
+		{
+			identifier: "1111222233335404",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	],
+	"account-505": [
+		{
+			identifier: "1111222233335505",
 			identifierType: "ACCOUNT_NUMBER",
 			institutionId: "0123",
 			institutionName: "Example Financial",
