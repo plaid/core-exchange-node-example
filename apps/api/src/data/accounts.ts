@@ -615,8 +615,8 @@ export const accountTransactions = {
 			checkNumber: 1234,
 			payee: "ACME LLC",
 			transactionId: "depositTransaction000000001",
-			postedTimestamp: "2022-04-06T00:00:00.000Z",
-			transactionTimestamp: "2022-04-05T00:00:00.000Z",
+			postedTimestamp: "2025-01-06T00:00:00.000Z",
+			transactionTimestamp: "2025-01-05T00:00:00.000Z",
 			description: "check for latest ACME invoice",
 			debitCreditMemo: "DEBIT",
 			status: "PENDING",
@@ -626,8 +626,8 @@ export const accountTransactions = {
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ADJUSTMENT",
 			transactionId: "depositTransaction000000002",
-			postedTimestamp: "2022-04-07T00:00:00.000Z",
-			transactionTimestamp: "2022-04-07T00:00:00.000Z",
+			postedTimestamp: "2025-01-07T00:00:00.000Z",
+			transactionTimestamp: "2025-01-07T00:00:00.000Z",
 			description: "reconciliation/adjustment of bank statement error",
 			debitCreditMemo: "DEBIT",
 			status: "POSTED",
@@ -637,8 +637,8 @@ export const accountTransactions = {
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ATMDEPOSIT",
 			transactionId: "depositTransaction000000003",
-			postedTimestamp: "2022-04-08T00:00:00.000Z",
-			transactionTimestamp: "2022-04-08T00:00:00.000Z",
+			postedTimestamp: "2025-01-08T00:00:00.000Z",
+			transactionTimestamp: "2025-01-08T00:00:00.000Z",
 			description: "ATM cash deposit location #1234",
 			debitCreditMemo: "CREDIT",
 			status: "POSTED",
@@ -649,9 +649,9 @@ export const accountTransactions = {
 		{
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ATMDEPOSIT",
-			transactionId: "depositTransaction000000003",
-			postedTimestamp: "2022-04-08T00:00:00.000Z",
-			transactionTimestamp: "2022-04-08T00:00:00.000Z",
+			transactionId: "depositTransaction000000004",
+			postedTimestamp: "2025-01-08T00:00:00.000Z",
+			transactionTimestamp: "2025-01-08T00:00:00.000Z",
 			description: "ATM cash deposit location #1234",
 			debitCreditMemo: "CREDIT",
 			status: "POSTED",
@@ -669,6 +669,20 @@ export const accountPaymentNetworks = {
 			type: "US_ACH",
 			transferIn: true,
 			transferOut: true
+		}
+	]
+};
+
+// Mock data for account asset transfer networks (different schema from payment networks)
+export const accountAssetTransferNetworks = {
+	"account-123": [
+		{
+			identifier: "1111222233335820",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
 		}
 	]
 };
