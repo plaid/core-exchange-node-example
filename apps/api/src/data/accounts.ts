@@ -4,6 +4,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-123",
 		accountNumberDisplay: "0123",
+		nickname: "My Checking",
 		productName: "Everyday Checking",
 		status: "OPEN",
 		currency: {
@@ -17,6 +18,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-456",
 		accountNumberDisplay: "0456",
+		nickname: "Emergency Fund",
 		productName: "High-Yield Savings",
 		status: "OPEN",
 		currency: {
@@ -30,6 +32,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-789",
 		accountNumberDisplay: "0789",
+		nickname: "House Down Payment",
 		productName: "12-Month CD",
 		status: "OPEN",
 		currency: {
@@ -43,6 +46,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-101",
 		accountNumberDisplay: "0101",
+		nickname: "Home Escrow",
 		productName: "Home Purchase Escrow",
 		status: "OPEN",
 		currency: {
@@ -56,6 +60,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-202",
 		accountNumberDisplay: "0202",
+		nickname: "Investment Buffer",
 		productName: "Premier Money Market",
 		status: "OPEN",
 		currency: {
@@ -69,6 +74,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-303",
 		accountNumberDisplay: "0303",
+		nickname: "Rainy Day Fund",
 		productName: "Emergency Fund Savings",
 		status: "OPEN",
 		currency: {
@@ -82,6 +88,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-404",
 		accountNumberDisplay: "0404",
+		nickname: "Dream Home",
 		productName: "First Home Saver",
 		status: "OPEN",
 		currency: {
@@ -95,6 +102,7 @@ export const accounts = [
 		accountCategory: "DEPOSIT_ACCOUNT",
 		accountId: "account-505",
 		accountNumberDisplay: "0505",
+		nickname: "Vacation Club",
 		productName: "Club Account",
 		status: "OPEN",
 		currency: {
@@ -108,6 +116,7 @@ export const accounts = [
 		accountCategory: "LOC_ACCOUNT",
 		accountId: "account-601",
 		accountNumberDisplay: "4532",
+		nickname: "Rewards Card",
 		productName: "Platinum Rewards Credit Card",
 		status: "OPEN",
 		currency: {
@@ -122,6 +131,7 @@ export const accounts = [
 		accountCategory: "LOAN_ACCOUNT",
 		accountId: "account-602",
 		accountNumberDisplay: "9876",
+		nickname: "Home Loan",
 		productName: "Home Mortgage Loan",
 		status: "OPEN",
 		currency: {
@@ -140,6 +150,7 @@ export const accounts = [
 		accountCategory: "LOAN_ACCOUNT",
 		accountId: "account-603",
 		accountNumberDisplay: "1234",
+		nickname: "Car Payment",
 		productName: "Auto Loan - 2022 Vehicle",
 		status: "OPEN",
 		currency: {
@@ -607,6 +618,7 @@ export const accountStatements = {
 };
 
 // Mock data for account transactions
+// Dates spread across multiple months to ensure validator date ranges find results
 export const accountTransactions = {
 	"account-123": [
 		{
@@ -615,19 +627,19 @@ export const accountTransactions = {
 			checkNumber: 1234,
 			payee: "ACME LLC",
 			transactionId: "depositTransaction000000001",
-			postedTimestamp: "2025-01-06T00:00:00.000Z",
-			transactionTimestamp: "2025-01-05T00:00:00.000Z",
+			postedTimestamp: "2024-12-15T00:00:00.000Z",
+			transactionTimestamp: "2024-12-14T00:00:00.000Z",
 			description: "check for latest ACME invoice",
 			debitCreditMemo: "DEBIT",
-			status: "PENDING",
+			status: "POSTED",
 			amount: 400
 		},
 		{
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ADJUSTMENT",
 			transactionId: "depositTransaction000000002",
-			postedTimestamp: "2025-01-07T00:00:00.000Z",
-			transactionTimestamp: "2025-01-07T00:00:00.000Z",
+			postedTimestamp: "2025-01-02T00:00:00.000Z",
+			transactionTimestamp: "2025-01-02T00:00:00.000Z",
 			description: "reconciliation/adjustment of bank statement error",
 			debitCreditMemo: "DEBIT",
 			status: "POSTED",
@@ -637,12 +649,78 @@ export const accountTransactions = {
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ATMDEPOSIT",
 			transactionId: "depositTransaction000000003",
-			postedTimestamp: "2025-01-08T00:00:00.000Z",
-			transactionTimestamp: "2025-01-08T00:00:00.000Z",
+			postedTimestamp: "2025-01-10T00:00:00.000Z",
+			transactionTimestamp: "2025-01-10T00:00:00.000Z",
 			description: "ATM cash deposit location #1234",
 			debitCreditMemo: "CREDIT",
 			status: "POSTED",
 			amount: 101.8
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DIRECTDEPOSIT",
+			transactionId: "depositTransaction000000005",
+			postedTimestamp: "2025-01-15T00:00:00.000Z",
+			transactionTimestamp: "2025-01-15T00:00:00.000Z",
+			description: "Payroll direct deposit",
+			debitCreditMemo: "CREDIT",
+			status: "POSTED",
+			amount: 2500.00
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DEBITCARD",
+			transactionId: "depositTransaction000000006",
+			postedTimestamp: "2025-01-20T00:00:00.000Z",
+			transactionTimestamp: "2025-01-19T00:00:00.000Z",
+			description: "GROCERY STORE #1234",
+			debitCreditMemo: "DEBIT",
+			status: "POSTED",
+			amount: 87.52
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DEBITCARD",
+			transactionId: "depositTransaction000000007",
+			postedTimestamp: "2025-01-21T00:00:00.000Z",
+			transactionTimestamp: "2025-01-21T00:00:00.000Z",
+			description: "COFFEE SHOP",
+			debitCreditMemo: "DEBIT",
+			status: "PENDING",
+			amount: 5.75
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DIRECTDEPOSIT",
+			transactionId: "depositTransaction000000009",
+			postedTimestamp: "2025-12-01T00:00:00.000Z",
+			transactionTimestamp: "2025-12-01T00:00:00.000Z",
+			description: "Payroll direct deposit",
+			debitCreditMemo: "CREDIT",
+			status: "POSTED",
+			amount: 2500.00
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DEBITCARD",
+			transactionId: "depositTransaction000000010",
+			postedTimestamp: "2025-12-10T00:00:00.000Z",
+			transactionTimestamp: "2025-12-09T00:00:00.000Z",
+			description: "HOLIDAY SHOPPING",
+			debitCreditMemo: "DEBIT",
+			status: "POSTED",
+			amount: 245.99
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "DEBITCARD",
+			transactionId: "depositTransaction000000011",
+			postedTimestamp: "2025-12-20T00:00:00.000Z",
+			transactionTimestamp: "2025-12-20T00:00:00.000Z",
+			description: "RESTAURANT",
+			debitCreditMemo: "DEBIT",
+			status: "POSTED",
+			amount: 78.50
 		}
 	],
 	"account-456": [
@@ -650,12 +728,23 @@ export const accountTransactions = {
 			accountCategory: "DEPOSIT_ACCOUNT",
 			transactionType: "ATMDEPOSIT",
 			transactionId: "depositTransaction000000004",
-			postedTimestamp: "2025-01-08T00:00:00.000Z",
-			transactionTimestamp: "2025-01-08T00:00:00.000Z",
+			postedTimestamp: "2025-01-18T00:00:00.000Z",
+			transactionTimestamp: "2025-01-18T00:00:00.000Z",
 			description: "ATM cash deposit location #1234",
 			debitCreditMemo: "CREDIT",
 			status: "POSTED",
 			amount: 101.8
+		},
+		{
+			accountCategory: "DEPOSIT_ACCOUNT",
+			transactionType: "TRANSFER",
+			transactionId: "depositTransaction000000008",
+			postedTimestamp: "2025-01-21T00:00:00.000Z",
+			transactionTimestamp: "2025-01-21T00:00:00.000Z",
+			description: "Transfer from checking",
+			debitCreditMemo: "CREDIT",
+			status: "POSTED",
+			amount: 500.00
 		}
 	]
 };
