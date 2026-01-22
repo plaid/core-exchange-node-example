@@ -235,7 +235,7 @@ const configuration: any = {
 		offline_access: []
 	},
 	scopes: [ "openid", "profile", "email", "offline_access", "accounts:read" ],
-	pkce: { methods: [ "S256" ], required: () => true },
+	pkce: { methods: [ "S256" ], required: () => false },
 	ttl: {
 		Session: 24 * 60 * 60,        // 1 day
 		Grant: 365 * 24 * 60 * 60,    // 1 year
