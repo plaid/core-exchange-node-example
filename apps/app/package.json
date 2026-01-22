@@ -14,7 +14,7 @@
     "@apps/shared": "workspace:*",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
-    "ejs": "^3.1.10",
+    "ejs": "^4.0.1",
     "express": "^5.2.1",
     "jose": "^6.1.3",
     "openid-client": "^6.8.1",
