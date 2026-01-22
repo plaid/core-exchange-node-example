@@ -672,3 +672,17 @@ export const accountPaymentNetworks = {
 		}
 	]
 };
+
+// Mock data for account asset transfer networks (different schema from payment networks)
+export const accountAssetTransferNetworks = {
+	"account-123": [
+		{
+			identifier: "1111222233335820",
+			identifierType: "ACCOUNT_NUMBER",
+			institutionId: "0123",
+			institutionName: "Example Financial",
+			jointAccount: false,
+			type: "US_DTC"
+		}
+	]
+};

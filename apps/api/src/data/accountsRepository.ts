@@ -1,4 +1,4 @@
-import { accounts, accountContacts, accountStatements, accountTransactions, accountPaymentNetworks } from "./accounts.js";
+import { accounts, accountContacts, accountStatements, accountTransactions, accountPaymentNetworks, accountAssetTransferNetworks } from "./accounts.js";
 
 // Type definitions
 interface Currency {
@@ -99,6 +99,15 @@ interface PaymentNetwork {
 	transferOut: boolean;
 }
 
+interface AssetTransferNetwork {
+	identifier: string;
+	identifierType?: "ACCOUNT_NUMBER" | "TOKENIZED_ACCOUNT_NUMBER";
+	institutionId: string;
+	institutionName?: string;
+	jointAccount?: boolean;
+	type: "CA_ATON" | "US_ACATS" | "US_DTC";
+}
+
 interface PaginatedAccountsResult {
 	accounts: Account[];
 	total: number;
@@ -120,7 +129,7 @@ interface PaginatedPaymentNetworksResult {
 }
 
 interface PaginatedAssetTransferNetworksResult {
-	assetTransferNetworks: PaymentNetwork[];
+	assetTransferNetworks: AssetTransferNetwork[];
 	total: number;
 }
 
@@ -239,12 +248,11 @@ export async function getPaymentNetworks( accountId: string, offset = 0, limit =
 
 /**
  * Get asset transfer networks for an account with pagination
- * Reuses the same mock dataset as payment networks for this demo.
  */
 export async function getAssetTransferNetworks( accountId: string, offset = 0, limit = 100 ): Promise<PaginatedAssetTransferNetworksResult> {
 	return new Promise<PaginatedAssetTransferNetworksResult>( ( resolve ) => {
 		setTimeout( () => {
-			const networks = ( accountPaymentNetworks as Record<string, PaymentNetwork[]> )[accountId] || [];
+			const networks = ( accountAssetTransferNetworks as Record<string, AssetTransferNetwork[]> )[accountId] || [];
 			const paginated = networks.slice( offset, offset + limit );
 			resolve( { assetTransferNetworks: paginated, total: networks.length } );
 		}, 100 );
