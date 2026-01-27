@@ -214,9 +214,11 @@ function secureComparePasswords( provided: string, stored: string ): boolean {
 
 /**
  * Validate interaction UID path parameter.
+ * Accepts string or string[] to handle Express req.params union types.
  */
-function validateInteractionUid( uid: string ): { success: true; data: string } | { success: false; error: string } {
-	const result = interactionUidSchema.safeParse( uid );
+function validateInteractionUid( uid: string | string[] ): { success: true; data: string } | { success: false; error: string } {
+	const uidStr = Array.isArray( uid ) ? uid[0] ?? "" : uid;
+	const result = interactionUidSchema.safeParse( uidStr );
 	if ( !result.success ) {
 		return { success: false, error: formatZodError( result.error ) };
 	}

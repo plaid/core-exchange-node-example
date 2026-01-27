@@ -423,9 +423,11 @@ export function validateParams<T>( schema: z.ZodType<T> ) {
 
 /**
  * Sanitize string for safe logging (remove newlines, control characters).
+ * Accepts string or string[] to handle Express req.params union types.
  */
-export function sanitizeForLogging( input: string, maxLength = 200 ): string {
-	return input
+export function sanitizeForLogging( input: string | string[], maxLength = 200 ): string {
+	const str = Array.isArray( input ) ? input[0] ?? "" : input;
+	return str
 		// eslint-disable-next-line no-control-regex
 		.replace( /[\x00-\x1F\x7F]/g, "" ) // Remove control characters
 		.replace( /[\r\n]/g, " " ) // Replace newlines with spaces
