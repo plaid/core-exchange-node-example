@@ -22,7 +22,7 @@
     "caddy": "sudo caddy run --config ./caddyfile",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
