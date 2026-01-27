@@ -21,7 +21,8 @@
     "build": "pnpm -r --filter \"@apps/*\" run build",
     "caddy": "sudo caddy run --config ./caddyfile",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -31,6 +32,7 @@
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^17.2.0",
+    "husky": "^9.1.7",
     "typescript": "^5.9.3"
   },
   "dependencies": {
