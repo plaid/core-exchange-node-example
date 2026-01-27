@@ -1,7 +1,7 @@
 {
   "name": "core-exchange-node-example",
   "private": true,
-  "version": "0.1.1",
+  "version": "1.0.0",
   "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
   "type": "module",
   "author": "David Neal <dneal@plaid.com> (https://reverentgeek.com)",
@@ -25,12 +25,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@stylistic/eslint-plugin": "^5.7.0",
-    "@typescript-eslint/eslint-plugin": "^8.53.1",
-    "@typescript-eslint/parser": "^8.53.1",
+    "@stylistic/eslint-plugin": "^5.7.1",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
-    "globals": "^17.0.0",
+    "globals": "^17.2.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
