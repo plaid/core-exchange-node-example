@@ -34,9 +34,11 @@ export const createWebSecurityHeaders = ( apiBaseUrl?: string ): RequestHandler 
 			directives: {
 				defaultSrc: [ "'self'" ],
 				styleSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline styles for Tailwind
-				scriptSrc: [ "'self'", "'unsafe-inline'" ], // Allow inline scripts for EJS templates
+				scriptSrc: [ "'self'", "'unsafe-inline'", "https://www.googletagmanager.com" ],
 				imgSrc: [ "'self'", "data:", "https:" ],
-				connectSrc: apiBaseUrl ? [ "'self'", apiBaseUrl ] : [ "'self'" ],
+				connectSrc: apiBaseUrl
+					? [ "'self'", apiBaseUrl, "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com" ]
+					: [ "'self'", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com" ],
 				fontSrc: [ "'self'" ],
 				objectSrc: [ "'none'" ],
 				mediaSrc: [ "'self'" ],
