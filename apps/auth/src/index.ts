@@ -88,7 +88,7 @@ function loadOIDCClients() {
 			client_id: getRequiredEnv( "CLIENT_ID", "dev-rp" ),
 			client_secret: getRequiredEnv( "CLIENT_SECRET", "dev-secret" ),
 			redirect_uris: [ getRequiredEnv( "REDIRECT_URI", "https://app.localtest.me/callback" ) ],
-			post_logout_redirect_uris: [ "https://app.localtest.me" ],
+			post_logout_redirect_uris: [ getRequiredEnv( "POST_LOGOUT_REDIRECT_URI", "https://app.localtest.me" ) ],
 			grant_types: [ "authorization_code", "refresh_token" ],
 			response_types: [ "code" ],
 			token_endpoint_auth_method: "client_secret_basic"
