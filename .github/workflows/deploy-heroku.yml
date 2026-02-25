@@ -1,0 +1,68 @@
+# Deploy all services to Heroku via container registry
+# Triggers on every push to main, or manually via workflow_dispatch
+name: Deploy to Heroku
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: auth
+            dockerfile: apps/auth/Dockerfile
+            app: plaidypus-auth
+          - service: api
+            dockerfile: apps/api/Dockerfile
+            app: plaidypus-api
+          - service: app
+            dockerfile: apps/app/Dockerfile
+            app: plaidypus-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Heroku Container Registry
+        run: echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: Build Docker image
+        run: docker build -f ${{ matrix.dockerfile }} -t registry.heroku.com/${{ matrix.app }}/web .
+
+      - name: Push Docker image
+        run: docker push registry.heroku.com/${{ matrix.app }}/web
+
+  release-auth:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Release auth
+        run: heroku container:release web --app plaidypus-auth
+
+  release-api:
+    needs: release-auth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Release API
+        run: heroku container:release web --app plaidypus-api
+
+  release-app:
+    needs: release-api
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Release app
+        run: heroku container:release web --app plaidypus-app
