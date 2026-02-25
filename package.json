@@ -25,12 +25,12 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@stylistic/eslint-plugin": "^5.7.1",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
     "concurrently": "^9.2.1",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.2",
     "globals": "^17.3.0",
     "husky": "^9.1.7",
     "typescript": "^5.9.3"
