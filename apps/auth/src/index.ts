@@ -77,7 +77,7 @@ function loadOIDCClients() {
 				throw error;
 			}
 			logger.error( { error }, `Failed to read OIDC clients file from ${ source }` );
-			throw new Error( `Failed to read OIDC clients file: ${ error }` );
+			throw new Error( `Failed to read OIDC clients file: ${ error }`, { cause: error } );
 		}
 	}
 

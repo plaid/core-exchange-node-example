@@ -432,9 +432,9 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 		// Add annotations to payload
 		const annotatedPayload: Record<string, { value: unknown; comment: string }> = {};
 		Object.keys( decodedPayload ).forEach( ( key ) => {
-			let comment = "";
 			const value = decodedPayload[key];
 
+			let comment;
 			switch ( key ) {
 				case "sub":
 					comment = "Subject - Unique identifier for the user";
