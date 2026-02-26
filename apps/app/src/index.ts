@@ -550,10 +550,10 @@ app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => 
 
 	try {
 		const accessToken = tokens.access_token as string;
-		// Clean the endpoint by removing any query strings (handled by validation schema)
-		const cleanEndpoint = endpoint.split( "?" )[0].split( "#" )[0];
+		// Strip fragment but preserve query string for pagination/filtering
+		const sanitizedEndpoint = endpoint.split( "#" )[0];
 
-		const apiResponse = await fetch( `${ API_BASE_URL }${ cleanEndpoint }`, {
+		const apiResponse = await fetch( `${ API_BASE_URL }${ sanitizedEndpoint }`, {
 			method,
 			headers: {
 				Authorization: `Bearer ${ accessToken }`,
