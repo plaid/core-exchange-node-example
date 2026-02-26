@@ -167,12 +167,16 @@ Features:
 
 ### Infrastructure
 
-- All services communicate via HTTPS using Caddy's internal CA
-- Caddy handles routing via `*.localtest.me` subdomains
-- Default endpoints:
+- All services communicate via HTTPS using Caddy's internal CA (local) or Heroku's SSL (production)
+- **Local development**: Caddy handles routing via `*.localtest.me` subdomains
   - Auth: `https://id.localtest.me` (port 3001)
   - API: `https://api.localtest.me` (port 3003)
   - APP: `https://app.localtest.me` (port 3004)
+- **Production (Heroku)**: Deployed as Docker containers to Heroku apps with custom domains
+  - Auth: `https://auth.plaidypus.dev`
+  - API: `https://api.plaidypus.dev`
+  - App: `https://app.plaidypus.dev`
+  - See `docs/heroku-setup.md` for full setup instructions
 - Environment variables in `.env` control service configuration
 - TypeScript with ESM modules across all apps
 - Shared TypeScript configuration via `tsconfig.base.json`
@@ -247,7 +251,7 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 - Proper cryptographic key rotation
 - Unique key IDs for debugging (e.g., `key-abc123def456`)
 
-**Configuration location:** `apps/auth/src/index.ts` (lines 68-89) loads JWKS from environment and logs warnings if not set
+**Configuration location:** `apps/auth/src/index.ts` (lines 110-129) loads JWKS from environment and logs warnings if not set
 
 ## Sensitive Data Handling
 
@@ -263,6 +267,7 @@ All sensitive configuration is managed through environment variables:
 | `COOKIE_SECRET` | Session cookie signing | High - Never commit |
 | `JWKS` | Token signing keys (contains private key) | Critical - Never commit |
 | `OIDC_CLIENTS` | Multiple client configurations | High - Never commit |
+| `POST_LOGOUT_REDIRECT_URI` | Post-logout redirect URL | Low - Configurable per environment |
 
 ### Template Configuration Files
 
@@ -340,6 +345,7 @@ This project includes automated CI/CD pipelines and containerization support for
 | -------- | ------- | ------- |
 | `ci.yml` | PRs, push to main | Lint, build, security audit |
 | `security.yml` | Weekly, dependency changes | CodeQL analysis, Docker image scanning |
+| `deploy-heroku.yml` | Push to main, manual | Build and deploy all services to Heroku |
 | `deploy-*.yml` | Push to paths | Deploy individual services to VM |
 
 #### CI Workflow (`ci.yml`)
@@ -388,6 +394,7 @@ docker compose up --build
 - Non-root user for security
 - Health checks for container orchestration
 - Production-only dependencies
+- Heroku PORT compatibility (maps dynamic `PORT` to service-specific port vars)
 
 ### Docker Compose
 
