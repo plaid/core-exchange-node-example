@@ -111,12 +111,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'core-exchange-${{ matrix.service }}:scan'
           format: 'sarif'
           output: 'trivy-results-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_DB_REPOSITORY: 'ghcr.io/aquasecurity/trivy-db:2'
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v4
@@ -125,8 +127,10 @@ jobs:
           sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
 
       - name: Trivy summary
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'core-exchange-${{ matrix.service }}:scan'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
+        env:
+          TRIVY_DB_REPOSITORY: 'ghcr.io/aquasecurity/trivy-db:2'
