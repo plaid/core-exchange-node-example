@@ -111,12 +111,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: 'core-exchange-${{ matrix.service }}:scan'
           format: 'sarif'
           output: 'trivy-results-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
+          version: 'v0.69.2'
         env:
           TRIVY_DB_REPOSITORY: 'ghcr.io/aquasecurity/trivy-db:2'
 
@@ -127,10 +128,11 @@ jobs:
           sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
 
       - name: Trivy summary
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: 'core-exchange-${{ matrix.service }}:scan'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          version: 'v0.69.2'
         env:
           TRIVY_DB_REPOSITORY: 'ghcr.io/aquasecurity/trivy-db:2'
