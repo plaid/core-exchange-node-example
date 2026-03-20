@@ -72,7 +72,7 @@ This reference implementation includes several security features:
 ### CI/CD Security
 
 - Automated dependency updates (Dependabot)
-- Security scanning (npm audit, CodeQL, Trivy)
+- Security scanning (npm audit, CodeQL)
 - Branch protection recommendations
 
 ## Security Best Practices for Implementers

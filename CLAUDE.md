@@ -344,7 +344,7 @@ This project includes automated CI/CD pipelines and containerization support for
 | Workflow | Trigger | Purpose |
 | -------- | ------- | ------- |
 | `ci.yml` | PRs, push to main | Lint, build, security audit |
-| `security.yml` | Weekly, dependency changes | CodeQL analysis, Docker image scanning |
+| `security.yml` | Weekly, dependency changes | CodeQL analysis |
 | `deploy-heroku.yml` | Push to main, manual | Build and deploy all services to Heroku |
 | `deploy-*.yml` | Push to paths | Deploy individual services to VM |
 
@@ -365,7 +365,6 @@ Comprehensive security scanning:
 
 - **Dependency Audit**: Weekly npm audit for known vulnerabilities
 - **CodeQL Analysis**: Static analysis for security issues
-- **Docker Image Scan**: Trivy scanner for container vulnerabilities
 
 ### Dependabot
 
@@ -445,7 +444,6 @@ Before deploying to production:
 4. **Build verification**: Ensure `pnpm build` succeeds before deployment
 5. **Use secrets management**: Never commit secrets; use environment variables or secret managers
 6. **Enable branch protection**: Require PR reviews and passing CI checks
-7. **Scan Docker images**: Use Trivy or similar before pushing to registry
 
 ### Branch Protection (Recommended)
 
