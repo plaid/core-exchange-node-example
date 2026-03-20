@@ -493,7 +493,6 @@ We use automated tools to keep dependencies secure:
 - **Dependabot**: Weekly automated PRs for dependency updates
 - **npm audit**: Security vulnerability scanning in CI
 - **CodeQL**: Static analysis for security issues
-- **Trivy**: Container image vulnerability scanning
 
 ### What You Should Add for Production
 
