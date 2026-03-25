@@ -18,7 +18,7 @@ jobs:
 
       # Install pnpm per docs; version comes from package.json "packageManager"
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           run_install: false
 
