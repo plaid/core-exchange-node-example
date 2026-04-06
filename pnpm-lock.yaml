@@ -46,8 +46,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
+        specifier: ^17.4.1
+        version: 17.4.1
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -83,8 +83,8 @@ importers:
         specifier: ^1.4.7
         version: 1.4.7
       dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
+        specifier: ^17.4.1
+        version: 17.4.1
       ejs:
         specifier: ^5.0.1
         version: 5.0.1
@@ -141,8 +141,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
+        specifier: ^17.4.1
+        version: 17.4.1
       ejs:
         specifier: ^5.0.1
         version: 5.0.1
@@ -899,8 +899,8 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  dotenv@17.3.1:
-    resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
+  dotenv@17.4.1:
+    resolution: {integrity: sha512-k8DaKGP6r1G30Lx8V4+pCsLzKr8vLmV2paqEj1Y55GdAgJuIqpRp5FfajGF8KtwMxCz9qJc6wUIJnm053d/WCw==}
     engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
@@ -2285,7 +2285,7 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  dotenv@17.3.1: {}
+  dotenv@17.4.1: {}
 
   dunder-proto@1.0.1:
     dependencies:
