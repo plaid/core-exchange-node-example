@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/data/accounts.ts","./src/data/accountsrepository.ts","./src/data/customers.ts","./src/data/customersrepository.ts","./src/routes/accounts.ts","./src/routes/customers.ts","./src/utils/validation.ts"],"version":"6.0.2"}
