@@ -20,16 +20,17 @@ interface CustomerFilters {
 }
 
 /**
- * Get the current customer (simulating a logged-in user)
+ * Get the current customer for an authenticated user.
+ *
+ * The `userId` argument should be the verified JWT subject (`sub` claim) of
+ * the authenticated request. The repository looks up the customer record
+ * keyed on this id; never trust unauthenticated input here.
  */
-export async function getCurrentCustomer(): Promise<Customer | null> {
-	// In a real implementation, this would use authentication context
-	// For now, we'll just return the first customer as the "current" one
-
+export async function getCurrentCustomer( userId: string ): Promise<Customer | null> {
 	// Simulate database query delay
 	return new Promise<Customer | null>( ( resolve ) => {
 		setTimeout( () => {
-			const currentCustomer = customers.find( ( c: Customer ) => c.customerId === "customer-123" );
+			const currentCustomer = customers.find( ( c: Customer ) => c.customerId === userId );
 			resolve( currentCustomer || null );
 		}, 75 ); // Simulate 75ms delay
 	} );
