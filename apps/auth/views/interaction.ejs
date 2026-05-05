@@ -43,6 +43,7 @@
           <% } %>
 
             <form method="post" action="/interaction/<%= uid %>/login" class="space-y-6">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
               <div>
                 <label for="email" class="block text-sm font-medium text-plaid-dark-gray mb-2">
                   Email Address
@@ -67,6 +68,7 @@
               </button>
             </form>
 
+            <% if (!isProduction) { %>
             <div class="mt-4 text-xs text-plaid-gray text-center">
               <p><strong>Development credentials:</strong></p>
               <p class="mt-2">Authorized user:</p>
@@ -76,6 +78,7 @@
               <p>Email: blocked@example.test</p>
               <p>Password: passw0rd!</p>
             </div>
+            <% } %>
             <% } else { %>
               <div class="bg-plaid-mint-200 border border-plaid-mint-200 rounded-md p-4 mb-6">
                 <div class="flex">
@@ -109,6 +112,7 @@
               </div>
 
               <form method="post" action="/interaction/<%= uid %>/confirm">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
                 <button type="submit"
                   class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-plaid-black bg-plaid-credit-lime-400 hover:bg-plaid-gold-standard-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plaid-mint-400 transition-colors">
                   Approve Access
@@ -116,6 +120,7 @@
               </form>
 
               <form method="post" action="/interaction/<%= uid %>/cancel" class="mt-3">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
                 <button type="submit"
                   class="w-full flex justify-center py-2 px-4 border border-plaid-blue-sky-200 rounded-md shadow-sm text-sm font-medium text-plaid-dark-gray bg-white hover:bg-plaid-light-gray focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plaid-gray transition-colors">
                   Cancel

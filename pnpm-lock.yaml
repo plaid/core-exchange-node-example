@@ -140,6 +140,12 @@ importers:
       '@apps/shared':
         specifier: workspace:*
         version: link:../shared
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
+      csrf-csrf:
+        specifier: ^4.0.3
+        version: 4.0.3
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -149,6 +155,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
+      express-rate-limit:
+        specifier: ^8.5.0
+        version: 8.5.0(express@5.2.1)
       oidc-provider:
         specifier: ^9.8.3
         version: 9.8.3
@@ -162,6 +171,9 @@ importers:
       '@tailwindcss/cli':
         specifier: ^4.2.4
         version: 4.2.4
+      '@types/cookie-parser':
+        specifier: ^1.4.10
+        version: 1.4.10(@types/express@5.0.6)
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -870,6 +882,9 @@ packages:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
+  csrf-csrf@4.0.3:
+    resolution: {integrity: sha512-DaygOzelL4Qo1pHwI9LPyZL+X2456/OzpT596kNeZGiTSqKVDOk/9PPJ+FjzZacjMUEusOHw3WJKe1RW4iUhrw==}
+
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
 
@@ -1023,6 +1038,12 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
+  express-rate-limit@8.5.0:
+    resolution: {integrity: sha512-XKhFohWaSBdVJNTi5TaHziqnPkv04I9UQV6q1Wy7Ui6GGQZVW12ojDFwqer14EvCXxjvPG0CyWXx7cAXpALB4Q==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express: '>= 4.11'
+
   express@5.2.1:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
     engines: {node: '>= 18'}
@@ -1174,6 +1195,10 @@ packages:
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
+
+  ip-address@10.1.0:
+    resolution: {integrity: sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==}
+    engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
@@ -2280,6 +2305,10 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
+  csrf-csrf@4.0.3:
+    dependencies:
+      http-errors: 2.0.1
+
   dateformat@4.6.3: {}
 
   debug@4.4.3:
@@ -2446,6 +2475,11 @@ snapshots:
 
   etag@1.8.1: {}
 
+  express-rate-limit@8.5.0(express@5.2.1):
+    dependencies:
+      express: 5.2.1
+      ip-address: 10.1.0
+
   express@5.2.1:
     dependencies:
       accepts: 2.0.0
@@ -2611,6 +2645,8 @@ snapshots:
   imurmurhash@0.1.4: {}
 
   inherits@2.0.4: {}
+
+  ip-address@10.1.0: {}
 
   ipaddr.js@1.9.1: {}
 
