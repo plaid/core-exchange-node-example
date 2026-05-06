@@ -8,6 +8,9 @@ interface Currency {
 interface Account {
 	accountCategory: string;
 	accountId: string;
+	// Owning customer - used for authorization checks. Must equal the
+	// authenticated user's `sub` claim for the user to access this account.
+	customerId: string;
 	accountNumberDisplay: string;
 	productName: string;
 	status: string;
@@ -136,21 +139,33 @@ interface PaginatedAssetTransferNetworksResult {
 // Simulating async database operations with promises
 
 /**
- * Get all accounts with pagination support
+ * Get all accounts owned by a specific customer with pagination support.
+ *
+ * Always scope account lookups by the authenticated user's customer id to
+ * prevent cross-customer data leakage.
  */
-export async function getAccounts( offset = 0, limit = 10 ): Promise<PaginatedAccountsResult> {
+export async function getAccounts( customerId: string, offset = 0, limit = 10 ): Promise<PaginatedAccountsResult> {
 	// Simulate database query delay
 	return new Promise<PaginatedAccountsResult>( ( resolve ) => {
 		setTimeout( () => {
-			const paginatedAccounts = accounts.slice( offset, offset + limit );
+			const owned = accounts.filter( ( acc: Account ) => acc.customerId === customerId );
+			const paginatedAccounts = owned.slice( offset, offset + limit );
 			resolve( {
 				accounts: paginatedAccounts,
-				total: accounts.length
+				total: owned.length
 			} );
 		}, 100 ); // Simulate 100ms delay
 	} );
 }
 
+/**
+ * Look up an account by id without applying ownership filtering.
+ *
+ * Callers in route handlers MUST verify `account.customerId` matches the
+ * authenticated user before returning the record. Prefer
+ * `getAccountForCustomer` when you have a customer id available - it
+ * collapses the lookup + ownership check into a single repository call.
+ */
 export async function getAccountById( accountId: string ): Promise<Account | null> {
 	// Simulate database query delay
 	return new Promise<Account | null>( ( resolve ) => {
@@ -159,6 +174,24 @@ export async function getAccountById( accountId: string ): Promise<Account | nul
 			resolve( account || null );
 		}, 50 ); // Simulate 50ms delay
 	} );
+}
+
+/**
+ * Look up an account by id and verify it belongs to the supplied customer.
+ *
+ * Returns the account when both the account exists and is owned by
+ * `customerId`; returns null otherwise. Treats not-found and not-owned
+ * identically so we don't leak the existence of accounts owned by other
+ * customers.
+ */
+export async function getAccountForCustomer(
+	accountId: string,
+	customerId: string
+): Promise<Account | null> {
+	const account = await getAccountById( accountId );
+	if ( !account ) return null;
+	if ( account.customerId !== customerId ) return null;
+	return account;
 }
 
 /**

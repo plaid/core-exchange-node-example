@@ -194,7 +194,7 @@
                   <li>The Authorization Server uses its <strong>private key</strong> (from JWKS) to sign the token</li>
                   <li>The signature is created from the header and payload using the RS256 algorithm</li>
                   <li>Anyone can verify the signature using the <strong>public key</strong> from
-                    <a href="<%= process.env.OP_ISSUER %>/.well-known/jwks.json" target="_blank" class="underline hover:text-plaid-mint-700">
+                    <a href="<%= jwksUrl %>" target="_blank" rel="noopener noreferrer" class="underline hover:text-plaid-mint-700">
                       /.well-known/jwks.json
                     </a>
                   </li>

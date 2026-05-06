@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
-import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { webcrypto } from "crypto";
 
 // Polyfill for crypto global in Node.js
@@ -20,11 +20,8 @@ import {
 	createApiSecurityHeaders,
 	setupBasicExpress
 } from "@apps/shared";
-
-// Extend Request interface to include user payload
-interface AuthenticatedRequest extends Request {
-	user?: JWTPayload;
-}
+import { AuthenticatedRequest, requireScope } from "./utils/auth.js";
+import { FDXErrors } from "./utils/errors.js";
 
 // Create logger for API service
 const logger = createLogger( "api" );
@@ -119,26 +116,23 @@ app.get( "/public/health", ( _req: Request, res: Response ) =>
 );
 
 // Routes
+//
+// `/customers/current` is mounted without an `accounts:read` scope check
+// because resolving the authenticated user's identity only requires the
+// `openid` scope (already implicit in any authenticated session). All
+// account/data routes require `accounts:read`.
 app.use( "/api/fdx/v6", customersRouter );
-app.use( "/api/fdx/v6", accountsRouter );
-
-// app.get( "/accounts", ( req: Request, res: Response ) => {
-// 	const scope = String( ( req as any ).user?.scope || "" ).split( " " );
-// 	if ( !scope.includes( "accounts:read" ) )
-// 		return res.status( 403 ).json( { error: "insufficient_scope" } );
-// 	return res.json( [ { id: "acc_123", name: "Primary Checking" } ] );
-// } );
+app.use( "/api/fdx/v6", requireScope( "accounts:read" ), accountsRouter );
 
 // 404 route handler for undefined routes
-app.use( ( req, res ) => {
-	res.status( 404 ).json( {
-		error: "not_found",
-		message: "Requested resource not found"
-	} );
+app.use( ( _req: Request, res: Response ) => {
+	res.status( 404 ).json( FDXErrors.accountNotFound( "Requested resource not found" ) );
 } );
 
-// Global error handler
-app.use( ( error: unknown, req: Request, res: Response ) => {
+// Global error handler. The 4-arg signature is required for Express to treat
+// this as an error-handling middleware.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+app.use( ( error: unknown, req: Request, res: Response, _next: NextFunction ) => {
 	logError( logger, error, { path: req.path, method: req.method } );
 	const sanitized = sanitizeError( error );
 	const statusCode = typeof error === "object" && error !== null && "statusCode" in error

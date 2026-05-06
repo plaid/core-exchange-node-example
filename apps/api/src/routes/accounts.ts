@@ -1,6 +1,14 @@
-import express, { Request, Response } from "express";
-import { getAccounts, getAccountById, getAccountContactById, getAccountStatements, getAccountStatementById, getAccountTransactions, getPaymentNetworks, getAssetTransferNetworks } from "../data/accountsRepository.js";
-import pino from "pino";
+import express, { Response } from "express";
+import {
+	getAccounts,
+	getAccountForCustomer,
+	getAccountContactById,
+	getAccountStatements,
+	getAccountStatementById,
+	getAccountTransactions,
+	getPaymentNetworks,
+	getAssetTransferNetworks
+} from "../data/accountsRepository.js";
 import {
 	paginationSchema,
 	dateRangePaginationSchema,
@@ -11,15 +19,12 @@ import {
 	type PaginationParams,
 	type DateRangePaginationParams
 } from "@apps/shared/validation";
+import { createLogger } from "@apps/shared";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { AuthenticatedRequest, getSubject } from "../utils/auth.js";
+import { FDXErrors } from "../utils/errors.js";
 
-const logger = pino( {
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true
-		}
-	}
-} );
+const logger = createLogger( "api:accounts" );
 
 const router = express.Router();
 
@@ -72,158 +77,152 @@ function validateStatementId( statementId: string ): { success: true; data: stri
 	return { success: true, data: result.data };
 }
 
-// Shared helper to validate account existence and send appropriate HTTP responses
-// Returns the account object if found; otherwise handles the response and returns null
-async function verifyAccount( accountId: string, res: Response, notFoundCode = 701 ) {
-	try {
-		const account = await getAccountById( accountId );
-		if ( !account ) {
-			res.status( 404 ).json( { code: notFoundCode, error: "An account with the provided account ID could not be found" } );
-			return null;
-		}
-		return account;
-	} catch ( error ) {
-		logger.error( error, "Error validating account" );
-		res.status( 500 ).json( { error: "Internal server error" } );
+/**
+ * Resolve and authorize an account against the authenticated user.
+ *
+ * Returns the account when (a) the user is authenticated, (b) the account
+ * exists, and (c) the account is owned by the authenticated user. Otherwise
+ * writes the appropriate FDX error response and returns null. Treats
+ * not-owned identically to not-found (404) so we don't leak existence of
+ * other customers' accounts.
+ */
+async function resolveOwnedAccount(
+	req: AuthenticatedRequest<{ accountId: string }>,
+	res: Response,
+	accountId: string
+) {
+	const userId = getSubject( req );
+	if ( !userId ) {
+		res.status( 401 ).json( FDXErrors.insufficientScope( "Missing authenticated subject" ) );
 		return null;
 	}
+
+	const account = await getAccountForCustomer( accountId, userId );
+	if ( !account ) {
+		res.status( 404 ).json( FDXErrors.accountNotFound() );
+		return null;
+	}
+	return account;
 }
 
-// GET /accounts with pagination support
-router.get( "/accounts", async ( req: Request, res: Response ) => {
-	// Validate and extract pagination parameters with bounds checking
-	const { offset, limit } = validatePagination( req.query );
+// GET /accounts - lists accounts owned by the authenticated user only
+router.get(
+	"/accounts",
+	asyncHandler( async ( req: AuthenticatedRequest, res: Response ) => {
+		const userId = getSubject( req );
+		if ( !userId ) {
+			return res.status( 401 ).json( FDXErrors.insufficientScope( "Missing authenticated subject" ) );
+		}
 
-	try {
-		// Get accounts using the repository
-		const result = await getAccounts( offset, limit );
+		const { offset, limit } = validatePagination( req.query );
+
+		const result = await getAccounts( userId, offset, limit );
 
 		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
 		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
-		// Construct response
-		const response = {
+		return res.json( {
 			page,
 			accounts: result.accounts
-		};
+		} );
+	} )
+);
 
-		res.json( response );
-	} catch ( error ) {
-		logger.error( error, "Error retrieving accounts" );
-		res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
-
-router.get( "/accounts/:accountId", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
-
-	try {
-		const account = await getAccountById( accountId );
-
-		if ( !account ) {
-			return res.status( 404 ).json( { code: 701, error: "An account with the provided account ID could not be found" } );
+router.get(
+	"/accounts/:accountId",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
 		}
+		const accountId = accountIdResult.data;
 
-		res.json( account );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving account" );
-		res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
 
-router.get( "/accounts/:accountId/contact", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+		return res.json( account );
+	} )
+);
 
-	const account = await verifyAccount( accountId, res, 701 );
-	if ( !account ) return;
+router.get(
+	"/accounts/:accountId/contact",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	try {
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
+
 		const contact = await getAccountContactById( accountId );
-
 		if ( !contact ) {
-			return res.status( 404 ).json( { code: 601, error: "An account with the provided account ID could not be found" } );
+			return res.status( 404 ).json( FDXErrors.accountNotFound() );
 		}
 
-		res.json( contact );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving account contact" );
-		res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+		return res.json( contact );
+	} )
+);
 
 // GET /accounts/:accountId/statements with pagination support
-router.get( "/accounts/:accountId/statements", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+router.get(
+	"/accounts/:accountId/statements",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	// Validate query parameters including date range and pagination
-	const queryResult = validateDateRangePagination( req.query );
-	if ( !queryResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: queryResult.error } );
-	}
-	const { offset, limit, startTime, endTime } = queryResult.data;
+		const queryResult = validateDateRangePagination( req.query );
+		if ( !queryResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( queryResult.error ) );
+		}
+		const { offset, limit, startTime, endTime } = queryResult.data;
 
-	const account = await verifyAccount( accountId, res, 701 );
-	if ( !account ) return;
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
 
-	try {
 		const result = await getAccountStatements( accountId, offset, limit, startTime || "", endTime || "" );
 
-		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
 		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
-		// Construct response
-		const response = {
+		return res.json( {
 			page,
 			statements: result.statements
-		};
-
-		res.json( response );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving statements" );
-		res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+		} );
+	} )
+);
 
 // GET /accounts/:accountId/statements/:statementId - simulate returning a PDF
-router.get( "/accounts/:accountId/statements/:statementId", async ( req: Request<{ accountId: string; statementId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+router.get(
+	"/accounts/:accountId/statements/:statementId",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string; statementId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	// Validate statementId path parameter
-	const statementIdResult = validateStatementId( req.params.statementId );
-	if ( !statementIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: statementIdResult.error } );
-	}
-	const statementId = statementIdResult.data;
+		const statementIdResult = validateStatementId( req.params.statementId );
+		if ( !statementIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( statementIdResult.error ) );
+		}
+		const statementId = statementIdResult.data;
 
-	try {
-		const account = await verifyAccount( accountId, res, 701 );
+		const account = await resolveOwnedAccount( req, res, accountId );
 		if ( !account ) return;
 
 		const statement = await getAccountStatementById( accountId, statementId );
 		if ( !statement ) {
-			return res.status( 404 ).json( { code: 601, error: "Statement not found for the provided accountId/statementId" } );
+			logger.debug( {
+				accountId: sanitizeForLogging( accountId ),
+				statementId: sanitizeForLogging( statementId )
+			}, "Statement not found for account" );
+			return res.status( 404 ).json( FDXErrors.statementNotFound() );
 		}
 
 		// Minimal valid PDF bytes: %PDF-1.4 ... %%EOF
@@ -234,32 +233,28 @@ router.get( "/accounts/:accountId/statements/:statementId", async ( req: Request
 		res.setHeader( "Content-Disposition", `inline; filename=statement-${ statementId }.pdf` );
 		res.setHeader( "Content-Length", buffer.length.toString() );
 		return res.status( 200 ).send( buffer );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ), statementId: sanitizeForLogging( statementId ) }, "Error retrieving statement PDF" );
-		return res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+	} )
+);
 
 // GET /accounts/:accountId/transactions with pagination support
-router.get( "/accounts/:accountId/transactions", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+router.get(
+	"/accounts/:accountId/transactions",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	// Validate query parameters including date range and pagination
-	const queryResult = validateDateRangePagination( req.query );
-	if ( !queryResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: queryResult.error } );
-	}
-	const { offset, limit, startTime, endTime } = queryResult.data;
+		const queryResult = validateDateRangePagination( req.query );
+		if ( !queryResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( queryResult.error ) );
+		}
+		const { offset, limit, startTime, endTime } = queryResult.data;
 
-	const account = await verifyAccount( accountId, res, 701 );
-	if ( !account ) return;
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
 
-	try {
 		const result = await getAccountTransactions( accountId, offset, limit, startTime || "", endTime || "" );
 		const hasMore = offset + limit < result.total;
 		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
@@ -267,64 +262,50 @@ router.get( "/accounts/:accountId/transactions", async ( req: Request<{ accountI
 			page,
 			transactions: result.transactions
 		} );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving transactions" );
-		return res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+	} )
+);
 
 // GET /accounts/:accountId/payment-networks with pagination support
-router.get( "/accounts/:accountId/payment-networks", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+router.get(
+	"/accounts/:accountId/payment-networks",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	// Validate pagination parameters with bounds checking
-	const { offset, limit } = validatePagination( req.query );
+		const { offset, limit } = validatePagination( req.query );
 
-	const account = await verifyAccount( accountId, res, 701 );
-	if ( !account ) return;
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
 
-	try {
-		// Get accounts using the repository
 		const result = await getPaymentNetworks( accountId, offset, limit );
-
-		// Calculate pagination metadata
 		const hasMore = offset + limit < result.total;
 		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
 
-		// Construct response
-		const response = {
+		return res.json( {
 			page,
 			paymentNetworks: result.paymentNetworks
-		};
-
-		res.json( response );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving payment networks" );
-		res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+		} );
+	} )
+);
 
 // GET /accounts/:accountId/asset-transfer-networks with pagination support
-router.get( "/accounts/:accountId/asset-transfer-networks", async ( req: Request<{ accountId: string }>, res: Response ) => {
-	// Validate accountId path parameter
-	const accountIdResult = validateAccountId( req.params.accountId );
-	if ( !accountIdResult.success ) {
-		return res.status( 400 ).json( { error: "Validation failed", details: accountIdResult.error } );
-	}
-	const accountId = accountIdResult.data;
+router.get(
+	"/accounts/:accountId/asset-transfer-networks",
+	asyncHandler( async ( req: AuthenticatedRequest<{ accountId: string }>, res: Response ) => {
+		const accountIdResult = validateAccountId( req.params.accountId );
+		if ( !accountIdResult.success ) {
+			return res.status( 400 ).json( FDXErrors.validationFailed( accountIdResult.error ) );
+		}
+		const accountId = accountIdResult.data;
 
-	// Validate pagination parameters with bounds checking
-	const { offset, limit } = validatePagination( req.query );
+		const { offset, limit } = validatePagination( req.query );
 
-	const account = await verifyAccount( accountId, res, 701 );
-	if ( !account ) return;
+		const account = await resolveOwnedAccount( req, res, accountId );
+		if ( !account ) return;
 
-	try {
 		const result = await getAssetTransferNetworks( accountId, offset, limit );
 		const hasMore = offset + limit < result.total;
 		const page = hasMore ? { nextOffset: String( offset + limit ) } : {};
@@ -332,10 +313,7 @@ router.get( "/accounts/:accountId/asset-transfer-networks", async ( req: Request
 			page,
 			assetTransferNetworks: result.assetTransferNetworks
 		} );
-	} catch {
-		logger.error( { accountId: sanitizeForLogging( accountId ) }, "Error retrieving asset transfer networks" );
-		return res.status( 500 ).json( { error: "Internal server error" } );
-	}
-} );
+	} )
+);
 
 export default router;

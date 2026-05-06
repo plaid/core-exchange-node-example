@@ -1,9 +1,14 @@
-// Mock customer data
+// Mock customer data.
+//
+// The first record's `customerId` is intentionally set to the demo user's
+// OIDC `sub` claim ("user_123" — see apps/auth/src/index.ts USERS map) so the
+// resource server can resolve an authenticated user to their customer record
+// using the JWT subject directly.
 export const customers = [
 	{
-		customerId: "customer-123",
-		name: "Current Customer",
-		email: "customer@example.com",
+		customerId: "user_123",
+		name: "Dev User",
+		email: "user@example.test",
 		status: "active",
 		createdDate: "2021-05-15",
 		preferences: {

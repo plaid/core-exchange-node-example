@@ -36,6 +36,7 @@ const logger = createLogger( "app" );
 interface OidcState {
 	state: string;
 	code_verifier: string;
+	nonce: string;
 }
 
 interface TokenSet {
@@ -48,7 +49,20 @@ interface CookieRequest extends Request {
 	cookies: {
 		[key: string]: string;
 	};
+	signedCookies: {
+		[key: string]: string;
+	};
 }
+
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+const SIGNED_COOKIE_OPTIONS = {
+	httpOnly: true,
+	sameSite: "lax",
+	secure: true,
+	signed: true,
+	path: "/"
+} as const;
 
 // Environment configuration
 
@@ -61,6 +75,18 @@ const REDIRECT_URI = getRequiredEnv( "REDIRECT_URI" );
 const API_BASE_URL = getRequiredEnv( "API_BASE_URL" );
 const API_AUDIENCE = getRequiredEnv( "API_AUDIENCE" );
 const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET" );
+const POST_LOGOUT_REDIRECT_URI = process.env.POST_LOGOUT_REDIRECT_URI || HOST;
+
+// Validate ISSUER_URL is an absolute URL — used to build links in views.
+// Throwing here fails fast on misconfiguration rather than rendering an
+// attacker-controlled string into an attribute later.
+const ISSUER_URL_OBJ = ( () => {
+	const url = new URL( ISSUER_URL );
+	if ( url.protocol !== "https:" && url.protocol !== "http:" ) {
+		throw new Error( `OP_ISSUER must be an http(s) URL, got: ${ url.protocol }` );
+	}
+	return url;
+} )();
 
 const app = express();
 setupBasicExpress( app );
@@ -101,22 +127,139 @@ function parseTokensCookie( cookieValue: string | undefined ): TokenSet | null {
  * Returns empty object if parsing fails.
  */
 function parseOidcCookie( cookieValue: string | undefined ): OidcState {
-	if ( !cookieValue ) return {} as OidcState;
+	if ( !cookieValue ) return { state: "", code_verifier: "", nonce: "" };
 
 	try {
 		const parsed = JSON.parse( cookieValue );
 		// Basic validation for expected fields
 		if ( typeof parsed !== "object" || parsed === null ) {
-			return {} as OidcState;
+			return { state: "", code_verifier: "", nonce: "" };
 		}
 		return {
 			state: typeof parsed.state === "string" ? parsed.state : "",
-			code_verifier: typeof parsed.code_verifier === "string" ? parsed.code_verifier : ""
+			code_verifier: typeof parsed.code_verifier === "string" ? parsed.code_verifier : "",
+			nonce: typeof parsed.nonce === "string" ? parsed.nonce : ""
 		};
 	} catch {
 		logger.warn( "Invalid OIDC state cookie format" );
-		return {} as OidcState;
+		return { state: "", code_verifier: "", nonce: "" };
 	}
+}
+
+/**
+ * Mask a token for display, showing only the first and last 4 characters.
+ */
+function maskToken( token: string | undefined ): string {
+	if ( !token ) return "";
+	if ( token.length <= 8 ) return "***";
+	return `${ token.slice( 0, 4 ) }…${ token.slice( -4 ) }`;
+}
+
+/**
+ * Decode a JWT without verifying its signature.
+ * Returns null if the token is malformed.
+ */
+function decodeJwtPayload( token: string ): Record<string, unknown> | null {
+	try {
+		const parts = token.split( "." );
+		if ( parts.length !== 3 ) return null;
+		return JSON.parse( Buffer.from( parts[1], "base64url" ).toString() );
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Determine whether an access token is expired (or close to expiring).
+ * Uses a 30 second clock-skew buffer.
+ */
+function isAccessTokenExpired( accessToken: string ): boolean {
+	const payload = decodeJwtPayload( accessToken );
+	if ( !payload || typeof payload.exp !== "number" ) {
+		// If we cannot read the expiry, treat the token as expired and force a refresh.
+		return true;
+	}
+	const nowSec = Math.floor( Date.now() / 1000 );
+	const skewSec = 30;
+	return payload.exp <= ( nowSec + skewSec );
+}
+
+/**
+ * Persist the token set in a signed, httpOnly cookie. Always read existing
+ * tokens via this helper's counterpart `parseTokensCookie( req.signedCookies )`.
+ */
+function writeTokensCookie( res: Response, tokens: TokenSet ): void {
+	res.cookie( "tokens", JSON.stringify( {
+		access_token: tokens.access_token,
+		refresh_token: tokens.refresh_token,
+		id_token: tokens.id_token
+	} ), SIGNED_COOKIE_OPTIONS );
+}
+
+/**
+ * Force a token refresh against the authorization server using the refresh
+ * token from the signed cookie. Persists the new token set back into the
+ * signed cookie and returns the new access token (or `null` when no refresh
+ * token is available).
+ */
+async function refreshTokensAndPersist( req: Request, res: Response ): Promise<string | null> {
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
+	if ( !tokens?.refresh_token ) return null;
+
+	const cfg = await ensureConfig();
+	const refreshed = await client.refreshTokenGrant( cfg, tokens.refresh_token, {
+		resource: API_AUDIENCE
+	} );
+
+	const nextTokens: TokenSet = {
+		access_token: refreshed.access_token,
+		refresh_token: refreshed.refresh_token || tokens.refresh_token,
+		id_token: refreshed.id_token || tokens.id_token
+	};
+
+	writeTokensCookie( res, nextTokens );
+
+	logger.info( {
+		rotated: !!refreshed.refresh_token,
+		expiresIn: refreshed.expiresIn?.()
+	}, "Tokens refreshed and persisted" );
+
+	return nextTokens.access_token;
+}
+
+/**
+ * Returns a valid (non-expired) access token, refreshing it when needed.
+ *
+ * 1. Reads tokens from the signed cookie.
+ * 2. Checks `exp` on the access token (jose decode + 30s skew buffer).
+ * 3. If expired and a refresh token is available, calls the auth server's
+ *    token endpoint via openid-client's refresh helper.
+ * 4. Atomically writes the new tokens back to the signed cookie before
+ *    returning the access token to the caller.
+ *
+ * Throws when no tokens are present or when refresh fails — callers are
+ * expected to map those errors onto an HTTP 401 / re-login flow.
+ */
+async function getValidAccessToken( req: Request, res: Response ): Promise<string> {
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
+	if ( !tokens?.access_token ) {
+		throw new Error( "No access token in cookie" );
+	}
+
+	if ( !isAccessTokenExpired( tokens.access_token ) ) {
+		return tokens.access_token;
+	}
+
+	if ( !tokens.refresh_token ) {
+		throw new Error( "Access token expired and no refresh token available" );
+	}
+
+	logger.debug( "Access token expired — attempting refresh" );
+	const newAccessToken = await refreshTokensAndPersist( req, res );
+	if ( !newAccessToken ) {
+		throw new Error( "Refresh did not return a new access token" );
+	}
+	return newAccessToken;
 }
 
 async function delay( ms: number ) {
@@ -167,7 +310,7 @@ async function ensureConfig(): Promise<client.Configuration> {
 // Discovery is performed lazily on demand by routes via ensureConfig()
 
 app.get( "/", async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 	res.render( "index", { tokens } );
 } );
 
@@ -178,13 +321,9 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 	const state = client.randomState();
 	const code_verifier = client.randomPKCECodeVerifier();
 	const code_challenge = await client.calculatePKCECodeChallenge( code_verifier );
+	const nonce = client.randomNonce();
 
-	res.cookie( "oidc", JSON.stringify( { state, code_verifier } ), {
-		httpOnly: true,
-		sameSite: "lax",
-		secure: true,
-		path: "/"
-	} );
+	res.cookie( "oidc", JSON.stringify( { state, code_verifier, nonce } ), SIGNED_COOKIE_OPTIONS );
 
 	// RFC 8707 - Resource Indicators for OAuth 2.0
 	// The 'resource' parameter specifies the target API (audience) for the access token
@@ -195,6 +334,7 @@ app.get( "/login", async ( _req: Request, res: Response ) => {
 		state,
 		code_challenge,
 		code_challenge_method: "S256",
+		nonce,
 		prompt: "login consent",
 		resource: API_AUDIENCE  // Resource indicator - must be absolute URI without fragment
 	} );
@@ -208,8 +348,8 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		// Force HTTPS protocol since we're behind a proxy
 		const currentUrl = new URL( req.originalUrl, `https://${ req.get( "host" ) }` );
 
-		// Safely parse OIDC state cookie
-		const cookieVal = parseOidcCookie( ( req as CookieRequest ).cookies["oidc"] );
+		// Safely parse OIDC state cookie (signed)
+		const cookieVal = parseOidcCookie( ( req as CookieRequest ).signedCookies["oidc"] );
 
 		logger.debug( { currentUrl: currentUrl.href }, "Callback - Current URL" );
 		logger.debug( { redirectUri: REDIRECT_URI }, "Callback - Expected Redirect URI" );
@@ -226,7 +366,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 			logger.info( { error: sanitizeForLogging( error ), errorDescription: sanitizeForLogging( rawErrorDescription ) }, "Callback - OAuth error received" );
 
 			// Clear the OIDC state cookie
-			res.clearCookie( "oidc" );
+			res.clearCookie( "oidc", { path: "/" } );
 
 			return res.status( 400 ).send( `
 				<!DOCTYPE html>
@@ -263,6 +403,9 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 		}
 		if ( !cookieVal.state ) {
 			throw new Error( "Missing state in cookie" );
+		}
+		if ( !cookieVal.nonce ) {
+			throw new Error( "Missing nonce in cookie" );
 		}
 
 		const authCode = currentUrl.searchParams.get( "code" );
@@ -311,23 +454,22 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 			currentUrl,
 			{
 				pkceCodeVerifier: cookieVal.code_verifier,
-				expectedState: cookieVal.state
+				expectedState: cookieVal.state,
+				expectedNonce: cookieVal.nonce  // Validates `nonce` claim in the ID Token
 			},
 			{
 				resource: API_AUDIENCE  // Resource indicator for token exchange (RFC 8707)
 			}
 		);
 
-		// Persist minimal tokens in an httpOnly cookie (for demo only).
-		res.cookie(
-			"tokens",
-			JSON.stringify( {
-				access_token: tokenSet.access_token,
-				refresh_token: tokenSet.refresh_token,
-				id_token: tokenSet.id_token
-			} ),
-			{ httpOnly: true, sameSite: "lax", secure: true, path: "/" }
-		);
+		// Persist minimal tokens in a signed, httpOnly cookie (for demo only).
+		writeTokensCookie( res, {
+			access_token: tokenSet.access_token,
+			refresh_token: tokenSet.refresh_token,
+			id_token: tokenSet.id_token
+		} );
+		// One-shot OIDC state cookie is no longer needed once the code is exchanged.
+		res.clearCookie( "oidc", { path: "/" } );
 		res.redirect( "/api-explorer" );
 	} catch ( error ) {
 		logError( logger, error, { context: "OAuth callback" } );
@@ -338,7 +480,7 @@ app.get( "/callback", async ( req: Request, res: Response ) => {
 
 // Refresh token endpoint - manually trigger a token refresh
 app.post( "/refresh", async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 
 	logger.debug( {
 		hasTokens: !!tokens,
@@ -351,7 +493,7 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 	}
 
 	try {
-		await ensureConfig();
+		const cfg = await ensureConfig();
 
 		logger.debug( {
 			refreshTokenPrefix: tokens.refresh_token.substring( 0, 10 ),
@@ -360,7 +502,7 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 
 		// Use refreshTokenGrant to exchange refresh token for new tokens
 		// The resource parameter must be included here too for the same reasons as above
-		const tokenSet = await client.refreshTokenGrant( config!, tokens.refresh_token, {
+		const tokenSet = await client.refreshTokenGrant( cfg, tokens.refresh_token, {
 			resource: API_AUDIENCE  // Resource indicator for refresh token exchange (RFC 8707)
 		} );
 
@@ -370,16 +512,12 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 			newIdTokenIssued: !!tokenSet.id_token
 		}, "POST /refresh - Refresh successful" );
 
-		// Update tokens in cookie
-		res.cookie(
-			"tokens",
-			JSON.stringify( {
-				access_token: tokenSet.access_token,
-				refresh_token: tokenSet.refresh_token || tokens.refresh_token, // Keep old refresh token if no new one
-				id_token: tokenSet.id_token || tokens.id_token // Keep old ID token if no new one
-			} ),
-			{ httpOnly: true, sameSite: "lax", secure: true, path: "/" }
-		);
+		// Update tokens in the signed cookie
+		writeTokensCookie( res, {
+			access_token: tokenSet.access_token,
+			refresh_token: tokenSet.refresh_token || tokens.refresh_token, // Keep old refresh token if no new one
+			id_token: tokenSet.id_token || tokens.id_token // Keep old ID token if no new one
+		} );
 
 		res.json( {
 			success: true,
@@ -400,7 +538,7 @@ app.post( "/refresh", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/token", async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 	if ( !tokens?.access_token || !tokens?.id_token ) return res.redirect( "/login" );
 
 	try {
@@ -504,13 +642,18 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 			annotatedPayload[key] = { value: decodedPayload[key], comment };
 		} );
 
+		// Build a validated absolute JWKS URL up front so the view never has to
+		// touch process.env / unvalidated strings inside an `href` attribute.
+		const jwksUrl = new URL( "/.well-known/jwks.json", ISSUER_URL_OBJ ).href;
+
 		// Render token inspector view with decoded token data
 		return res.render( "token", {
 			tokens,
 			rawToken: tokens.id_token,
 			header: annotatedHeader,
 			payload: annotatedPayload,
-			signature
+			signature,
+			jwksUrl
 		} );
 	} catch ( error ) {
 		logError( logger, error, { context: "ID token verification" } );
@@ -522,14 +665,14 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 } );
 
 app.get( "/api-explorer", async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 	if ( !tokens?.access_token ) return res.redirect( "/login" );
 
 	res.render( "api-explorer", { tokens } );
 } );
 
 app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 	if ( !tokens?.access_token ) return res.status( 401 ).json( { error: "No access token" } );
 
 	// Validate API call request against allow-list of endpoints and methods
@@ -548,18 +691,44 @@ app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => 
 
 	const { endpoint, method } = validationResult.data;
 
-	try {
-		const accessToken = tokens.access_token as string;
-		// Strip fragment but preserve query string for pagination/filtering
-		const sanitizedEndpoint = endpoint.split( "#" )[0];
+	// Strip fragment but preserve query string for pagination/filtering
+	const sanitizedEndpoint = endpoint.split( "#" )[0];
+	const upstreamUrl = `${ API_BASE_URL }${ sanitizedEndpoint }`;
 
-		const apiResponse = await fetch( `${ API_BASE_URL }${ sanitizedEndpoint }`, {
-			method,
-			headers: {
-				Authorization: `Bearer ${ accessToken }`,
-				"Content-Type": "application/json"
+	const callApi = async ( accessToken: string ) => fetch( upstreamUrl, {
+		method,
+		headers: {
+			Authorization: `Bearer ${ accessToken }`,
+			"Content-Type": "application/json"
+		}
+	} );
+
+	try {
+		// Auto-refresh on expired access tokens (proactive: based on `exp`).
+		let accessToken: string;
+		try {
+			accessToken = await getValidAccessToken( req, res );
+		} catch ( refreshErr ) {
+			logError( logger, refreshErr, { context: "Pre-call token refresh" } );
+			return res.status( 401 ).json( { error: "Session expired — please log in again" } );
+		}
+
+		let apiResponse = await callApi( accessToken );
+
+		// Reactive fallback: the access token looked valid but the API rejected
+		// it (e.g. server clock skew, revoked grant). Try one refresh-and-retry.
+		if ( apiResponse.status === 401 ) {
+			logger.info( "API returned 401 — attempting one refresh-and-retry" );
+			try {
+				const refreshedToken = await refreshTokensAndPersist( req, res );
+				if ( refreshedToken ) {
+					apiResponse = await callApi( refreshedToken );
+				}
+			} catch ( retryErr ) {
+				logError( logger, retryErr, { context: "401 refresh-and-retry" } );
+				// Fall through with the original 401 response
 			}
-		} );
+		}
 
 		const contentType = apiResponse.headers.get( "content-type" );
 		let responseData;
@@ -587,38 +756,44 @@ app.post( "/api-call", express.json(), async ( req: Request, res: Response ) => 
 } );
 
 app.get( "/debug/tokens", async ( req: Request, res: Response ) => {
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	// Gate behind non-production environments — raw tokens (even masked) are
+	// debug-only data and should never be reachable in production.
+	if ( IS_PRODUCTION ) {
+		logger.warn( "GET /debug/tokens - blocked in production" );
+		return res.status( 404 ).send( "Not Found" );
+	}
+
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 
 	if ( !tokens?.access_token ) {
 		return res.redirect( "/login" );
 	}
 
-	// Decode JWT tokens to show payload
-	const decodeJwt = ( token: string ) => {
-		try {
-			const parts = token.split( "." );
-			if ( parts.length !== 3 ) return null;
-			const payload = JSON.parse( Buffer.from( parts[1], "base64url" ).toString() );
-			return payload;
-		} catch {
-			return null;
-		}
+	const accessTokenPayload = tokens.access_token ? decodeJwtPayload( tokens.access_token ) : null;
+	const idTokenPayload = tokens.id_token ? decodeJwtPayload( tokens.id_token ) : null;
+
+	// Mask raw token strings so the rendered HTML never contains the actual
+	// access/refresh/id tokens. Decoded payloads are still shown — those are
+	// not credentials on their own.
+	const maskedTokens = {
+		access_token: maskToken( tokens.access_token ),
+		refresh_token: tokens.refresh_token ? maskToken( tokens.refresh_token ) : undefined,
+		id_token: tokens.id_token ? maskToken( tokens.id_token ) : undefined
 	};
 
-	const accessTokenPayload = tokens.access_token ? decodeJwt( tokens.access_token ) : null;
-	const idTokenPayload = tokens.id_token ? decodeJwt( tokens.id_token ) : null;
-
 	return res.render( "debug-tokens", {
-		tokens,
+		tokens: maskedTokens,
 		accessTokenPayload,
-		idTokenPayload
+		idTokenPayload,
+		// Pass through to the navigation partial so "Authenticated" badge stays correct
+		hasTokens: true
 	} );
 } );
 
 app.get( "/logout", async ( req: Request, res: Response ) => {
 	logger.info( "Logout route called" );
 	const config = await ensureConfig();
-	const tokens = parseTokensCookie( ( req as CookieRequest ).cookies["tokens"] );
+	const tokens = parseTokensCookie( ( req as CookieRequest ).signedCookies["tokens"] );
 
 	logger.debug( { tokensPresent: !!tokens }, "Logout - tokens present" );
 	logger.debug( { idTokenPresent: !!tokens?.id_token }, "Logout - id_token present" );
@@ -630,17 +805,29 @@ app.get( "/logout", async ( req: Request, res: Response ) => {
 		has_end_session: !!serverMetadata.end_session_endpoint
 	}, "Logout - server metadata" );
 
-	// Clear local cookies first
+	// Clear local cookies up front. Even if the RP-initiated logout below
+	// fails, the local session is already gone.
 	res.clearCookie( "tokens", { path: "/" } );
 	res.clearCookie( "oidc", { path: "/" } );
 
-	// For now, skip OIDC logout and just do local logout
-	// The complex OIDC logout flow is having issues with the authorization server
-	// TODO: Fix OIDC logout flow later
-	logger.info( "Logout - performing local logout only" );
+	// RP-initiated logout per OIDC spec:
+	//   <end_session_endpoint>?id_token_hint=…&post_logout_redirect_uri=…&state=…
+	// The auth server clears its session and redirects back to our app, where
+	// `post_logout_redirect_uri` should be a registered URI on the client.
+	const endSessionEndpoint = serverMetadata.end_session_endpoint;
+	if ( endSessionEndpoint && tokens?.id_token ) {
+		const endSessionUrl = new URL( endSessionEndpoint );
+		endSessionUrl.searchParams.set( "id_token_hint", tokens.id_token );
+		endSessionUrl.searchParams.set( "post_logout_redirect_uri", POST_LOGOUT_REDIRECT_URI );
+		endSessionUrl.searchParams.set( "client_id", CLIENT_ID );
+		endSessionUrl.searchParams.set( "state", client.randomState() );
+		logger.info( { endSession: endSessionUrl.origin + endSessionUrl.pathname }, "Logout - redirecting to end_session_endpoint" );
+		return res.redirect( endSessionUrl.href );
+	}
 
-	logger.info( "Logout - falling back to local redirect" );
-	// Fallback to local redirect if no proper logout endpoint
+	// Fallback: no end_session_endpoint (auth server doesn't support RP-initiated logout)
+	// or no id_token to use as a hint. Local logout is the best we can do.
+	logger.info( "Logout - end_session_endpoint or id_token missing, performing local logout only" );
 	res.redirect( "/" );
 } );
 

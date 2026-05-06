@@ -1,7 +1,15 @@
-// Mock data for accounts
+// Mock data for accounts.
+//
+// Every account carries a `customerId` referencing the owning customer. This
+// is used by the resource server to enforce account-ownership checks on
+// authenticated requests so a user can only access accounts they own.
+//
+// For the demo flow all accounts are assigned to the demo user (sub
+// "user_123"; see apps/auth/src/index.ts USERS map and apps/api/src/data/customers.ts).
 export const accounts = [
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-123",
 		accountNumberDisplay: "0123",
 		nickname: "My Checking",
@@ -16,6 +24,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-456",
 		accountNumberDisplay: "0456",
 		nickname: "Emergency Fund",
@@ -30,6 +39,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-789",
 		accountNumberDisplay: "0789",
 		nickname: "House Down Payment",
@@ -44,6 +54,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-101",
 		accountNumberDisplay: "0101",
 		nickname: "Home Escrow",
@@ -58,6 +69,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-202",
 		accountNumberDisplay: "0202",
 		nickname: "Investment Buffer",
@@ -72,6 +84,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-303",
 		accountNumberDisplay: "0303",
 		nickname: "Rainy Day Fund",
@@ -86,6 +99,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-404",
 		accountNumberDisplay: "0404",
 		nickname: "Dream Home",
@@ -100,6 +114,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "DEPOSIT_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-505",
 		accountNumberDisplay: "0505",
 		nickname: "Vacation Club",
@@ -114,6 +129,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "LOC_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-601",
 		accountNumberDisplay: "4532",
 		nickname: "Rewards Card",
@@ -129,6 +145,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "LOAN_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-602",
 		accountNumberDisplay: "9876",
 		nickname: "Home Loan",
@@ -148,6 +165,7 @@ export const accounts = [
 	},
 	{
 		accountCategory: "LOAN_ACCOUNT",
+		customerId: "user_123",
 		accountId: "account-603",
 		accountNumberDisplay: "1234",
 		nickname: "Car Payment",

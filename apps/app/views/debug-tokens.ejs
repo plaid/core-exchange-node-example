@@ -17,13 +17,18 @@
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-plaid-black">Token Debug</h1>
-      <p class="text-plaid-dark-gray mt-2">View raw and decoded tokens for debugging</p>
+      <p class="text-plaid-dark-gray mt-2">View masked and decoded tokens for debugging</p>
+      <div class="mt-4 bg-plaid-mint-200 border-l-4 border-plaid-mint-600 p-4 rounded">
+        <p class="text-sm text-plaid-mint-700">
+          <strong>Note:</strong> Tokens are masked (first/last 4 characters only). Full token values are never sent to the browser. This page is disabled in production.
+        </p>
+      </div>
     </div>
 
     <!-- Access Token -->
     <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-plaid-black">Access Token (Raw)</h2>
+        <h2 class="text-lg font-semibold text-plaid-black">Access Token (Masked)</h2>
         <button onclick="copyToClipboard('access-token-raw', this)" class="copy-button" style="float: none;">
           <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -62,7 +67,7 @@
     <% if (tokens.id_token) { %>
     <div class="bg-white rounded-lg shadow-sm border border-plaid-blue-sky-200 p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-plaid-black">ID Token (Raw)</h2>
+        <h2 class="text-lg font-semibold text-plaid-black">ID Token (Masked)</h2>
         <button onclick="copyToClipboard('id-token-raw', this)" class="copy-button" style="float: none;">
           <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -114,7 +119,7 @@
       </div>
       <div class="code-block token-raw" id="refresh-token"><%= tokens.refresh_token %></div>
       <p class="text-sm text-plaid-gray mt-3">
-        Refresh tokens are opaque and cannot be decoded. They are used to obtain new access tokens.
+        Refresh tokens are opaque and cannot be decoded. They are used to obtain new access tokens. (Masked)
       </p>
     </div>
     <% } %>

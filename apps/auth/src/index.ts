@@ -1,6 +1,14 @@
 import "dotenv/config";
-import express, { Request, Response } from "express";
-import { Provider, errors } from "oidc-provider";
+import express, { Request, Response, NextFunction } from "express";
+import {
+	Provider,
+	errors,
+	type OIDCAuthorizationCode,
+	type OIDCClient
+} from "oidc-provider";
+import cookieParser from "cookie-parser";
+import { doubleCsrf } from "csrf-csrf";
+import rateLimit from "express-rate-limit";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import {
@@ -155,6 +163,12 @@ setupBasicExpress( app );
 // Security headers
 app.use( createWebSecurityHeaders() );
 
+// Cookie parser - required for csrf-csrf double-submit cookie pattern.
+// The `COOKIE_SECRET` is also reused below as the CSRF HMAC secret when
+// `CSRF_SECRET` is not separately configured.
+const COOKIE_SECRET = getRequiredEnv( "COOKIE_SECRET", "dev-cookie-secret-CHANGE-ME" );
+app.use( cookieParser( COOKIE_SECRET ) );
+
 // Body parsers (needed to log token request parameters)
 app.use( express.urlencoded( { extended: false } ) );
 app.use( express.json() );
@@ -162,8 +176,147 @@ app.use( express.json() );
 // Template engine
 setupEJSTemplates( app, new URL( "../views", import.meta.url ).pathname );
 
+// Expose NODE_ENV-derived flags to all templates so views can gate
+// development-only UI (e.g. demo credentials) without re-checking env vars.
+app.locals.isProduction = process.env.NODE_ENV === "production";
+
 // Serve static files (CSS, etc.)
 app.use( "/public", express.static( new URL( "../public", import.meta.url ).pathname ) );
+
+// ---------------------------------------------------------------------------
+// CSRF protection (double-submit cookie via csrf-csrf, the maintained
+// replacement for the deprecated `csurf` middleware).
+//
+// Tokens are bound to the interaction UID when present so each user's
+// interaction has its own CSRF binding; for non-interaction routes the
+// session identifier falls back to a stable cookie value or the request IP.
+// ---------------------------------------------------------------------------
+const CSRF_SECRET = process.env.CSRF_SECRET || COOKIE_SECRET;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+const {
+	generateCsrfToken,
+	doubleCsrfProtection
+} = doubleCsrf( {
+	getSecret: () => CSRF_SECRET,
+	getSessionIdentifier: ( req ) => {
+		// Prefer the per-interaction UID so tokens are scoped to a single login flow.
+		const uidParam = ( req.params as { uid?: string } | undefined )?.uid;
+		if ( typeof uidParam === "string" && uidParam.length > 0 ) {
+			return uidParam;
+		}
+		// Fallback to a stable per-client identifier so non-interaction routes
+		// still receive a deterministic session id.
+		return req.ip ?? "anonymous";
+	},
+	cookieName: IS_PRODUCTION ? "__Host-psifi.x-csrf-token" : "x-csrf-token",
+	cookieOptions: {
+		httpOnly: true,
+		sameSite: "lax",
+		secure: IS_PRODUCTION,
+		path: "/"
+	},
+	getCsrfTokenFromRequest: ( req ) => {
+		const headerToken = req.headers[ "x-csrf-token" ];
+		if ( typeof headerToken === "string" && headerToken.length > 0 ) {
+			return headerToken;
+		}
+		const bodyToken = ( req.body as { _csrf?: unknown } | undefined )?._csrf;
+		return typeof bodyToken === "string" ? bodyToken : undefined;
+	}
+} );
+
+// ---------------------------------------------------------------------------
+// Login rate limiting
+//
+// 10 attempts per 15 minutes per IP balances normal user retries (typo'd
+// password, autofill mishaps) against brute-force probing. Adjust via the
+// `LOGIN_RATE_LIMIT_*` env vars if a deployment needs a different ceiling.
+// ---------------------------------------------------------------------------
+const LOGIN_RATE_LIMIT_WINDOW_MS = Number( process.env.LOGIN_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000 );
+const LOGIN_RATE_LIMIT_MAX = Number( process.env.LOGIN_RATE_LIMIT_MAX ?? 10 );
+
+const loginRateLimiter = rateLimit( {
+	windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+	max: LOGIN_RATE_LIMIT_MAX,
+	standardHeaders: true,
+	legacyHeaders: false,
+	handler: ( req: Request, res: Response ) => {
+		logger.warn( {
+			path: req.path,
+			ip: req.ip,
+			uid: req.params?.uid
+		}, "Login rate limit exceeded" );
+
+		const uidParam = req.params?.uid;
+		const uid = typeof uidParam === "string" ? uidParam : "";
+
+		let csrfToken = "";
+		try {
+			csrfToken = generateCsrfToken( req, res );
+		} catch {
+			// non-fatal; render without a fresh token
+		}
+
+		try {
+			return res.status( 429 ).render( "interaction", {
+				uid,
+				prompt: "login",
+				scopes: [],
+				error: "Too many login attempts. Please wait a few minutes and try again.",
+				email: undefined,
+				csrfToken
+			} );
+		} catch {
+			return res.status( 429 ).json( {
+				error: "too_many_requests",
+				error_description: "Too many login attempts. Please try again later."
+			} );
+		}
+	}
+} );
+
+/**
+ * Wraps `doubleCsrfProtection` with a friendly EJS error page when the token
+ * fails to validate. Without this users would see a raw 403 JSON/HTML body.
+ */
+function csrfProtection( req: Request, res: Response, next: NextFunction ): void {
+	doubleCsrfProtection( req, res, ( err ) => {
+		if ( err ) {
+			logger.warn( {
+				path: req.path,
+				ip: req.ip,
+				error: err instanceof Error ? err.message : String( err )
+			}, "CSRF validation failed" );
+
+			const uidParam = req.params?.uid;
+			const uid = typeof uidParam === "string" ? uidParam : "";
+
+			// Try to render the interaction page with a friendly error. If the
+			// view fails to render (e.g. on non-interaction routes), fall back
+			// to a plain 403.
+			try {
+				let csrfToken = "";
+				try {
+					csrfToken = generateCsrfToken( req, res );
+				} catch {
+					// ignore - we'll render without a fresh token
+				}
+				return res.status( 403 ).render( "interaction", {
+					uid,
+					prompt: "login",
+					scopes: [],
+					error: "Your session expired or the request could not be verified. Please try again.",
+					email: undefined,
+					csrfToken
+				} );
+			} catch {
+				return res.status( 403 ).json( { error: "invalid_csrf_token" } );
+			}
+		}
+		return next();
+	} );
+}
 
 // Very minimal in-memory user store
 const USERS = new Map<
@@ -225,8 +378,10 @@ function validateInteractionUid( uid: string | string[] ): { success: true; data
 	return { success: true, data: result.data };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const configuration: any = {
+// `oidc-provider` does not ship a complete public Configuration type, so we
+// type our config object structurally. The provider validates the shape at
+// runtime; we only need TypeScript to keep the values we set well-typed.
+const configuration = {
 	clients: SANITIZED_CLIENTS,
 	// Use custom JWKS if provided, otherwise oidc-provider generates ephemeral keys
 	...( JWKS ? { jwks: JWKS } : {} ),
@@ -245,8 +400,7 @@ const configuration: any = {
 		IdToken: 60 * 60,              // 1 hour
 		RefreshToken: 14 * 24 * 60 * 60 // 14 days
 	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	issueRefreshToken: async ( _ctx: unknown, client: any, code: any ) => {
+	issueRefreshToken: async ( _ctx: unknown, client: OIDCClient, code: OIDCAuthorizationCode ) => {
 		// Issue refresh token if client supports refresh_token grant and either:
 		// - offline_access scope is requested (standard behavior), or
 		// - client has force_refresh_token flag set in .env.clients.json
@@ -367,8 +521,7 @@ const configuration: any = {
 		};
 	},
 	interactions: {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		url: ( _ctx: unknown, interaction: any ) => `/interaction/${ interaction.uid }`
+		url: ( _ctx: unknown, interaction: { uid: string } ) => `/interaction/${ interaction.uid }`
 	}
 };
 
@@ -472,12 +625,15 @@ async function main() {
 				session: details.session
 			}, "GET /interaction/:uid - Interaction details loaded" );
 
+			const csrfToken = generateCsrfToken( req, res );
+
 			res.render( "interaction", {
 				uid,
 				prompt,
 				scopes: requestedScopes,
 				error: undefined,
-				email: undefined
+				email: undefined,
+				csrfToken
 			} );
 		} catch ( error ) {
 			logError( logger, error, { context: "GET /interaction/:uid" } );
@@ -501,6 +657,8 @@ async function main() {
 	app.post(
 		"/interaction/:uid/login",
 		express.urlencoded( { extended: false } ),
+		loginRateLimiter,
+		csrfProtection,
 		async ( req: Request, res: Response ) => {
 			try {
 				// Validate interaction UID path parameter
@@ -523,12 +681,14 @@ async function main() {
 						.filter( Boolean );
 
 					// Re-render login form with validation error
+					const csrfToken = generateCsrfToken( req, res );
 					return res.render( "interaction", {
 						uid,
 						prompt: "login",
 						scopes: requestedScopes,
 						error: "Invalid email or password format.",
-						email: String( req.body?.email || "" ).slice( 0, 254 )  // Preserve truncated email
+						email: String( req.body?.email || "" ).slice( 0, 254 ),  // Preserve truncated email
+						csrfToken
 					} );
 				}
 
@@ -552,12 +712,14 @@ async function main() {
 						.filter( Boolean );
 
 					// Re-render login form with error message
+					const csrfToken = generateCsrfToken( req, res );
 					return res.render( "interaction", {
 						uid,
 						prompt: "login",
 						scopes: requestedScopes,
 						error: "Invalid email or password. Please try again.",
-						email  // Preserve the email field
+						email,  // Preserve the email field
+						csrfToken
 					} );
 				}
 
@@ -633,6 +795,7 @@ async function main() {
 	app.post(
 		"/interaction/:uid/confirm",
 		express.urlencoded( { extended: false } ),
+		csrfProtection,
 		async ( req: Request, res: Response ) => {
 			try {
 				// Validate interaction UID path parameter
@@ -750,6 +913,7 @@ async function main() {
 	app.post(
 		"/interaction/:uid/cancel",
 		express.urlencoded( { extended: false } ),
+		csrfProtection,
 		async ( req: Request, res: Response ) => {
 			// Validate interaction UID path parameter
 			const uidResult = validateInteractionUid( req.params.uid );
@@ -814,15 +978,38 @@ async function main() {
 			}, "GET /auth - Authorization request received" );
 		}
 
-		// Intercept response to log token response
-		const originalSend = res.send.bind( res );
-		const originalEnd = res.end.bind( res );
+		// Intercept response to log token response. Use Response['send']/['end']
+		// directly so the wrappers preserve Express's overloaded signatures.
+		const originalSend = res.send.bind( res ) as Response[ "send" ];
+		const originalEnd = res.end.bind( res ) as Response[ "end" ];
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		res.send = function ( body: any ) {
-			if ( req.path === "/token" && req.method === "POST" ) {
+		interface TokenResponseBody {
+			access_token?: string;
+			id_token?: string;
+			refresh_token?: string;
+			token_type?: string;
+			expires_in?: number;
+			scope?: string;
+		}
+
+		const parseTokenBody = ( value: unknown ): TokenResponseBody | null => {
+			if ( typeof value === "string" ) {
 				try {
-					const parsed = typeof body === "string" ? JSON.parse( body ) : body;
+					return JSON.parse( value ) as TokenResponseBody;
+				} catch {
+					return null;
+				}
+			}
+			if ( value && typeof value === "object" ) {
+				return value as TokenResponseBody;
+			}
+			return null;
+		};
+
+		res.send = function ( body: unknown ) {
+			if ( req.path === "/token" && req.method === "POST" ) {
+				const parsed = parseTokenBody( body );
+				if ( parsed ) {
 					logger.debug( {
 						path: req.path,
 						accessTokenIssued: !!parsed.access_token,
@@ -832,48 +1019,46 @@ async function main() {
 						expiresIn: parsed.expires_in,
 						scope: parsed.scope
 					}, "POST /token - Token response sent (via send)" );
-				} catch {
+				} else {
 					logger.debug( { path: req.path }, "POST /token - Response sent (could not parse)" );
 				}
 			}
 			return originalSend( body );
-		};
+		} as Response[ "send" ];
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		res.end = function ( chunk?: any, ...args: any[] ) {
+		res.end = function ( chunk?: unknown, ...args: unknown[] ) {
 			if ( req.path === "/token" && req.method === "POST" && chunk ) {
-				try {
-					const parsed = typeof chunk === "string" ? JSON.parse( chunk ) : chunk;
-					if ( parsed.access_token ) {
-						// Count dots to determine JWT format (should have 2 dots = 3 parts)
-						const accessTokenParts = parsed.access_token ? parsed.access_token.split( "." ).length : 0;
-						const idTokenParts = parsed.id_token ? parsed.id_token.split( "." ).length : 0;
-						const refreshTokenParts = parsed.refresh_token ? parsed.refresh_token.split( "." ).length : 0;
+				const parsed = parseTokenBody( chunk );
+				if ( parsed?.access_token ) {
+					// Count dots to determine JWT format (should have 2 dots = 3 parts)
+					const accessTokenParts = parsed.access_token.split( "." ).length;
+					const idTokenParts = parsed.id_token ? parsed.id_token.split( "." ).length : 0;
+					const refreshTokenParts = parsed.refresh_token ? parsed.refresh_token.split( "." ).length : 0;
 
-						logger.debug( {
-							path: req.path,
-							accessTokenIssued: !!parsed.access_token,
-							accessTokenLength: parsed.access_token ? parsed.access_token.length : 0,
-							accessTokenParts,
-							accessTokenPrefix: parsed.access_token ? parsed.access_token.substring( 0, 20 ) : "",
-							idTokenIssued: !!parsed.id_token,
-							idTokenLength: parsed.id_token ? parsed.id_token.length : 0,
-							idTokenParts,
-							refreshTokenIssued: !!parsed.refresh_token,
-							refreshTokenLength: parsed.refresh_token ? parsed.refresh_token.length : 0,
-							refreshTokenParts,
-							refreshTokenPrefix: parsed.refresh_token ? parsed.refresh_token.substring( 0, 20 ) : "",
-							tokenType: parsed.token_type,
-							expiresIn: parsed.expires_in,
-							scope: parsed.scope
-						}, "POST /token - Token response sent (via end)" );
-					}
-				} catch {
-					// Ignore parsing errors
+					logger.debug( {
+						path: req.path,
+						accessTokenIssued: !!parsed.access_token,
+						accessTokenLength: parsed.access_token.length,
+						accessTokenParts,
+						accessTokenPrefix: parsed.access_token.substring( 0, 20 ),
+						idTokenIssued: !!parsed.id_token,
+						idTokenLength: parsed.id_token ? parsed.id_token.length : 0,
+						idTokenParts,
+						refreshTokenIssued: !!parsed.refresh_token,
+						refreshTokenLength: parsed.refresh_token ? parsed.refresh_token.length : 0,
+						refreshTokenParts,
+						refreshTokenPrefix: parsed.refresh_token ? parsed.refresh_token.substring( 0, 20 ) : "",
+						tokenType: parsed.token_type,
+						expiresIn: parsed.expires_in,
+						scope: parsed.scope
+					}, "POST /token - Token response sent (via end)" );
 				}
 			}
-			return originalEnd( chunk, ...args );
-		};
+			// Express's `end` is heavily overloaded; we delegate to the original
+			// implementation via Reflect.apply so we don't have to enumerate
+			// every overload in our types.
+			return Reflect.apply( originalEnd, res, [ chunk, ...args ] );
+		} as Response[ "end" ];
 
 		next();
 	} );
