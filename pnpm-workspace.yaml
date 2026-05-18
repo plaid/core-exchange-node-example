@@ -2,6 +2,14 @@ packages:
   - apps/*
   - packages/*
 
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@types/node@25.9.0'
+  - tsx@4.22.2
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
