@@ -36,6 +36,6 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "helmet": "^8.1.0"
+    "helmet": "^8.2.0"
   }
 }
