@@ -17,7 +17,7 @@ A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/
 
 - **TypeScript** (v5.9) with ESM modules everywhere
 - **Node.js** (v22+) - Yes, you need the latest
-- **pnpm** (v10) - For managing our monorepo workspace
+- **pnpm** (v11) - For managing our monorepo workspace
 
 **OAuth/OIDC (the important bits):**
 
@@ -88,7 +88,7 @@ brew install node pnpm caddy
 **Version requirements:**
 
 - Node.js ≥22.0.0 (we enforce this in `package.json`)
-- pnpm ≥10.15.1
+- pnpm ≥11.1.3
 - Caddy (latest is fine)
 
 ### Installation
