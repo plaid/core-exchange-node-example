@@ -15,7 +15,7 @@ A working example of [Plaid Core Exchange](https://plaid.com/core-exchange/docs/
 
 **The Core Stuff:**
 
-- **TypeScript** (v5.9) with ESM modules everywhere
+- **TypeScript** (v6.0) with ESM modules everywhere
 - **Node.js** (v22+) - Yes, you need the latest
 - **pnpm** (v11) - For managing our monorepo workspace
 
@@ -116,7 +116,7 @@ Defaults in `.env.example` work out of the box for local dev using localtest.me 
   - Auth: `https://id.localtest.me` (port 3001)
   - API: `https://api.localtest.me` (port 3003)
   - App: `https://app.localtest.me` (port 3004)
-- **OAuth Client**: Pre-configured with development credentials (`dev-rp` / `dev-secret`)
+- **OAuth Client**: Pre-configured with development credentials (`dev-rp` / `dev-secret-CHANGE-FOR-PRODUCTION`)
 - **Secrets**: Development-safe defaults (change for production!)
 
 **For production**, you'll need to generate secure secrets for `apps/auth/.env` and `apps/app/.env`:
@@ -318,7 +318,7 @@ API_PORT=3003
 
 # Single Client (default setup)
 # Use the scripts/secrets.js CLI app to generate new secrets
-CLIENT_ID=dev-rp-CHANGE-FOR-PRODUCTION
+CLIENT_ID=dev-rp
 CLIENT_SECRET=dev-secret-CHANGE-FOR-PRODUCTION
 REDIRECT_URI=https://app.localtest.me/callback
 
@@ -432,7 +432,7 @@ Want refresh tokens even without the `offline_access` scope? Add a per-client fl
 [
   {
     "client_id": "dev-rp",
-    "client_secret": "dev-secret",
+    "client_secret": "dev-secret-CHANGE-FOR-PRODUCTION",
     "redirect_uris": ["https://app.localtest.me/callback"],
     "post_logout_redirect_uris": ["https://app.localtest.me"],
     "grant_types": ["authorization_code", "refresh_token"],
