@@ -644,7 +644,7 @@ app.get( "/token", async ( req: Request, res: Response ) => {
 
 		// Build a validated absolute JWKS URL up front so the view never has to
 		// touch process.env / unvalidated strings inside an `href` attribute.
-		const jwksUrl = new URL( "/.well-known/jwks.json", ISSUER_URL_OBJ ).href;
+		const jwksUrl = new URL( "/jwks", ISSUER_URL_OBJ ).href;
 
 		// Render token inspector view with decoded token data
 		return res.render( "token", {

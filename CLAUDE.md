@@ -101,8 +101,8 @@ Key features:
 - **Forced interactions**: Authorization flow uses `prompt: "login consent"` to always show login and consent screens
 - **RP-initiated logout**: Supports logout with automatic form submission
 - **Token signing (JWKS)**:
-  - Development: Uses ephemeral keys (auto-generated on startup with `kid="keystore-CHANGE-ME"`)
-  - Production: Configure persistent JWKS via `JWKS` environment variable to prevent token invalidation on restarts
+  - Development: Uses oidc-provider's static, public development key (`kid="keystore-CHANGE-ME"`)
+  - Production: Configure your own JWKS via `JWKS` environment variable, since the development key is public
   - Generate keys with: `node scripts/secrets.js jwks`
 
 ### 2. Resource Server (API)
@@ -230,15 +230,14 @@ The authorization server uses JWKS (JSON Web Key Set) to sign JWT tokens:
 **Development (default):**
 
 - No `JWKS` environment variable needed
-- `oidc-provider` auto-generates ephemeral keys on startup
+- `oidc-provider` falls back to its public development key
 - Keys have `kid="keystore-CHANGE-ME"` in JWT headers
-- Keys regenerate on each restart (invalidates all tokens)
-- Perfectly acceptable for local development
+- The private key is public, so this is only acceptable for local development
 
 **Production (required):**
 
 - Set `JWKS` environment variable with persistent signing keys
-- Prevents token invalidation on server restarts
+- Keeps the signing key private
 - Enables proper key rotation strategy
 - Generate with: `node scripts/secrets.js jwks`
 - Store securely (AWS Secrets Manager, HashiCorp Vault, etc.)

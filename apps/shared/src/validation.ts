@@ -284,7 +284,8 @@ export const oidcClientSchema = z.object( {
 		"client_secret_basic",
 		"client_secret_post",
 		"none"
-	] ).optional()
+	] ).optional(),
+	force_refresh_token: z.boolean().optional()
 } );
 
 export const oidcClientsSchema = z.array( oidcClientSchema );
