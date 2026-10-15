@@ -94,7 +94,8 @@ pnpm clean
 
 ## Dependencies
 
-- **Peer Dependencies**: `pino` (logging)
+- **Dependencies**: `pino` (logging), `zod`, `helmet`
+- **Peer Dependencies**: `express`
 - **Dev Dependencies**: `typescript`, `@types/node`
 
 ## License

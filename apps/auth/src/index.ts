@@ -116,11 +116,11 @@ const OIDC_CLIENTS = loadOIDCClients();
 logger.info( `Loaded ${ OIDC_CLIENTS.length } OIDC client(s)` );
 
 // Load JWKS (JSON Web Key Set) for token signing with schema validation
-// If not provided, oidc-provider will generate ephemeral keys with kid "keystore-CHANGE-ME"
+// If not provided, oidc-provider uses its public development key with kid "keystore-CHANGE-ME"
 function loadJWKS() {
 	const jwksEnv = process.env.JWKS;
 	if ( !jwksEnv ) {
-		logger.warn( "JWKS not configured - using oidc-provider default ephemeral keys" );
+		logger.warn( "JWKS not configured - using oidc-provider's public development key" );
 		logger.warn( "For production, set JWKS environment variable with your signing keys" );
 		logger.warn( "Generate keys with: node scripts/secrets.js jwks" );
 		return undefined;
@@ -383,7 +383,7 @@ function validateInteractionUid( uid: string | string[] ): { success: true; data
 // runtime; we only need TypeScript to keep the values we set well-typed.
 const configuration = {
 	clients: SANITIZED_CLIENTS,
-	// Use custom JWKS if provided, otherwise oidc-provider generates ephemeral keys
+	// Use custom JWKS if provided, otherwise oidc-provider uses its public development key
 	...( JWKS ? { jwks: JWKS } : {} ),
 	claims: {
 		openid: [ "sub" ],

@@ -190,13 +190,23 @@ If your browser still complains about certificates, restart it or check your Key
 Edit the `caddyfile` and add a port to each site:
 
 ```caddyfile
-:8443 {
-  tls internal
+id.localtest.me:8443 {
   reverse_proxy localhost:3001
+  tls internal
+}
+
+app.localtest.me:8443 {
+  reverse_proxy localhost:3004
+  tls internal
+}
+
+api.localtest.me:8443 {
+  reverse_proxy localhost:3003
+  tls internal
 }
 ```
 
-Then update your `.env` to use `https://localhost:8443` for the issuer and redirect URIs. Port 443 is easier, but this works if you can't use sudo.
+Then add `:8443` to every `https://*.localtest.me` URL in your `.env` files (issuer, redirect URIs, and hosts). Port 443 is easier, but this works if you can't use sudo.
 
 ### Running the Apps
 
@@ -372,14 +382,14 @@ The tool generates:
 
 **Development (default):**
 
-- If you don't set the `JWKS` environment variable, `oidc-provider` will automatically generate ephemeral (temporary) signing keys on startup
-- These keys use the default key ID (`kid`) of `"keystore-CHANGE-ME"`
-- Keys are regenerated every time the auth server restarts, invalidating all existing tokens
-- This is perfectly fine for local development since tokens have short lifetimes (1 hour)
+- If you don't set the `JWKS` environment variable, `oidc-provider` signs tokens with its built-in development key
+- This key uses the key ID (`kid`) `"keystore-CHANGE-ME"`
+- The key is static, and its private half ships in the public `oidc-provider` npm package, so anyone can sign tokens with it
+- This is fine for local development, but never for a deployed server
 
 **Production (required):**
 
-- You **MUST** provide your own JWKS to prevent token invalidation on server restarts
+- You **MUST** provide your own JWKS, since the built-in development key is public
 - Generate persistent signing keys with `node scripts/secrets.js jwks`
 - Store the JWKS in a secure environment variable or secret manager
 - The generated JWKS contains **PRIVATE KEY material** - treat it like any other secret!
@@ -388,18 +398,17 @@ The tool generates:
 
 When the Authorization Server signs JWT tokens (ID tokens and access tokens), it uses a private key and includes the key ID (`kid`) in the JWT header. The Resource Server (API) uses the public key from the JWKS endpoint to verify token signatures.
 
-**Problems with ephemeral keys in production:**
+**Problems with the development key in production:**
 
-1. **Service restarts invalidate all tokens** - Users and applications must re-authenticate
-2. **Load balancing issues** - Different servers may have different keys
-3. **No key rotation strategy** - Can't implement proper cryptographic key rotation
-4. **Debugging difficulties** - The generic `kid` value doesn't help identify which key was used
+1. **Anyone can forge tokens** - The private key is published in the `oidc-provider` package
+2. **No key rotation strategy** - Can't implement proper cryptographic key rotation
+3. **Debugging difficulties** - The generic `kid` value doesn't help identify which key was used
 
 **Benefits of persistent keys:**
 
-1. **Tokens survive restarts** - Access/ID tokens remain valid across deployments
+1. **Private signing keys** - Only your servers can issue valid tokens
 2. **Proper key rotation** - You can add new keys while keeping old ones for validation
-3. **Better security** - Control your cryptographic material instead of relying on auto-generated keys
+3. **Better security** - Control your cryptographic material instead of relying on a published key
 4. **Meaningful key IDs** - Generated keys have unique identifiers like `key-abc123def456`
 
 #### Setting Up JWKS for Production
@@ -414,7 +423,7 @@ JWKS='{"keys":[{"kty":"RSA","n":"...","e":"AQAB","d":"...","kid":"key-abc123","a
 
 The generated JWKS includes:
 
-- **Public components** (`kty`, `n`, `e`, `kid`, `alg`, `use`) - Exposed at `/.well-known/jwks.json`
+- **Public components** (`kty`, `n`, `e`, `kid`, `alg`, `use`) - Exposed at `/jwks`
 - **Private components** (`d`, `p`, `q`, `dp`, `dq`, `qi`) - Used for signing, never exposed
 
 **Important notes:**
@@ -498,7 +507,7 @@ We use automated tools to keep dependencies secure:
 
 This demo intentionally omits some production requirements:
 
-- **Rate limiting** - Prevent brute force and DoS attacks
+- **API-wide rate limiting** - Prevent DoS attacks (only the login endpoint is rate-limited)
 - **Audit logging** - Track authentication events and API access
 - **Account lockout** - Lock accounts after repeated failed login attempts
 - **Password hashing** - Replace demo passwords with bcrypt/Argon2 hashed passwords
@@ -536,7 +545,7 @@ See `docker-compose.yml` for local development and `docker-compose.prod.example.
 | Workflow | Purpose |
 | -------- | ------- |
 | `ci.yml` | Lint, build, and security audit on PRs |
-| `security.yml` | Weekly CodeQL and container scanning |
+| `security.yml` | Weekly dependency audit and CodeQL |
 | `deploy-*.yml` | Deploy services to infrastructure |
 
 ### Recommended Branch Protection
